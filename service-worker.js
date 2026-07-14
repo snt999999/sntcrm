@@ -1,4 +1,4 @@
-const CACHE_NAME = 'solncanet-v61-supabase-sigma-approved-sms';
+const CACHE_NAME = 'solncanet-v61-supabase-sigma-sender-auto';
 const APP_SHELL = [
   '/',
   '/index.html',
