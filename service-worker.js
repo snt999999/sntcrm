@@ -1,4 +1,4 @@
-const CACHE_NAME = 'solncanet-v61-supabase-calendar-services-accounts';
+const CACHE_NAME = 'solncanet-v61-supabase-sigma-approved-sms';
 const APP_SHELL = [
   '/',
   '/index.html',

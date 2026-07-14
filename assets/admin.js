@@ -241,13 +241,11 @@ const els = {
 };
 
 const NOTIFICATION_TEMPLATES = {
-  confirm: { title: "Запись подтверждена", text: "СОЛНЦАНЕТ: ваша запись подтверждена на {date} в {time}. Адрес: {address}. Тел. +7 912 662-92-35" },
-  reminder: { title: "Напоминание о записи", text: "СОЛНЦАНЕТ: напоминаем о записи {date} в {time}. Услуга: {service}. Адрес: {address}. Тел. +7 912 662-92-35" },
-  reschedule: { title: "Перенос записи", text: "СОЛНЦАНЕТ: ваша запись перенесена на {date} в {time}. Адрес: {address}. Если время не подходит, свяжитесь с нами: +7 912 662-92-35" },
-  cancel: { title: "Отмена записи", text: "СОЛНЦАНЕТ: ваша запись отменена. Для выбора новой даты свяжитесь с нами: +7 912 662-92-35" },
-  done: { title: "Работы выполнены", text: "СОЛНЦАНЕТ: работы по услуге {service} выполнены. Спасибо за обращение! По вопросам гарантии: +7 912 662-92-35" },
-  review: { title: "Просьба оставить отзыв", text: "СОЛНЦАНЕТ: спасибо за обращение! Будем благодарны за отзыв о нашей работе. Это помогает нам становиться лучше." },
-  custom: { title: "Свой текст", text: "" }
+  confirm: { title: "Подтверждение записи", text: "СОЛНЦАНЕТ: запись оформлена на {date} {time}." },
+  reminder: { title: "Напоминание за день", text: "СОЛНЦАНЕТ: напоминаем о записи {date}, {time}." },
+  reminder2h: { title: "Напоминание за 2 часа", text: "СОЛНЦАНЕТ: до записи осталось 2 часа." },
+  reschedule: { title: "Перенос записи", text: "СОЛНЦАНЕТ: запись перенесена на {date} {time}." },
+  review: { title: "Благодарность + отзыв", text: "Спасибо, что выбрали СОЛНЦАНЕТ! Оставьте отзыв: https://clck.su/solncanet" }
 };
 
 init();
@@ -2740,8 +2738,8 @@ function renderNotificationTemplates() {
 
 function updateRequestNotificationEditor() {
   if (!current || !els.notifyTemplate || !els.notifyMessage) return;
-  const key = els.notifyTemplate.value || "confirm";
-  const tpl = NOTIFICATION_TEMPLATES[key] || NOTIFICATION_TEMPLATES.confirm;
+  const key = els.notifyTemplate.value || "reschedule";
+  const tpl = NOTIFICATION_TEMPLATES[key] || NOTIFICATION_TEMPLATES.reschedule;
   if (key !== "custom" || !els.notifyMessage.value.trim()) {
     els.notifyMessage.value = fillNotificationTemplate(tpl.text, current);
   }
@@ -3230,8 +3228,8 @@ function updateScheduleSmsEditor() {
   if (!current || !els.scheduleSmsTemplate || !els.scheduleSmsMessage) return;
   if (!els.scheduleSmsDate?.value) els.scheduleSmsDate.value = current.fields?.["Дата записи"] || today();
   if (!els.scheduleSmsTime?.value) els.scheduleSmsTime.value = "18:00";
-  const key = els.scheduleSmsTemplate.value || "reminder";
-  const tpl = NOTIFICATION_TEMPLATES[key] || NOTIFICATION_TEMPLATES.reminder;
+  const key = els.scheduleSmsTemplate.value || "reschedule";
+  const tpl = NOTIFICATION_TEMPLATES[key] || NOTIFICATION_TEMPLATES.reschedule;
   if (key !== "custom" || !els.scheduleSmsMessage.value.trim()) els.scheduleSmsMessage.value = fillNotificationTemplate(tpl.text, current);
   if (els.scheduleSmsStatus) els.scheduleSmsStatus.textContent = "";
 }
@@ -3259,11 +3257,12 @@ async function scheduleDefaultSmsForCurrentRequest() {
   try {
     setNotificationStatus(els.scheduleSmsStatus, "Создаю напоминания...", true);
     for (const slot of slots) {
-      const text = fillNotificationTemplate(NOTIFICATION_TEMPLATES.reminder.text, current);
+      const templateKey = slot.templateKey || "reminder";
+      const text = fillNotificationTemplate((NOTIFICATION_TEMPLATES[templateKey] || NOTIFICATION_TEMPLATES.reminder).text, current);
       await scheduleSmsApi({ recordId: current.id, client: f["Имя клиента"] || "", company: f["Компания"] || "", phone: f["Телефон"], type: slot.type, date: slot.date, time: slot.time, message: text }, true);
     }
     await loadSmsQueue(true);
-    setNotificationStatus(els.scheduleSmsStatus, "Напоминания за 24 часа и за 2 часа созданы", true);
+    setNotificationStatus(els.scheduleSmsStatus, "Напоминания за день и за 2 часа созданы", true);
   } catch (error) {
     setNotificationStatus(els.scheduleSmsStatus, error.message, false);
   }
@@ -3272,13 +3271,15 @@ async function scheduleDefaultSmsForCurrentRequest() {
 function defaultReminderSlots(dateStr, timeStr) {
   const d = new Date(`${dateStr}T${timeStr || "10:00"}:00`);
   if (Number.isNaN(d.getTime())) return [];
+  const now = new Date();
+  const moreThanDay = d.getTime() - now.getTime() > 24 * 60 * 60 * 1000;
   return [
-    { type: "Напоминание за 24 часа", ms: 24 * 60 * 60 * 1000 },
-    { type: "Напоминание за 2 часа", ms: 2 * 60 * 60 * 1000 }
+    { type: "Напоминание за день", templateKey: "reminder", ms: 24 * 60 * 60 * 1000, requireMoreThanDay: true },
+    { type: "Напоминание за 2 часа", templateKey: "reminder2h", ms: 2 * 60 * 60 * 1000 }
   ].map((x) => {
     const t = new Date(d.getTime() - x.ms);
-    return { type: x.type, date: ymdLocal(t), time: String(t.getHours()).padStart(2, "0") + ":" + String(t.getMinutes()).padStart(2, "0") };
-  }).filter((x) => `${x.date} ${x.time}` >= `${today()} 00:00`);
+    return { type: x.type, templateKey: x.templateKey, requireMoreThanDay: x.requireMoreThanDay, at: t, date: ymdLocal(t), time: String(t.getHours()).padStart(2, "0") + ":" + String(t.getMinutes()).padStart(2, "0") };
+  }).filter((x) => x.at > now && (!x.requireMoreThanDay || moreThanDay));
 }
 
 async function scheduleSmsApi(payload, silent = false) {
