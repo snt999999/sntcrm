@@ -1,4 +1,4 @@
-const CACHE_NAME = 'solncanet-v61-supabase-ready';
+const CACHE_NAME = 'solncanet-v61-supabase-calendar-sync-fix';
 const APP_SHELL = [
   '/',
   '/index.html',

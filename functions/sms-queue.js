@@ -9,7 +9,17 @@ function dateOnly(value) { return String(value || "").slice(0, 10) || null; }
 function timeOnly(value) { return String(value || "").slice(0, 5) || null; }
 function allowedPasswords(env) { const builtin = ["sergey41", "roman41", "nikitaK41", "dima41", "nikitaP41", "andrey41"]; const extra = String(env.USER_PASSWORDS || "").split(/[;,\n]/).map((x) => x.trim()).filter(Boolean); if (env.ADMIN_PASSWORD) builtin.push(String(env.ADMIN_PASSWORD)); return new Set([...builtin, ...extra]); }
 function checkAdmin(request, env) { const provided = (request.headers.get("x-admin-password") || "").trim(); if (!provided) return { ok: false, status: 401, body: { ok: false, error: "Не передан пароль" } }; if (!allowedPasswords(env).has(provided)) return { ok: false, status: 401, body: { ok: false, error: "Неверный пароль" } }; return { ok: true }; }
-function sbUrl(env) { return String(env.SUPABASE_URL || "").replace(/\/+$/, ""); }
+function sbUrl(env) {
+  // Cloudflare variable SUPABASE_URL may be pasted either as:
+  // https://xxxx.supabase.co OR https://xxxx.supabase.co/rest/v1
+  // We always normalize it to the project root, because our requests add /rest/v1 themselves.
+  let value = String(env.SUPABASE_URL || "").trim();
+  value = value.replace(/\/+$/, "");
+  value = value.replace(/\/rest\/v1$/i, "");
+  value = value.replace(/\/auth\/v1$/i, "");
+  value = value.replace(/\/storage\/v1$/i, "");
+  return value;
+}
 function sbKey(env) { return env.SUPABASE_SECRET_KEY || env.SUPABASE_SERVICE_ROLE_KEY || env.SUPABASE_SERVICE_KEY || env.SUPABASE_ANON_KEY || env.SUPABASE_PUBLISHABLE_KEY || ""; }
 function checkSupabaseEnv(env) { if (!sbUrl(env)) return "SUPABASE_URL is missing"; if (!sbKey(env)) return "SUPABASE_SECRET_KEY is missing"; return ""; }
 async function sbFetch(env, path, options = {}) { const err = checkSupabaseEnv(env); if (err) throw new Error(err); const headers = { "apikey": sbKey(env), "Authorization": "Bearer " + sbKey(env), "Accept": "application/json", ...(options.headers || {}) }; if (options.body !== undefined && !headers["Content-Type"]) headers["Content-Type"] = "application/json"; const res = await fetch(sbUrl(env) + path, { ...options, headers }); const text = await res.text(); const data = text ? parseJson(text) : null; if (!res.ok) { const msg = (data && (data.message || data.error || data.hint || data.details)) || text || `Supabase HTTP ${res.status}`; const e = new Error(msg); e.status = res.status; e.response = data; throw e; } return data; }

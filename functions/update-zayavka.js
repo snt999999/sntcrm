@@ -8,7 +8,17 @@ function dateOnly(value) { return String(value || "").slice(0, 10) || null; }
 function timeOnly(value) { return String(value || "").slice(0, 5) || null; }
 function allowedPasswords(env) { const builtin = ["sergey41", "roman41", "nikitaK41", "dima41", "nikitaP41", "andrey41"]; const extra = String(env.USER_PASSWORDS || "").split(/[;,\n]/).map((x) => x.trim()).filter(Boolean); if (env.ADMIN_PASSWORD) builtin.push(String(env.ADMIN_PASSWORD)); return new Set([...builtin, ...extra]); }
 function checkAdmin(request, env) { const provided = (request.headers.get("x-admin-password") || "").trim(); if (!provided) return { ok: false, status: 401, body: { ok: false, error: "Не передан пароль" } }; if (!allowedPasswords(env).has(provided)) return { ok: false, status: 401, body: { ok: false, error: "Неверный пароль" } }; return { ok: true }; }
-function sbUrl(env) { return String(env.SUPABASE_URL || "").replace(/\/+$/, ""); }
+function sbUrl(env) {
+  // Cloudflare variable SUPABASE_URL may be pasted either as:
+  // https://xxxx.supabase.co OR https://xxxx.supabase.co/rest/v1
+  // We always normalize it to the project root, because our requests add /rest/v1 themselves.
+  let value = String(env.SUPABASE_URL || "").trim();
+  value = value.replace(/\/+$/, "");
+  value = value.replace(/\/rest\/v1$/i, "");
+  value = value.replace(/\/auth\/v1$/i, "");
+  value = value.replace(/\/storage\/v1$/i, "");
+  return value;
+}
 function sbKey(env) { return env.SUPABASE_SECRET_KEY || env.SUPABASE_SERVICE_ROLE_KEY || env.SUPABASE_SERVICE_KEY || env.SUPABASE_ANON_KEY || env.SUPABASE_PUBLISHABLE_KEY || ""; }
 function checkSupabaseEnv(env) { if (!sbUrl(env)) return "SUPABASE_URL is missing"; if (!sbKey(env)) return "SUPABASE_SECRET_KEY is missing"; return ""; }
 async function sbFetch(env, path, options = {}) { const err = checkSupabaseEnv(env); if (err) throw new Error(err); const headers = { "apikey": sbKey(env), "Authorization": "Bearer " + sbKey(env), "Accept": "application/json", ...(options.headers || {}) }; if (options.body !== undefined && !headers["Content-Type"]) headers["Content-Type"] = "application/json"; const res = await fetch(sbUrl(env) + path, { ...options, headers }); const text = await res.text(); const data = text ? parseJson(text) : null; if (!res.ok) { const msg = (data && (data.message || data.error || data.hint || data.details)) || text || `Supabase HTTP ${res.status}`; const e = new Error(msg); e.status = res.status; e.response = data; throw e; } return data; }
@@ -37,6 +47,81 @@ function statusFromDb(status) { return { queued: "Запланировано", s
 async function scheduleAutoSms(env, row) { const fields = fieldsFromZayavka(row); const phone = normalizePhone(fields["Телефон"] || ""); const date = dateOnly(fields["Дата записи"]); const time = timeOnly(fields["Время записи"]); if (!phone || !date || !time) return []; const start = new Date(makeStartAt(date, time)); if (Number.isNaN(start.getTime())) return []; const now = new Date(); const slots = [ { type: "confirmation", at: new Date(now.getTime() + 60 * 1000) }, { type: "reminder_day", at: new Date(start.getTime() - 24 * 60 * 60 * 1000) }, { type: "reminder_2h", at: new Date(start.getTime() - 2 * 60 * 60 * 1000) } ]; const created = []; for (const slot of slots) { if (slot.type !== "confirmation" && slot.at <= now) continue; const p = localPartsFromIso(slot.at.toISOString()); const old = { "ID заявки": row.id, "ФИО": fields["Имя клиента"] || "", "Компания": fields["Компания"] || "", "Телефон": phone, "Канал": "sms", "Тип уведомления": smsTypeLabel(slot.type), "Текст SMS": smsTemplate(slot.type, fields), "Дата отправки": p.date, "Время отправки": p.time, "Статус": "Запланировано", "Ошибка": "", "Создано": new Date().toISOString(), __zayavka_id: row.id, __client_id: row.client_id || null }; const sms = await createSms(env, old); if (sms) created.push(sms); } return created; }
 async function addHistory(env, entityType, entityId, action, actor, comment, oldData, newData) { try { await sbFetch(env, `/rest/v1/history_log`, { method: "POST", body: JSON.stringify({ entity_type: entityType, entity_id: entityId || null, action, actor: actor || "system", comment: comment || "", old_data: oldData || null, new_data: newData || null }) }); } catch (_) {} }
 
+
+function endpointFromEnv(env) { return env.GOOGLE_CALENDAR_SYNC_URL || env.GOOGLE_CALENDAR_EXPORT_URL || env.GOOGLE_CALENDAR_IMPORT_URL || ""; }
+function tokenFromEnv(env) { return env.GOOGLE_CALENDAR_SYNC_TOKEN || env.GOOGLE_CALENDAR_EXPORT_TOKEN || env.GOOGLE_CALENDAR_IMPORT_TOKEN || ""; }
+function shouldSyncGoogleCalendar(oldFields, newFields, requested, fresh) {
+  if (requested && requested.__skipGoogleCalendarSync) return false;
+  if (fresh && fresh.deleted_at) return false;
+  const eventId = String(newFields["Google Calendar Event ID"] || oldFields["Google Calendar Event ID"] || "").trim();
+  if (!eventId) return false;
+  const keys = [
+    "Дата записи", "Время записи", "Услуга", "Адрес", "Имя клиента", "Телефон", "Компания",
+    "Комментарий клиента", "Комментарий администратора", "м2", "Итоговый м2", "Направление",
+    "Авто", "Пленка", "Плёнка", "Авто услуги", "Общая стоимость", "Монтажники", "Ответственный", "Файлы"
+  ];
+  return keys.some((k) => Object.prototype.hasOwnProperty.call(requested || {}, k) && String(oldFields[k] || "") !== String(newFields[k] || ""));
+}
+async function callGoogleCalendarAppsScript(env, payload) {
+  const endpoint = endpointFromEnv(env);
+  const token = tokenFromEnv(env);
+  if (!endpoint) return { ok: false, skipped: true, error: "GOOGLE_CALENDAR_IMPORT_URL / GOOGLE_CALENDAR_SYNC_URL не задан в Cloudflare Pages" };
+  if (!token) return { ok: false, skipped: true, error: "GOOGLE_CALENDAR_IMPORT_TOKEN / GOOGLE_CALENDAR_SYNC_TOKEN не задан в Cloudflare Pages" };
+  const response = await fetch(endpoint, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "Accept": "application/json" },
+    body: JSON.stringify({ ...payload, token })
+  });
+  const text = await response.text();
+  const data = text ? parseJson(text) : null;
+  if (!data || typeof data !== "object") return { ok: false, status: response.status, error: "Apps Script вернул не JSON", responsePreview: String(text || "").slice(0, 800) };
+  if (!response.ok || data.ok === false) return { ok: false, status: response.status, error: data.error || data.message || "Ошибка Apps Script", appsScript: data };
+  return { ok: true, status: response.status, ...data };
+}
+async function syncGoogleCalendarAfterUpdate(env, row, oldFields, requested) {
+  const newFields = fieldsFromZayavka(row);
+  if (!shouldSyncGoogleCalendar(oldFields, newFields, requested, row)) return { ok: true, skipped: true };
+  if (!newFields["Дата записи"] || !newFields["Время записи"]) return { ok: false, skipped: true, error: "Для Google Календаря нужны дата и время записи" };
+  const eventId = String(newFields["Google Calendar Event ID"] || oldFields["Google Calendar Event ID"] || "").trim();
+  const result = await callGoogleCalendarAppsScript(env, {
+    action: "upsert",
+    eventId,
+    recordId: row.id,
+    source: "update-zayavka",
+    fields: newFields
+  });
+  if (!result.ok) return result;
+
+  const returnedEventId = result.eventId || eventId;
+  const returnedLink = result.htmlLink || newFields["Ссылка на событие"] || "";
+  const mergedOldFields = {
+    ...oldFieldsFrom(row.meta),
+    ...newFields,
+    "Google Calendar Event ID": returnedEventId,
+    "Ссылка на событие": returnedLink,
+    "Источник": "Заявка → автоматически обновлено в Google Календаре"
+  };
+  const meta = {
+    ...(row.meta || {}),
+    old_fields: mergedOldFields,
+    company: cleanText(mergedOldFields["Компания"] || "", 220),
+    responsible: cleanText(mergedOldFields["Ответственный"] || "", 160),
+    installers: cleanText(mergedOldFields["Монтажники"] || "", 300),
+    files: mergedOldFields["Файлы"] || "",
+    history: mergedOldFields["История изменений"] || "",
+    comments_json: mergedOldFields["Комментарии"] || ""
+  };
+  try {
+    await sbFetch(env, `/rest/v1/zayavki?id=eq.${encodeURIComponent(row.id)}`, {
+      method: "PATCH",
+      body: JSON.stringify({ calendar_event_id: returnedEventId, meta })
+    });
+  } catch (e) {
+    return { ok: false, error: "Google Календарь обновился, но ID/ссылка не записались в Supabase: " + e.message, calendarResult: result };
+  }
+  return { ok: true, updated: true, eventId: returnedEventId, htmlLink: returnedLink, appsScript: result };
+}
+
 function shouldRescheduleAutoSms(oldFields, newFields) { const keys = ["Дата записи", "Время записи", "Телефон", "Услуга"]; return keys.some((k) => Object.prototype.hasOwnProperty.call(newFields, k) && String(oldFields[k] || "") !== String(newFields[k] || "")); }
 export async function onRequestPost(context) {
   const { request, env } = context;
@@ -59,9 +144,11 @@ export async function onRequestPost(context) {
     let fresh = await getZayavka(env, body.id) || asArr(updated)[0];
     if (shouldRescheduleAutoSms(oldFields, { ...oldFields, ...requested }) && !fresh.deleted_at) { await cancelFutureAutoSms(env, body.id); await scheduleAutoSms(env, fresh); fresh = await getZayavka(env, body.id) || fresh; }
     if (fresh.deleted_at) await cancelFutureAutoSms(env, body.id);
+    const calendarSync = await syncGoogleCalendarAfterUpdate(env, fresh, oldFields, requested);
+    if (calendarSync?.updated) fresh = await getZayavka(env, body.id) || fresh;
     await addHistory(env, "zayavka", body.id, fresh.deleted_at ? "deleted_or_updated" : "updated", request.headers.get("x-admin-password") || "admin", "Изменение заявки", oldFields, fieldsFromZayavka(fresh));
     const savedFields = Object.fromEntries(Object.entries(requested).filter(([k]) => !String(k).startsWith("__")));
-    return json({ ok: true, provider: "supabase", savedFields, record: normRecord(fresh), nocodbResponse: { id: body.id, fields: fieldsFromZayavka(fresh) }, verified: true, message: "Сохранено в Supabase" });
+    return json({ ok: true, provider: "supabase", savedFields, record: normRecord(fresh), nocodbResponse: { id: body.id, fields: fieldsFromZayavka(fresh) }, verified: true, message: calendarSync?.updated ? "Сохранено в Supabase и Google Календарь обновлён" : "Сохранено в Supabase", calendarSync });
   } catch (error) { return json({ ok: false, provider: "supabase", error: error.message, status: error.status || 500, supabaseResponse: error.response || null, lastError: error.message }, error.status || 500); }
 }
 export async function onRequest(context) { if (context.request.method !== "POST") return json({ ok: false, error: "Only POST" }, 405); return onRequestPost(context); }

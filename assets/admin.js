@@ -1193,7 +1193,11 @@ async function updateRecord(id, fields, successText, options = {}) {
 
     if (current && String(current.id) === String(id)) current = fresh;
     renderAll();
-    if (!options.silent) msg(successText || "Сохранено в Supabase");
+    if (!options.silent) {
+      if (data.calendarSync?.updated) msg((successText || "Сохранено в Supabase") + ". Google Календарь обновлён");
+      else if (data.calendarSync && data.calendarSync.ok === false && !data.calendarSync.skipped) msg((successText || "Сохранено в Supabase") + ". Но Google Календарь не обновился: " + (data.calendarSync.error || "ошибка"));
+      else msg(successText || "Сохранено в Supabase");
+    }
     return { ...data, record: fresh };
   } catch (error) {
     msg("Не сохранено: " + error.message);

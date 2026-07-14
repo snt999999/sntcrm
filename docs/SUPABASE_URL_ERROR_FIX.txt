@@ -1,0 +1,16 @@
+Ошибка: Invalid path specified in request URL
+
+Причина:
+В Cloudflare в переменную SUPABASE_URL часто вставляют не корневой Project URL,
+а Data API URL с /rest/v1 на конце:
+https://xxxx.supabase.co/rest/v1
+
+А функции сайта сами добавляют /rest/v1 перед названием таблицы.
+Получается неправильный адрес:
+https://xxxx.supabase.co/rest/v1/rest/v1/zayavki
+
+Как правильно:
+SUPABASE_URL=https://xxxx.supabase.co
+
+В этой версии добавлена защита: если /rest/v1 уже есть в SUPABASE_URL,
+функции автоматически его уберут.
