@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Онлайн-запись — СОЛНЦАНЕТ</title>
+
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <meta name="theme-color" content="#111827" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="СОЛНЦАНЕТ" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png" />
+  <link rel="stylesheet" href="assets/site.css" />
+</head>
+<body class="booking-page">
+  <header class="site-header">
+    <a class="logo" href="index.html"><img src="assets/logo-solncanet.png" alt="СОЛНЦАНЕТ" /><span>Онлайн-запись</span></a>
+    <div class="header-contacts"><a href="tel:+73433612244">8 (343) 361-22-44</a><a href="tel:+79126629235">+7 (912) 662-92-35</a></div>
+    <nav class="nav"><a href="index.html">Главная</a><a href="admin.html">Админ-панель</a></nav>
+  </header>
+  <main class="booking-only">
+    <section class="booking-only__intro">
+      <p class="pretitle">СОЛНЦАНЕТ</p>
+      <h1>Онлайн-запись</h1>
+      <p>Выберите свободную дату и время. После заявки мы свяжемся с вами для уточнения деталей.</p>
+    <div class="booking-contact-choice">
+        <a class="messenger messenger--tg" href="https://t.me/infosnt" target="_blank" rel="noopener">Написать в Telegram</a>
+        <a class="messenger messenger--max" href="https://max.ru/u/f9LHodD0cOJzCTZONeauAnUFGMjW4PM404PirE-rPHovceQ9714S84993z8" target="_blank" rel="noopener">Написать в MAX</a>
+        <a class="messenger messenger--phone" href="tel:+79221812244">Позвонить</a>
+      </div>
+    </section>
+    <iframe src="https://cal.com/solncanet?embed=true" title="Онлайн-запись СОЛНЦАНЕТ" loading="lazy" allow="camera; microphone; fullscreen; autoplay; clipboard-write"></iframe>
+  </main>
+  <div class="floating-contact">
+    <button class="floating-contact__main" type="button" aria-label="Связаться">Написать</button>
+    <div class="floating-contact__menu">
+      <a href="https://t.me/infosnt" target="_blank" rel="noopener">Telegram</a>
+      <a href="https://max.ru/u/f9LHodD0cOJzCTZONeauAnUFGMjW4PM404PirE-rPHovceQ9714S84993z8" target="_blank" rel="noopener">MAX</a>
+      <a href="tel:+79221812244">Позвонить</a>
+    </div>
+  </div>
+  <script src="assets/site.js"></script>
+  <script src="assets/pwa.js"></script>
+</body>
+</html>

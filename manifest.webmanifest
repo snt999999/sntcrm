@@ -1,0 +1,23 @@
+{
+  "name": "СОЛНЦАНЕТ — заявки и админка",
+  "short_name": "СОЛНЦАНЕТ",
+  "description": "Онлайн-запись, заявки, файлы, монтажники, отчёты и уведомления СОЛНЦАНЕТ.",
+  "start_url": "/admin.html",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#ffffff",
+  "theme_color": "#e71630",
+  "categories": ["business", "productivity"],
+  "icons": [
+    { "src": "/assets/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/assets/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/assets/icons/maskable-1024.png", "sizes": "1024x1024", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "Админка", "short_name": "Админка", "url": "/admin.html", "icons": [{ "src": "/assets/icons/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Онлайн-запись", "short_name": "Запись", "url": "/zapis.html", "icons": [{ "src": "/assets/icons/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Заявки", "short_name": "Заявки", "url": "/admin.html#requests", "icons": [{ "src": "/assets/icons/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Отчёты", "short_name": "Отчёты", "url": "/admin.html#reports", "icons": [{ "src": "/assets/icons/icon-192.png", "sizes": "192x192" }] }
+  ]
+}

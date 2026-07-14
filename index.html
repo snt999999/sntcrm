@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>СОЛНЦАНЕТ — продажа и установка тонировочных плёнок</title>
+  <meta name="description" content="Онлайн-запись СОЛНЦАНЕТ: тонировка авто, окон, балконов, витрин, бронирование стекол, фар и защита авто полиуретановой пленкой." />
+
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <meta name="theme-color" content="#111827" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="СОЛНЦАНЕТ" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png" />
+  <link rel="stylesheet" href="assets/site.css" />
+</head>
+<body>
+  <header class="site-header">
+    <a class="logo" href="index.html" aria-label="СОЛНЦАНЕТ">
+      <img src="assets/logo-solncanet.png" alt="СОЛНЦАНЕТ" />
+      <span>Плёнки. Качество. Надёжность.</span>
+    </a>
+
+    <div class="header-contacts" aria-label="Контакты">
+      <a href="tel:+73433612244">8 (343) 361-22-44</a>
+      <a href="tel:+79126629235">+7 (912) 662-92-35</a>
+      <a href="mailto:info@solncanet.ru">info@solncanet.ru</a>
+    </div>
+
+    <nav class="nav" aria-label="Навигация">
+      <a href="#services">Услуги</a>
+      <a href="#booking">Онлайн-запись</a>
+      <a href="#advantages">Преимущества</a>
+      <a href="#contacts">Контакты</a>
+      <a href="admin.html">Админ-панель</a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="hero__text">
+        <p class="pretitle">Екатеринбург · ул. Бебеля, 9</p>
+        <h1>Продажа и установка <span>тонировочных плёнок</span></h1>
+        <h2>для авто, окон и зданий</h2>
+        <p class="hero__desc">Профессиональная тонировка и защита стекол: автомобильные, архитектурные, атермальные, защитные и декоративные плёнки.</p>
+        <div class="hero-badges">
+          <div><b>Опытные</b><span>специалисты</span></div>
+          <div><b>Качественные</b><span>материалы</span></div>
+          <div><b>Гарантия</b><span>на материалы и работы</span></div>
+        </div>
+        <div class="hero-actions">
+          <a class="btn btn--red" href="zapis.html">Онлайн-запись</a>
+          <a class="btn btn--light" href="#services">Посмотреть услуги</a>
+        </div>
+      </div>
+      <div class="hero__image" data-hero-media data-video-src="assets/video/hero.mp4" data-video-poster="assets/img/hero-solncanet.webp">
+        <img src="assets/img/hero-solncanet.webp" alt="СОЛНЦАНЕТ — продажа и установка плёнок" />
+      </div>
+    </section>
+
+    <section id="booking" class="booking-card">
+      <div class="booking-form">
+        <h2>Онлайн-запись / заявка на консультацию</h2>
+        <p>Заполните форму или выберите свободное время в календаре. Мы свяжемся с вами и уточним детали.</p>
+        <form id="leadForm" class="lead-form-v7">
+          <input type="text" name="hpCompany" class="hp-field" tabindex="-1" autocomplete="off" aria-hidden="true" />
+          <input type="hidden" name="formStartedAt" id="formStartedAt" />
+
+          <label>Фамилия и имя
+            <input name="name" placeholder="Например: Иванов Сергей" autocomplete="name" required />
+          </label>
+
+          <label>Компания
+            <input name="companyName" placeholder="Например: ООО Ромашка" autocomplete="organization" />
+          </label>
+
+          <label>Телефон
+            <input name="phone" placeholder="+7 (___) ___-__-__" autocomplete="tel" required />
+          </label>
+
+          <label>Услуга
+            <select name="service" required>
+              <option value="">Выберите услугу</option>
+              <option>Тонировка стекол автомобиля</option>
+              <option>Атермальная тонировка автомобиля</option>
+              <option>Тонировка балконов и окон</option>
+              <option>Бронирование стекол и витрин</option>
+              <option>Бронирование фар</option>
+              <option>Защита авто полиуретановой пленкой</option>
+              <option>Тонирование витрин</option>
+              <option>Декоративное тонирование офисных перегородок</option>
+              <option>Замер / консультация</option>
+              <option>Другое</option>
+            </select>
+          </label>
+
+          <div class="form-row-2">
+            <label>Желаемая дата
+              <input name="preferredDate" type="date" />
+            </label>
+            <label>Желаемое время
+              <input name="preferredTime" type="time" />
+            </label>
+          </div>
+
+          <label>Адрес объекта
+            <input name="address" placeholder="Город, улица, дом, офис / квартира" required />
+          </label>
+
+          <label>Информация об объекте
+            <textarea name="objectInfo" placeholder="Автомобиль, квартира, балкон, витрина, офис. Укажите площадь, количество стекол или особенности." required></textarea>
+          </label>
+
+          <label>Комментарий / что нужно сделать
+            <textarea name="task" placeholder="Например: тонировка авто, бронирование фар, тонировка балкона, защита витрин." required></textarea>
+          </label>
+
+          <button class="btn btn--red" id="leadSubmitBtn" type="submit">Отправить заявку</button>
+        </form>
+        <div class="contact-choice" id="messengerChoice">
+          <b>Дополнительно можно связаться напрямую:</b>
+          <div>
+            <a class="messenger messenger--tg" href="https://t.me/infosnt" target="_blank" rel="noopener">Написать в Telegram</a>
+            <a class="messenger messenger--max" href="https://max.ru/u/f9LHodD0cOJzCTZONeauAnUFGMjW4PM404PirE-rPHovceQ9714S84993z8" target="_blank" rel="noopener">Написать в MAX</a>
+            <a class="messenger messenger--phone" href="tel:+79221812244">Позвонить</a>
+          </div>
+        </div>
+        <p class="form-note" id="formNote">После отправки заявки мы свяжемся с вами для уточнения деталей и подтверждения записи.</p>
+      </div>
+
+      <div class="calendar-widget">
+        <h3>Выберите дату и время</h3>
+        <iframe src="https://cal.com/solncanet?embed=true" loading="lazy" title="Онлайн-запись СОЛНЦАНЕТ" allow="camera; microphone; fullscreen; autoplay; clipboard-write"></iframe>
+        <a class="btn btn--blue" href="https://cal.com/solncanet" target="_blank" rel="noopener">Открыть запись в новом окне</a>
+      </div>
+    </section>
+
+    <section id="services" class="services-section">
+      <div class="section-head">
+        <p class="pretitle">Авто · Архитектура · Защита</p>
+        <h2>Наши услуги</h2>
+      </div>
+      <div class="services-grid">
+        <a class="service-card" data-card-link="true" href="https://солнцанет.рф/tonirovka-stekol-avtomobilja/" target="_blank" rel="noopener">
+          <img src="assets/img/auto-tonirovka.webp" alt="Тонировка стекол автомобиля" loading="lazy" />
+          <div class="service-card__body">
+            <span class="service-card__num">1</span>
+            <h3>Тонировка стекол автомобиля</h3>
+            <p>Комфорт, приватность, антиблик и защита салона от выгорания. Подбираем плёнку под задачу: жара, блики, законность и внешний вид.</p>
+            <b>Перейти на страницу услуги →</b>
+            <small>солнцанет.рф/tonirovka-stekol-avtomobilja/</small>
+          </div>
+        </a>
+        <a class="service-card" data-card-link="true" href="https://солнцанет.рф/tonirovka-balkona/" target="_blank" rel="noopener">
+          <img src="assets/img/okna-balkony.webp" alt="Тонировка балконов и окон" loading="lazy" />
+          <div class="service-card__body">
+            <span class="service-card__num">2</span>
+            <h3>Тонировка балконов и окон</h3>
+            <p>Защита от жары, яркого света и посторонних взглядов без замены остекления. Замер, подбор плёнки, точный раскрой и аккуратный монтаж.</p>
+            <b>Перейти на страницу услуги →</b>
+            <small>солнцанет.рф/tonirovka-balkona/</small>
+          </div>
+        </a>
+        <a class="service-card" data-card-link="true" href="https://солнцанет.рф/atermalnoe-tonirovanie-avto/" target="_blank" rel="noopener">
+          <img src="assets/img/atermal.webp" alt="Атермальная тонировка автомобиля" loading="lazy" />
+          <div class="service-card__body">
+            <span class="service-card__num">3</span>
+            <h3>Атермальная тонировка автомобиля</h3>
+            <p>Снижает нагрев салона и воздействие ультрафиолета, сохраняя хороший обзор и светопропускание. Решение для комфорта и законности.</p>
+            <b>Перейти на страницу услуги →</b>
+            <small>солнцанет.рф/atermalnoe-tonirovanie-avto/</small>
+          </div>
+        </a>
+        <a class="service-card" data-card-link="true" href="https://солнцанет.рф/bronirovanie-stekol/" target="_blank" rel="noopener">
+          <img src="assets/img/bronirovanie-stekol.webp" alt="Бронирование стекол и витрин" loading="lazy" />
+          <div class="service-card__body">
+            <span class="service-card__num">4</span>
+            <h3>Бронирование стекол и витрин</h3>
+            <p>Укрепляющая защитная плёнка повышает стойкость стекла к удару, удерживает осколки и помогает защитить объект от вандализма.</p>
+            <b>Перейти на страницу услуги →</b>
+            <small>солнцанет.рф/bronirovanie-stekol/</small>
+          </div>
+        </a>
+        <a class="service-card" data-card-link="true" href="https://солнцанет.рф/bronirovanie-far/" target="_blank" rel="noopener">
+          <img src="https://солнцанет.рф/wp-content/uploads/2026/03/img_20201122_005517-scaled-e1772696358312.jpg" alt="Бронирование фар" loading="lazy" />
+          <div class="service-card__body">
+            <span class="service-card__num">5</span>
+            <h3>Бронирование фар</h3>
+            <p>Прозрачная полиуретановая плёнка защищает оптику от сколов, пескоструя, царапин и помутнения, сохраняя фары аккуратными.</p>
+            <b>Перейти на страницу услуги →</b>
+            <small>солнцанет.рф/bronirovanie-far/</small>
+          </div>
+        </a>
+        <a class="service-card" data-card-link="true" href="https://солнцанет.рф/tonirovka-ofisnyh-peregorodok/" target="_blank" rel="noopener">
+          <img src="assets/img/ofis-peregorodki.webp" alt="Декоративное тонирование офисных перегородок" loading="lazy" />
+          <div class="service-card__body">
+            <span class="service-card__num">6</span>
+            <h3>Офисные перегородки</h3>
+            <p>Матовые, сатиновые, декоративные и SMART-решения для приватности, зонирования, дизайна и комфортной работы в офисе.</p>
+            <b>Перейти на страницу услуги →</b>
+            <small>солнцанет.рф/tonirovka-ofisnyh-peregorodok/</small>
+          </div>
+        </a>
+        <a class="service-card" data-card-link="true" href="https://солнцанет.рф/zashhita-avto-poliuretanovoj-plenkoj/" target="_blank" rel="noopener">
+          <img src="assets/img/ppf.webp" alt="Защита авто полиуретановой пленкой" loading="lazy" />
+          <div class="service-card__body">
+            <span class="service-card__num">7</span>
+            <h3>Защита авто полиуретановой пленкой</h3>
+            <p>PPF-защита кузова от сколов, царапин, гравия и реагентов. Аккуратные кромки, точные лекала и рекомендации по зонам риска.</p>
+            <b>Перейти на страницу услуги →</b>
+            <small>солнцанет.рф/zashhita-avto-poliuretanovoj-plenkoj/</small>
+          </div>
+        </a>
+        <a class="service-card" data-card-link="true" href="https://солнцанет.рф/tonirovanie-vitrin/" target="_blank" rel="noopener">
+          <img src="assets/img/vitriny.webp" alt="Тонирование витрин" loading="lazy" />
+          <div class="service-card__body">
+            <span class="service-card__num">8</span>
+            <h3>Тонирование витрин</h3>
+            <p>Тонирование витрин для магазинов, салонов, офисов и кафе: меньше перегрева и бликов, больше приватности и аккуратный вид фасада.</p>
+            <b>Перейти на страницу услуги →</b>
+            <small>солнцанет.рф/tonirovanie-vitrin/</small>
+          </div>
+        </a>
+      </div>
+    </section>
+
+    <section id="advantages" class="benefits">
+      <div><b>Бесплатная консультация</b><span>Подскажем подходящее решение под задачу.</span></div>
+      <div><b>Бесплатные образцы</b><span>Можно оценить внешний вид плёнки заранее.</span></div>
+      <div><b>Комплексные работы</b><span>Авто, квартиры, офисы, витрины и фасадное стекло.</span></div>
+      <div><b>Гарантия</b><span>На материалы и профессиональную установку.</span></div>
+    </section>
+
+    <section id="contacts" class="contacts-card">
+      <div>
+        <h2>Контакты</h2>
+        <p>г. Екатеринбург, ул. Бебеля, 9</p>
+        <p><a href="tel:+73433612244">8 (343) 361-22-44</a> · <a href="tel:+79126629235">+7 (912) 662-92-35</a></p>
+        <p><a href="mailto:info@solncanet.ru">info@solncanet.ru</a></p>
+      </div>
+      <div class="contacts-actions">
+        <a class="btn btn--red" href="zapis.html">Записаться онлайн</a>
+        <a class="btn btn--light" href="https://солнцанет.рф" target="_blank" rel="noopener">Открыть основной сайт</a>
+      </div>
+    </section>
+  </main>
+
+  <div class="floating-contact">
+    <button class="floating-contact__main" type="button" aria-label="Связаться">Написать</button>
+    <div class="floating-contact__menu">
+      <a href="https://t.me/infosnt" target="_blank" rel="noopener">Telegram</a>
+      <a href="https://max.ru/u/f9LHodD0cOJzCTZONeauAnUFGMjW4PM404PirE-rPHovceQ9714S84993z8" target="_blank" rel="noopener">MAX</a>
+      <a href="tel:+79221812244">Позвонить</a>
+    </div>
+  </div>
+
+  <script src="assets/site.js"></script>
+  <script src="assets/pwa.js"></script>
+</body>
+</html>

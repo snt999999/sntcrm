@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Админ-панель — СОЛНЦАНЕТ</title>
+
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <meta name="theme-color" content="#111827" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="СОЛНЦАНЕТ" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png" />
+  <link rel="stylesheet" href="assets/admin.css" />
+</head>
+<body class="logged-out">
+  <button id="mobileMenuBtn" class="mobile-menu-btn" type="button" aria-label="Открыть меню">☰ Меню</button>
+  <div id="sidebarOverlay" class="sidebar-overlay" aria-hidden="true"></div>
+  <aside class="sidebar" id="sidebar">
+    <button id="sidebarCloseBtn" class="sidebar-close-btn" type="button" aria-label="Закрыть меню">×</button>
+    <a class="sidebar-logo" href="index.html"><img src="assets/logo-solncanet.png" alt="СОЛНЦАНЕТ" /></a>
+    <nav class="sidebar-nav">
+      <a class="active" href="#requests" data-section="requests">Заявки</a>
+      <a href="#calendar" data-section="calendar">Календарь</a>
+      <a href="#clients" data-section="clients">Клиенты</a>
+      <a href="#objects" data-section="objects">Объекты</a>
+      <a href="#installers" data-section="installers">Монтажники</a>
+      <a href="#trash" data-section="trash">Корзина отмен</a>
+      <a href="#history" data-section="history">История</a>
+      <a href="#activity" data-section="activity">Активность</a>
+      <a href="#sms" data-section="sms">Уведомления</a>
+      <a href="#files" data-section="files">Файлы</a>
+      <a href="#reports" data-section="reports">Отчёты</a>
+      <a href="#settings" data-section="settings">Настройки</a>
+      <a href="#calendarImport" data-section="calendarImport">Импорт календаря</a>
+    </nav>
+  </aside>
+
+  <main class="admin-main">
+    <section id="loginPanel" class="login">
+      <img src="assets/logo-solncanet.png" alt="СОЛНЦАНЕТ" />
+      <h1>Вход в админ-панель</h1>
+      <p>Введите пароль своего аккаунта.</p>
+      <form id="loginForm">
+        <input id="passwordInput" type="password" placeholder="Пароль администратора" required />
+        <button type="submit">Войти</button>
+      </form>
+      <p id="loginMessage" class="login-error"></p>
+    </section>
+
+    <section id="appPanel" style="display:none">
+      <section class="admin-topbar" id="adminTopbar">
+        <div class="topbar-left">
+          <button id="topQuickAddBtn" class="primary" type="button">+ Быстрая запись</button>
+          <button id="topRefreshBtn" type="button">Обновить</button>
+        </div>
+        <div class="global-search-wrap">
+          <input id="globalSearchInput" type="search" placeholder="Быстрый поиск по всей админке: телефон, клиент, компания, адрес, заявка, файл..." autocomplete="off" />
+          <div id="globalSearchResults" class="global-search-results" hidden></div>
+        </div>
+        <div class="topbar-right">
+          <span id="userBadge" class="user-badge">Сотрудник · Архитектура</span>
+          <button id="topReportsBtn" type="button">Отчёты</button>
+          <a href="zapis.html" target="_blank" rel="noopener">Запись</a>
+        </div>
+      </section>
+
+      <section id="requestsSection" class="workspace-section">
+        <header class="admin-head">
+          <div>
+            <h1>Заявки</h1>
+          </div>
+          <div class="actions">
+            <button id="quickAddBtn" class="primary" type="button">+ Быстрая запись</button>
+            <button id="listBtn" class="active" type="button">Список</button>
+            <button id="calendarBtn" type="button">Календарь</button>
+            <button id="exportBtn" type="button">Экспорт / Отчёты</button>
+            <button id="logoutBtn" type="button">Выйти</button>
+          </div>
+        </header>
+
+        <section class="stats stats-six">
+          <div><span>Всего</span><b id="statTotal">0</b></div>
+          <div><span>Новые</span><b id="statNew">0</b></div>
+          <div><span>Сегодня</span><b id="statToday">0</b></div>
+          <div><span>В работе</span><b id="statWork">0</b></div>
+          <div><span>Объём, м²</span><b id="statVolume">0</b></div>
+          <div><span>В фильтре</span><b id="statFiltered">0</b></div>
+        </section>
+
+        <section class="filters filters-advanced">
+          <input id="searchInput" placeholder="Поиск: клиент, телефон, адрес, услуга, монтажник" />
+          <select id="statusFilter">
+            <option value="">Все статусы</option>
+            <option>Новая заявка</option>
+            <option>Связались</option>
+            <option>Замер</option>
+            <option>Согласовано</option>
+            <option>В работе</option>
+            <option>Выполнено</option>
+            <option>Оплачено</option>
+            <option>Отказ</option>
+            <option>Отменена</option>
+          </select>
+          <select id="workspaceSelect" class="workspace-select calendar-mode-select workspace-select-hidden" title="Режим календаря и списков" aria-hidden="true" tabindex="-1">
+            <option value="all">Все</option>
+            <option value="architecture">Архитектура</option>
+            <option value="auto">Авто</option>
+          </select>
+          <div class="workspace-segment" role="group" aria-label="Направление">
+            <button type="button" class="workspace-pill" data-workspace-mode="all">Все</button>
+            <button type="button" class="workspace-pill workspace-pill-architecture" data-workspace-mode="architecture">Архитектура</button>
+            <button type="button" class="workspace-pill workspace-pill-auto" data-workspace-mode="auto">Авто</button>
+          </div>
+          <select id="installerFilter">
+            <option value="">Все монтажники</option>
+            <option value="Никита П">Пахнев Никита</option>
+            <option value="Андрей Ш">Шолохов Андрей</option>
+            <option value="Никита К">Кислов Никита</option>
+            <option value="Дмитрий П">Петухов Дмитрий</option>
+            <option value="Роман З">Зинченко Роман</option>
+          </select>
+          <input id="dateFrom" type="date" />
+          <input id="dateTo" type="date" />
+          <button id="clearFiltersBtn" type="button">Сбросить</button>
+          <button id="refreshBtn" type="button">Обновить</button>
+        </section>
+        <div id="message"></div>
+
+        <section id="bulkToolbar" class="bulk-toolbar" hidden>
+          <label class="bulk-select-all"><input id="bulkSelectAll" type="checkbox" /> Выделить всё на странице</label>
+          <b id="bulkSelectedCount">Выбрано: 0</b>
+          <select id="bulkStatusSelect" title="Новый статус">
+            <option value="">Статус</option>
+            <option>Новая заявка</option>
+            <option>Связались</option>
+            <option>Замер</option>
+            <option>Согласовано</option>
+            <option>В работе</option>
+            <option>Выполнено</option>
+            <option>Оплачено</option>
+            <option>Ожидает</option>
+          </select>
+          <button id="bulkApplyStatusBtn" type="button">Изменить статус</button>
+          <select id="bulkInstallerSelect" title="Исполнитель">
+            <option value="">Исполнитель</option>
+            <option value="Сергей">Сергей</option>
+            <option value="Роман">Роман</option>
+            <option value="Никита К">Никита К</option>
+            <option value="Дмитрий П">Дима</option>
+            <option value="Никита П">Никита П</option>
+            <option value="Андрей Ш">Андрей</option>
+          </select>
+          <button id="bulkApplyInstallerBtn" type="button">Назначить</button>
+          <button id="bulkExportBtn" type="button">Экспорт CSV</button>
+          <button id="bulkDeleteBtn" class="danger" type="button">Удалить</button>
+        </section>
+
+        <section id="listView" class="card table-card">
+          <table>
+            <thead>
+              <tr>
+                <th class="bulk-check-col"></th><th>Дата</th><th>Время</th><th>Клиент</th><th>Компания</th><th>Телефон</th><th>Услуга</th><th>Адрес</th><th>м²</th><th>Монтажники</th><th class="status-th">Статус</th><th></th>
+              </tr>
+            </thead>
+            <tbody id="requestsBody"></tbody>
+          </table>
+        </section>
+
+        <section id="calendarView" class="card calendar calendar-month-view" style="display:none">
+          <div class="monthbar calendar-monthbar">
+            <button id="prevMonth" type="button" aria-label="Предыдущий месяц">←</button>
+            <div class="monthbar-title">
+              <h2 id="monthTitle">Месяц</h2>
+              <p id="calendarMonthSummary">0 событий</p>
+            </div>
+            <button id="nextMonth" type="button" aria-label="Следующий месяц">→</button>
+          </div>
+          <div class="calendar-month-tools">
+            <button id="calendarTodayBtn" class="primary" type="button">Сегодня</button>
+            
+          </div>
+          <div class="weekdays calendar-weekdays"><b>Пн</b><b>Вт</b><b>Ср</b><b>Чт</b><b>Пт</b><b>Сб</b><b>Вс</b></div>
+          <div id="calendarGrid" class="grid calendar-grid-month"></div>
+          <section class="calendar-day-agenda" id="calendarDayAgenda">
+            <div class="calendar-day-agenda-head">
+              <div>
+                <h3 id="calendarSelectedDateTitle">Выберите день</h3>
+                <p id="calendarSelectedDateSummary">События выбранного дня появятся здесь.</p>
+              </div>
+            </div>
+            <div id="calendarSelectedEvents" class="calendar-selected-events"></div>
+          </section>
+        </section>
+      </section>
+
+
+      <section id="calendarImportSection" class="workspace-section" style="display:none">
+        <header class="admin-head">
+          <div>
+            <h1>Импорт из Google Календаря</h1>
+          </div>
+          <div class="actions">
+            <button id="calendarImportCheckBtn" type="button">Проверить подключение</button>
+            <button id="calendarImportLoadBtn" class="primary" type="button">Загрузить события</button>
+          </div>
+        </header>
+
+        <section class="section-filters calendar-import-filters">
+          <input id="calendarImportSearch" placeholder="Поиск: телефон, клиент, адрес, услуга, название события..." />
+          <input id="calendarImportFrom" type="date" title="С даты" />
+          <input id="calendarImportTo" type="date" title="По дату" />
+          <select id="calendarImportMode">
+            <option value="all">Все события</option>
+            <option value="work-like">Похожие на заявки</option>
+            <option value="not-imported">Только неперенесённые</option>
+            <option value="hidden">Скрытые / не работа</option>
+          </select>
+          <button id="calendarImportTodayBtn" type="button">Сегодня</button>
+          <button id="calendarImportWeekBtn" type="button">7 дней</button>
+        </section>
+
+        <section class="stats stats-four compact-stats calendar-import-stats">
+          <div><span>Событий</span><b id="calendarImportStatTotal">0</b></div>
+          <div><span>Похожи на заявки</span><b id="calendarImportStatWork">0</b></div>
+          <div><span>Уже перенесены</span><b id="calendarImportStatImported">0</b></div>
+          <div><span>Скрыто</span><b id="calendarImportStatHidden">0</b></div>
+        </section>
+
+        <section class="card calendar-import-help">
+          <b>Как работать:</b>
+          <span>загрузи события → проверь карточку → нажми «Создать заявку» или «Проверить / заполнить». Личные события жми «Не работа» — они уйдут в скрытые.</span>
+        </section>
+
+        <p id="calendarImportStatus" class="muted-text"></p>
+        <section id="calendarImportList" class="calendar-import-list"></section>
+      </section>
+
+      <section id="clientsSection" class="workspace-section" style="display:none">
+        <header class="admin-head"><div><h1>Клиенты</h1></div></header>
+        <section class="section-filters clients-filters">
+          <input id="clientsSearchInput" placeholder="Поиск: имя, компания, телефон, услуга, плёнка, адрес, комментарий..." />
+          <input id="clientsDateFrom" type="date" title="С даты" />
+          <input id="clientsDateTo" type="date" title="По дату" />
+          <select id="clientsServiceFilter"><option value="">Все услуги</option><option>Тонировка стекол автомобиля</option><option>Атермальная тонировка автомобиля</option><option>Тонировка балконов и окон</option><option>Бронирование стекол и витрин</option><option>Бронирование фар</option><option>Защита авто полиуретановой пленкой</option><option>Тонирование витрин</option><option>Декоративное тонирование офисных перегородок</option><option>Замер / консультация</option></select>
+          <input id="clientsFilmFilter" placeholder="Плёнка / материал: XPEL, Silver, Safety..." />
+          <select id="clientsStatusFilter"><option value="">Все статусы</option><option>Новая заявка</option><option>Связались</option><option>Замер</option><option>Согласовано</option><option>В работе</option><option>Выполнено</option><option>Оплачено</option><option>Отказ</option><option>Отменена</option></select>
+          <button id="clientsClearFiltersBtn" type="button">Сбросить</button>
+        </section>
+        <section class="stats stats-four compact-stats"><div><span>Клиентов</span><b id="clientsStatCount">0</b></div><div><span>Заявок</span><b id="clientsStatRequests">0</b></div><div><span>Объём, м²</span><b id="clientsStatM2">0</b></div><div><span>Повторных</span><b id="clientsStatRepeat">0</b></div></section>
+        <section class="card table-card"><table><thead><tr><th>Клиент</th><th>Компания</th><th>Телефон</th><th>Заявок</th><th>Последняя услуга</th><th>Последний адрес</th><th>Объём, м²</th><th>Последняя дата</th><th></th></tr></thead><tbody id="clientsBody"></tbody></table></section>
+      </section>
+
+      <section id="objectsSection" class="workspace-section" style="display:none">
+        <header class="admin-head"><div><h1>Объекты</h1></div></header>
+        <section class="section-filters objects-filters">
+          <input id="objectsSearchInput" placeholder="Поиск: адрес, объект, клиент, компания, телефон, комментарий..." />
+          <input id="objectsDateFrom" type="date" title="С даты" />
+          <input id="objectsDateTo" type="date" title="По дату" />
+          <select id="objectsServiceFilter"><option value="">Все услуги</option><option>Тонировка стекол автомобиля</option><option>Атермальная тонировка автомобиля</option><option>Тонировка балконов и окон</option><option>Бронирование стекол и витрин</option><option>Бронирование фар</option><option>Защита авто полиуретановой пленкой</option><option>Тонирование витрин</option><option>Декоративное тонирование офисных перегородок</option><option>Замер / консультация</option></select>
+          <select id="objectsStatusFilter"><option value="">Все статусы</option><option>Новая заявка</option><option>Связались</option><option>Замер</option><option>Согласовано</option><option>В работе</option><option>Выполнено</option><option>Оплачено</option><option>Отказ</option><option>Отменена</option></select>
+          <select id="objectsInstallerFilter"><option value="">Все монтажники</option><option value="Никита П">Пахнев Никита</option><option value="Андрей Ш">Шолохов Андрей</option><option value="Никита К">Кислов Никита</option><option value="Дмитрий П">Петухов Дмитрий</option><option value="Роман З">Зинченко Роман</option></select>
+          <input id="objectsM2Min" type="number" step="0.01" placeholder="м² от" />
+          <input id="objectsM2Max" type="number" step="0.01" placeholder="м² до" />
+          <button id="objectsClearFiltersBtn" type="button">Сбросить</button>
+        </section>
+        <section class="stats stats-four compact-stats"><div><span>Объектов</span><b id="objectsStatCount">0</b></div><div><span>Объём, м²</span><b id="objectsStatM2">0</b></div><div><span>Выполнено</span><b id="objectsStatDone">0</b></div><div><span>В работе</span><b id="objectsStatWork">0</b></div></section>
+        <section class="card table-card"><table><thead><tr><th>Дата</th><th>Клиент</th><th>Компания</th><th>Адрес / объект</th><th>Услуга</th><th>м²</th><th>Монтажники</th><th>Статус</th><th></th></tr></thead><tbody id="objectsBody"></tbody></table></section>
+      </section>
+
+      <section id="installersSection" class="workspace-section" style="display:none">
+        <header class="admin-head"><div><h1>Монтажники</h1></div><div class="actions"><button data-report="payroll" type="button">Отчёт по зарплате</button></div></header>
+        <section class="section-filters installers-filters">
+          <input id="installersSearchInput" placeholder="Поиск: монтажник, клиент, адрес, услуга..." />
+          <input id="installersDateFrom" type="date" title="С даты" />
+          <input id="installersDateTo" type="date" title="По дату" />
+          <select id="installersStatusFilter"><option value="">Все статусы</option><option>Выполнено</option><option>Оплачено</option><option>В работе</option><option>Согласовано</option><option>Замер</option></select>
+          <select id="installersServiceFilter"><option value="">Все услуги</option><option>Тонировка стекол автомобиля</option><option>Атермальная тонировка автомобиля</option><option>Тонировка балконов и окон</option><option>Бронирование стекол и витрин</option><option>Бронирование фар</option><option>Защита авто полиуретановой пленкой</option><option>Тонирование витрин</option><option>Декоративное тонирование офисных перегородок</option></select>
+          <button id="installersClearFiltersBtn" type="button">Сбросить</button>
+        </section>
+        <section class="stats stats-four compact-stats"><div><span>Объектов</span><b id="installersStatJobs">0</b></div><div><span>Объём, м²</span><b id="installersStatM2">0</b></div><div><span>Начислено</span><b id="installersStatAmount">0 ₽</b></div><div><span>К выплате</span><b id="installersStatTotal">0 ₽</b></div></section>
+        <section class="card table-card"><table><thead><tr><th>Монтажник</th><th>Объектов</th><th>Всего м²</th><th>Начислено</th><th>Доплата</th><th>Аванс / удержание</th><th>Итого к выплате</th><th>Последний объект</th><th></th></tr></thead><tbody id="installersBody"></tbody></table></section>
+
+        <section id="installerDetailsPanel" class="card installer-details" style="display:none">
+          <div class="installer-details-head">
+            <div>
+              <h2 id="installerDetailsTitle">История работ монтажника</h2>
+              <p id="installerDetailsInfo">Выберите монтажника в таблице выше.</p>
+            </div>
+            <button id="installerDetailsCloseBtn" class="ghost-action" type="button">Скрыть</button>
+          </div>
+          <section class="section-filters installer-details-filters">
+            <input id="installerDetailsSearchInput" placeholder="Поиск по истории: объект, адрес, клиент, компания, телефон, услуга, комментарий..." />
+            <input id="installerDetailsDateFrom" type="date" title="С даты" />
+            <input id="installerDetailsDateTo" type="date" title="По дату" />
+            <select id="installerDetailsStatusFilter"><option value="">Все статусы</option><option>Новая заявка</option><option>Связались</option><option>Замер</option><option>Согласовано</option><option>В работе</option><option>Выполнено</option><option>Оплачено</option><option>Отказ</option><option>Отменена</option></select>
+            <select id="installerDetailsServiceFilter"><option value="">Все услуги</option><option>Тонировка стекол автомобиля</option><option>Атермальная тонировка автомобиля</option><option>Тонировка балконов и окон</option><option>Бронирование стекол и витрин</option><option>Бронирование фар</option><option>Защита авто полиуретановой пленкой</option><option>Тонирование витрин</option><option>Декоративное тонирование офисных перегородок</option><option>Замер / консультация</option></select>
+            <input id="installerDetailsM2Min" type="number" step="0.01" placeholder="м² от" />
+            <input id="installerDetailsM2Max" type="number" step="0.01" placeholder="м² до" />
+            <button id="installerDetailsClearBtn" type="button">Сбросить</button>
+          </section>
+          <section class="stats stats-four compact-stats installer-details-stats">
+            <div><span>Работ</span><b id="installerDetailsStatJobs">0</b></div>
+            <div><span>Объём, м²</span><b id="installerDetailsStatM2">0</b></div>
+            <div><span>Начислено</span><b id="installerDetailsStatAmount">0 ₽</b></div>
+            <div><span>Средняя ставка</span><b id="installerDetailsStatRate">0 ₽</b></div>
+          </section>
+          
+          <div class="table-card installer-history-table"><table><thead><tr><th>Дата</th><th>Клиент</th><th>Компания</th><th>Телефон</th><th>Адрес / объект</th><th>Услуга</th><th>м² объекта</th><th>Бригада</th><th>Ставка</th><th>Начислено</th><th>Статус</th><th></th></tr></thead><tbody id="installerDetailsBody"></tbody></table></div>
+        </section>
+      </section>
+
+      <section id="trashSection" class="workspace-section" style="display:none">
+        <header class="admin-head"><div><h1>Корзина отмен</h1></div></header>
+        <section class="card table-card"><table><thead><tr><th>Дата</th><th>Клиент</th><th>Телефон</th><th>Услуга</th><th>Адрес</th><th>Причина / комментарий</th><th>Статус</th><th></th></tr></thead><tbody id="trashBody"></tbody></table></section>
+      </section>
+
+      <section id="historySection" class="workspace-section" style="display:none">
+        <header class="admin-head"><div><h1>История изменений</h1></div></header>
+        <section class="file-search-panel"><input id="historySearchInput" placeholder="Поиск по истории: клиент, телефон, действие, заявка..." /><button id="clearHistoryLocalBtn" type="button">Очистить локальную историю</button></section>
+        <section class="card table-card"><table><thead><tr><th>Дата и время</th><th>Заявка</th><th>Клиент</th><th>Действие</th><th>Что изменилось</th><th></th></tr></thead><tbody id="historyBody"></tbody></table></section>
+      </section>
+
+      <section id="smsSection" class="workspace-section" style="display:none">
+        <header class="admin-head"><div><h1>SMS-уведомления</h1></div><div class="actions"><button id="notificationCheckBtn" type="button">Проверить подключение</button><button id="smsBalanceBtn" type="button">Проверить баланс SIGMA</button><button id="smsQueueRefreshBtn" data-sms-refresh type="button">Обновить историю</button></div></header>
+        <section class="notification-grid notification-grid--two sms-overview-grid">
+          <div class="notification-card"><b>SMS клиентам</b><span id="notificationSmsStatus" class="pill-status">не проверено</span></div>
+          <div class="notification-card"><b>Telegram администратору</b><span id="notificationTelegramStatus" class="pill-status">не проверено</span></div>
+        </section>
+        <section class="stats sms-stats compact-stats">
+          <div><span>Всего SMS</span><b id="smsStatTotal">0</b></div>
+          <div><span>Запланировано</span><b id="smsStatPlanned">0</b></div>
+          <div><span>Отправлено</span><b id="smsStatSent">0</b></div>
+          <div><span>Ошибки</span><b id="smsStatErrors">0</b></div>
+        </section>
+        <section class="card notification-console sms-control-grid">
+          <div>
+            <h2>Тестовая отправка</h2>
+            <div class="dialog-grid">
+              <label>Канал<select id="testNotifyChannel"><option value="sms">SMS клиенту</option><option value="telegram">Telegram администратору</option></select></label>
+              <label>Телефон<input id="testNotifyTo" data-ru-phone placeholder="+7" inputmode="tel" autocomplete="tel" /></label>
+              <label class="wide">Текст сообщения<textarea id="testNotifyMessage">СОЛНЦАНЕТ: Тест</textarea></label>
+            </div>
+            <div class="dialog-actions"><button id="sendTestNotifyBtn" type="button">Отправить тест</button><button id="copyTestNotifyBtn" type="button" class="ghost">Скопировать текст</button></div>
+            <p id="notificationStatus" class="muted-text"></p><p id="smsBalanceText" class="muted-text"></p>
+          </div>
+          <div>
+            <h2>Проверка статуса SIGMA</h2>
+            <div class="dialog-grid">
+              <label class="wide">ID SIGMA<input id="sigmaStatusId" placeholder="Например: 000000-10000000" /></label>
+            </div>
+            <div class="dialog-actions"><button id="checkSigmaStatusBtn" type="button">Проверить статус</button></div>
+            <p id="sigmaStatusText" class="muted-text"></p>
+          </div>
+        </section>
+        <section class="card notification-console sms-schedule-console">
+          <div class="sms-section-title"><div><h2>История и очередь SMS</h2></div><button data-sms-refresh type="button" class="ghost">Обновить</button></div>
+          <div class="sms-queue-toolbar">
+            <input id="smsQueueSearch" type="search" placeholder="Поиск: клиент, телефон, ID SIGMA, компания, текст, статус..." />
+            <select id="smsQueueStatus"><option value="">Все статусы</option><option value="Запланировано">Запланировано</option><option value="Отправляется">Отправляется</option><option value="Отправлено">Отправлено</option><option value="Ошибка">Ошибка</option><option value="Отменено">Отменено</option><option value="Пропущено">Пропущено</option></select>
+            <input id="smsQueueFrom" type="date" />
+            <input id="smsQueueTo" type="date" />
+          </div>
+          <div class="table-card sms-queue-table"><table><thead><tr><th>Дата / время</th><th>Клиент</th><th>Телефон</th><th>Сообщение</th><th>ID / доставка</th><th>Статус</th><th>Действия</th></tr></thead><tbody id="smsQueueBody"><tr><td colspan="7">Очередь ещё не загружена</td></tr></tbody></table></div>
+          <p id="smsQueueStatusText" class="muted-text"></p>
+        </section>
+        <section class="card notification-console">
+          <h2>Шаблоны сообщений</h2>
+          <div id="notificationTemplatesList" class="notification-templates"></div>
+        </section>
+        <section class="card table-card local-notification-log"><h2>Локальный журнал быстрых отправок</h2><p class="muted-text">Основная история хранится выше в NocoDB. Этот блок — быстрый журнал текущего браузера.</p><table><thead><tr><th>Дата</th><th>Канал</th><th>Кому</th><th>Сообщение</th><th>Статус</th></tr></thead><tbody id="notificationLogBody"></tbody></table></section>
+      </section>
+
+      <section id="filesSection" class="workspace-section" style="display:none">
+        <header class="admin-head"><div><h1>Файлы</h1></div></header>
+        <section class="file-search-panel file-search-panel--wide"><input id="filesSearchInput" placeholder="Быстрый поиск: номер заявки, файл, телефон, адрес, объект, клиент..." /><select id="filesTypeFilter"><option value="">Все типы</option><option value="фото">Фото</option><option value="видео">Видео</option><option value="pdf">PDF / документы</option><option value="документ">Другие документы</option></select><button id="filesRefreshBtn" type="button">Обновить файлы</button><button id="googleDriveTestBtn" type="button">Проверить Google Drive</button></section>
+        <section class="files-dashboard"><div class="upload-zone" id="filesDropZone"><b>Загрузка файлов</b><label>Заявка<select id="filesRequestSelect"><option value="">Сначала загрузите заявки</option></select></label><input id="filesUploadInput" type="file" multiple /><button id="filesUploadBtn" type="button">Загрузить файлы</button><p id="filesStatus" class="muted-text"></p></div><div class="card"><table><thead><tr><th>Заявка</th><th>Клиент</th><th>Телефон</th><th>Адрес / объект</th><th>Файлы</th><th>Статус</th><th></th></tr></thead><tbody id="filesBody"></tbody></table></div></section>
+      </section>
+
+      <section id="reportsSection" class="workspace-section" style="display:none">
+        <header class="admin-head"><div><h1>Отчёты</h1></div></header>
+        <section class="report-cards">
+          <button class="report-card" data-report="requests" type="button"><b>Заявки</b><span>Клиенты, услуги, даты, статусы</span></button>
+          <button class="report-card" data-report="payroll" type="button"><b>Зарплата монтажников</b><span>Рабочий расчёт по м², ставкам, доплатам и авансам</span></button>
+          <button class="report-card" data-report="autoPayroll" type="button"><b>Отчет по авто</b></button>
+          <button class="report-card" data-report="objects" type="button"><b>Объекты и объём</b><span>Адреса, м², статусы работ</span></button>
+          <button class="report-card" data-report="clients" type="button"><b>Клиенты</b><span>Повторные обращения и история</span></button>
+        </section>
+      </section>
+
+
+      <section id="activitySection" class="workspace-section" style="display:none">
+        <header class="admin-head"><div><h1>Активность</h1></div></header>
+        <section class="card activity-card">
+          <div id="activityBody" class="activity-body"></div>
+        </section>
+      </section>
+
+      <section id="settingsSection" class="workspace-section" style="display:none">
+        <header class="admin-head"><div><h1>Настройки</h1></div></header>
+        <section class="settings-grid">
+          <a href="/test" target="_blank">Проверить сайт</a>
+          <a href="/nocodb-test" target="_blank">Проверить базу заявок</a>
+          <a href="/list-files" target="_blank">Проверить файлы</a>
+          <button id="googleDriveTestBtnSettings" type="button">Проверить Google Drive</button>
+          <a href="zapis.html" target="_blank">Открыть страницу записи</a>
+        </section>
+        
+      </section></section>
+    </section>
+  <datalist id="autoServiceDatalist"></datalist>
+  </main>
+
+  <dialog id="requestDialog" class="wide-dialog">
+    <form method="dialog">
+      <button class="close" value="cancel">×</button>
+      <div class="dialog-title-row"><h2 id="dialogTitle">Заявка</h2><span id="requestAutosaveStatus" class="autosave-status">Все изменения сохранены</span></div>
+      <div class="request-info" id="requestInfo"></div>
+      <div class="dialog-grid">
+        <label>Дата записи<input id="editDate" type="date" /></label>
+        <label>Время записи<input id="editTime" type="time" /></label>
+        <label>Статус<select id="editStatus"><option>Новая заявка</option><option>Связались</option><option>Замер</option><option>Согласовано</option><option>В работе</option><option>Выполнено</option><option>Оплачено</option><option>Отказ</option><option>Отменена</option></select></label>
+        <label>Направление<select id="editDirection"><option value="architecture">Архитектура</option><option value="auto">Авто</option></select></label>
+        <label>Итоговый м²<input id="editM2" type="number" step="0.01" /></label>
+        <label>Ответственный<input id="editResponsible" /></label>
+        <label>Компания<input id="editCompany" placeholder="Название компании" /></label>
+        <label id="editServiceLabel">Услуга<input id="editService" /></label>
+        <section id="editAutoFields" class="wide auto-fields" style="display:none"><h3>Авто</h3><div class="dialog-grid"><label>Автомобиль<input id="editAuto" placeholder="Например: Solaris 2015, BMW X5" /></label><label>Плёнка<input id="editFilm" placeholder="Плёнка / материал" /></label></div><div class="auto-services-head"><b>Услуги и стоимость</b><button id="editAddServiceBtn" type="button" class="ghost-small">+ услуга</button></div><div id="editAutoServices" class="auto-services"></div><div class="auto-total">Общая стоимость: <b id="editAutoTotal">0 ₽</b></div></section>
+        <label class="wide">Адрес<input id="editAddress" /></label>
+        <label class="wide">Комментарий администратора<textarea id="editAdminComment"></textarea></label>
+      </div>
+      <fieldset><legend>Монтажники</legend><label><input type="checkbox" name="installer" value="Никита П" /> Пахнев Никита</label><label><input type="checkbox" name="installer" value="Андрей Ш" /> Шолохов Андрей</label><label><input type="checkbox" name="installer" value="Никита К" /> Кислов Никита</label><label><input type="checkbox" name="installer" value="Дмитрий П" /> Петухов Дмитрий</label><label><input type="checkbox" name="installer" value="Роман З" /> Зинченко Роман</label></fieldset>
+      <details class="files-box crm-accordion" open><summary>Файлы этой заявки</summary><div class="request-file-upload"><input id="requestFileInput" type="file" multiple /><button id="requestUploadBtn" type="button">Загрузить</button><button id="requestFilesRefreshBtn" type="button" class="ghost-small">Обновить список</button></div><div id="requestFilesBox" class="request-files-box"></div></details>
+      <details class="files-box google-calendar-box crm-accordion"><summary>Google Календарь</summary><div id="requestGoogleCalendarBox" class="google-calendar-status-box"></div><div class="dialog-actions"><button id="requestGoogleCreateBtn" type="button">Создать / обновить событие</button><a id="requestGoogleOpenLink" class="dialog-link-button ghost-link" href="#" target="_blank" rel="noopener" hidden>Открыть в Google</a></div><p id="requestGoogleStatus" class="muted-text"></p></details>
+      <details class="files-box notification-box crm-accordion"><summary>Уведомление клиенту</summary><div class="dialog-grid"><label>Шаблон<select id="notifyTemplate"><option value="confirm">Запись подтверждена</option><option value="reminder">Напоминание о записи</option><option value="reschedule">Перенос записи</option><option value="cancel">Отмена записи</option><option value="done">Работы выполнены</option><option value="review">Просьба оставить отзыв</option><option value="custom">Свой текст</option></select></label><label>Канал<select id="notifyChannel"><option value="sms">SMS клиенту</option><option value="telegram">Telegram администратору</option></select></label><label class="wide">Текст сообщения<textarea id="notifyMessage" placeholder="Текст уведомления"></textarea></label></div><div class="dialog-actions"><button id="sendNotifyBtn" type="button">Отправить сейчас</button><button id="copyNotifyBtn" type="button" class="ghost">Скопировать</button></div><p id="requestNotifyStatus" class="muted-text"></p></details>
+      <details class="files-box notification-box crm-accordion"><summary>Авто-SMS</summary><div class="dialog-grid"><label>Шаблон<select id="scheduleSmsTemplate"><option value="confirm">Запись подтверждена</option><option value="reminder">Напоминание о записи</option><option value="reschedule">Перенос записи</option><option value="cancel">Отмена записи</option><option value="done">Работы выполнены</option><option value="review">Просьба оставить отзыв</option><option value="custom">Свой текст</option></select></label><label>Дата отправки<input id="scheduleSmsDate" type="date" /></label><label>Время отправки<input id="scheduleSmsTime" type="time" /></label><label class="wide">Текст SMS<textarea id="scheduleSmsMessage" placeholder="Текст SMS"></textarea></label></div><div class="dialog-actions"><button id="scheduleSmsBtn" type="button">Запланировать SMS</button><button id="scheduleDefaultSmsBtn" type="button" class="ghost">Создать напоминания за 24 часа и за 2 часа</button></div><p id="scheduleSmsStatus" class="muted-text"></p></details>
+      <section class="files-box"><h3>Комментарии</h3><div id="requestCommentsBox" class="comments-box"></div><div class="comment-add-row"><textarea id="requestCommentText" placeholder="Добавить комментарий по заявке"></textarea><button id="addRequestCommentBtn" type="button" class="ghost">Добавить</button></div></section>
+      <details class="files-box crm-accordion"><summary>История этой заявки</summary><div id="requestHistoryBox" class="history-box"></div></details>
+      <section class="cancel-box"><h3>Удаление</h3><textarea id="cancelReason" placeholder="Причина удаления"></textarea></section>
+      <div class="dialog-actions"><button id="saveRequestBtn" type="button">Сохранить</button><button id="cancelRequestBtn" class="danger" type="button">Удалить</button><button class="ghost" value="cancel">Закрыть</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="smsDetailDialog" class="wide-dialog sms-detail-dialog">
+    <form method="dialog">
+      <button class="close" value="cancel">×</button>
+      <div class="sms-detail-head">
+        <div>
+          <h2 id="smsDetailTitle">Карточка SMS</h2>
+          <p id="smsDetailSubtitle" class="muted-text"></p>
+        </div>
+        <span id="smsDetailStatusPill" class="pill-status">—</span>
+      </div>
+      <section class="sms-detail-grid">
+        <div class="sms-detail-box"><span>Клиент</span><b id="smsDetailClient">—</b></div>
+        <div class="sms-detail-box"><span>Телефон</span><b id="smsDetailPhone">—</b></div>
+        <div class="sms-detail-box"><span>ID заявки</span><b id="smsDetailRequestId">—</b></div>
+        <div class="sms-detail-box"><span>ID SIGMA</span><b id="smsDetailSigmaId">—</b></div>
+        <div class="sms-detail-box"><span>Стоимость</span><b id="smsDetailClientId">—</b></div>
+        <div class="sms-detail-box"><span>Статус доставки</span><b id="smsDetailDelivery">—</b></div>
+      </section>
+      <section class="files-box sms-detail-message"><h3>Текст SMS</h3><pre id="smsDetailMessage">—</pre></section>
+      <section class="files-box sms-detail-message"><h3>Ответ сервиса / ошибка</h3><pre id="smsDetailService">—</pre></section>
+      <div class="dialog-actions sms-detail-actions">
+        <button id="smsDetailCheckBtn" type="button">Проверить статус SIGMA</button>
+        <button id="smsDetailCopyIdBtn" type="button" class="ghost">Скопировать ID</button>
+        <button id="smsDetailSendNowBtn" type="button" class="ghost">Отправить сейчас</button>
+        <button id="smsDetailOpenRequestBtn" type="button" class="ghost">Открыть заявку</button>
+        <button id="smsDetailCancelBtn" type="button" class="danger">Отменить SMS</button>
+        <button class="ghost" value="cancel">Закрыть</button>
+      </div>
+      <p id="smsDetailStatusText" class="muted-text"></p>
+    </form>
+  </dialog>
+
+  <dialog id="clientCardDialog" class="wide-dialog client-card-dialog">
+    <form method="dialog">
+      <button class="close" value="cancel">×</button>
+      <div class="client-card-head">
+        <div>
+          <h2 id="clientCardTitle">Карточка клиента</h2>
+          <p id="clientCardSubtitle" class="muted-text"></p>
+        </div>
+        <div class="client-card-actions">
+          <button id="clientCardQuickBtn" type="button" class="primary">Новая заявка этому клиенту</button>
+        </div>
+      </div>
+      <section class="client-card-stats stats stats-four compact-stats">
+        <div><span>Заявок</span><b id="clientCardStatRequests">0</b></div>
+        <div><span>Объём, м²</span><b id="clientCardStatM2">0</b></div>
+        <div><span>Выполнено</span><b id="clientCardStatDone">0</b></div>
+        <div><span>Последняя дата</span><b id="clientCardStatLast">—</b></div>
+      </section>
+      <section class="client-card-grid">
+        <div class="card client-card-box">
+          <h3>Данные клиента</h3>
+          <div id="clientCardInfo" class="client-card-info"></div>
+        </div>
+        <div class="card client-card-box">
+          <h3>Адреса / объекты</h3>
+          <div id="clientCardAddresses" class="client-card-tags"></div>
+        </div>
+      </section>
+      <section class="card client-card-box">
+        <h3>История обращений</h3>
+        <div class="table-card client-card-table"><table><thead><tr><th>Дата</th><th>Услуга</th><th>Адрес</th><th>м²</th><th>Статус</th><th></th></tr></thead><tbody id="clientCardRequestsBody"></tbody></table></div>
+      </section>
+      <section class="card client-card-box">
+        <h3>Файлы клиента</h3>
+        <div id="clientCardFiles" class="request-files-box"></div>
+      </section>
+      <section class="card client-card-box">
+        <h3>Комментарии</h3>
+        <div id="clientCardComments" class="client-card-comments"></div>
+      </section>
+      <div class="dialog-actions"><button class="ghost" value="cancel">Закрыть</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="quickAddDialog" class="wide-dialog">
+    <form method="dialog">
+      <button class="close" value="cancel">×</button>
+      <h2>Быстрая запись по звонку</h2>
+      <p class="modal-note">Заполните минимум: ФИО, телефон, услугу, дату и время. Заявка сразу попадёт в NocoDB.</p>
+      <div class="dialog-grid"><label>Фамилия и имя<input id="quickName" placeholder="Иванов Сергей" /></label><label>Компания<input id="quickCompany" placeholder="Например: ООО Ромашка" /></label><label>Телефон<input id="quickPhone" inputmode="tel" autocomplete="tel" placeholder="+7 (___) ___-__-__" /></label><div id="quickClientHint" class="quick-client-hint wide">Начните вводить номер — подходящие клиенты появятся списком ниже.</div><label class="wide inline-check quick-google-sync"><input id="quickGoogleSync" type="checkbox" checked /> <span>Дублировать запись в Google Календарь</span></label><div id="quickClientSuggestions" class="quick-client-suggestions wide" hidden></div><label>Направление<select id="quickDirection"><option value="architecture">Архитектура</option><option value="auto">Авто</option></select></label><label id="quickServiceLabel" class="quick-architecture-only">Услуга<select id="quickService"><option>Тонировка стекол автомобиля</option><option>Тонировка балконов и окон</option><option>Атермальная тонировка автомобиля</option><option>Бронирование стекол и витрин</option><option>Бронирование фар</option><option>Декоративное тонирование офисных перегородок</option><option>Защита авто полиуретановой пленкой</option><option>Тонирование витрин</option><option>Замер / консультация</option><option>Другое</option></select></label><section id="quickAutoFields" class="wide auto-fields" style="display:none"><h3>Авто</h3><div class="dialog-grid"><label>Автомобиль<input id="quickAuto" placeholder="Например: Solaris 2015, BMW X5" /></label><label>Плёнка<input id="quickFilm" placeholder="Плёнка / материал" /></label></div><div class="auto-services-head"><b>Услуги и стоимость</b><button id="quickAddServiceBtn" type="button" class="ghost-small">+ услуга</button></div><div id="quickAutoServices" class="auto-services"></div><div class="auto-total">Общая стоимость: <b id="quickAutoTotal">0 ₽</b></div></section><label>Дата записи<input id="quickDate" type="date" /></label><label>Время записи<input id="quickTime" type="time" /></label><label id="quickM2Label" class="quick-architecture-only">м² / примерный объём<input id="quickM2" type="number" step="0.01" /></label><label id="quickAddressLabel" class="wide quick-architecture-only">Адрес объекта<input id="quickAddress" placeholder="Город, улица, дом, объект" /></label><label class="wide">Комментарий / что нужно сделать<textarea id="quickComment" placeholder="Кратко опишите задачу клиента"></textarea></label></div>
+      <div class="dialog-actions"><button id="quickSaveBtn" type="button">Создать заявку</button><button class="ghost" value="cancel">Отмена</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="reportDialog" class="wide-dialog report-wide-dialog">
+    <form method="dialog">
+      <button class="close" value="cancel">×</button>
+      <h2 id="reportTitle">Настройка отчёта</h2>
+      <div class="dialog-grid">
+        <label>С даты<input id="reportDateFrom" type="date" /></label>
+        <label>По дату<input id="reportDateTo" type="date" /></label>
+        <label>Статус<select id="reportStatus"><option value="">Все статусы</option><option>Новая заявка</option><option>Связались</option><option>Замер</option><option>Согласовано</option><option>В работе</option><option>Выполнено</option><option>Оплачено</option><option>Отказ</option><option>Отменена</option></select></label>
+        <label>Формат<select id="reportFormat"><option value="xls">Excel: монтажи + сводка + сотрудники</option><option value="csv">CSV</option></select></label>
+      </div>
+      <fieldset><legend>Монтажники</legend><label><input type="checkbox" id="reportAllInstallers" checked /> Все монтажники</label><label><input type="checkbox" name="reportInstaller" value="Никита П" /> Пахнев Никита</label><label><input type="checkbox" name="reportInstaller" value="Андрей Ш" /> Шолохов Андрей</label><label><input type="checkbox" name="reportInstaller" value="Никита К" /> Кислов Никита</label><label><input type="checkbox" name="reportInstaller" value="Дмитрий П" /> Петухов Дмитрий</label><label><input type="checkbox" name="reportInstaller" value="Роман З" /> Зинченко Роман</label></fieldset>
+
+      <section id="payrollOptions" class="payroll-options" style="display:none">
+        <h3>Расчёт зарплаты монтажников</h3>
+        <input id="payrollSplitMode" type="hidden" value="equal-m2" />
+        <div class="dialog-grid"><label>Статусы для зарплаты<select id="payrollStatusMode"><option value="completed">Только Выполнено и Оплачено</option><option value="all-active">Все, кроме Отказ / Отменена</option><option value="report-filter">Как выбран статус выше</option></select></label></div><p class="modal-note payroll-guide" id="payrollGuide">м² объекта делится на всех монтажников, ставка берётся по количеству монтажников на объекте.</p>
+        <div class="payroll-toolbar"><button id="savePayrollSettingsBtn" type="button">Сохранить ставки</button><button id="previewPayrollBtn" type="button">Показать предварительный расчёт</button></div>
+        <div class="payroll-table-wrap"><table class="payroll-settings-table"><thead><tr><th>Сотрудник</th><th>1 чел, ₽/м²</th><th>2 чел, ₽/м²</th><th>3 чел, ₽/м²</th><th>4 чел, ₽/м²</th><th>5 чел, ₽/м²</th><th>Доплата, ₽</th><th>Аванс / удержание, ₽</th><th>Комментарий</th></tr></thead><tbody id="payrollSettingsBody"></tbody></table></div>
+      </section>
+
+      <section id="reportPreview" class="report-preview"></section>
+      <div class="dialog-actions"><button id="downloadReportBtn" type="button">Скачать отчёт</button><button class="ghost" value="cancel">Отмена</button></div>
+    </form>
+  </dialog>
+
+
+  <dialog id="filePreviewDialog" class="wide-dialog file-preview-dialog">
+    <form method="dialog">
+      <button class="close" value="cancel">×</button>
+      <h2 id="filePreviewTitle">Просмотр файла</h2>
+      <p id="filePreviewMeta" class="modal-note">Информация о файле</p>
+      <div id="filePreviewContent" class="file-preview-content"></div>
+      <div class="dialog-actions">
+        <a id="filePreviewOpenLink" class="dialog-link-button" href="#" target="_blank" rel="noopener">Открыть в Google Drive</a>
+        <a id="filePreviewDownloadLink" class="dialog-link-button" href="#" target="_blank" rel="noopener">Скачать</a>
+        <button class="ghost" value="cancel">Закрыть</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script src="assets/admin.js"></script>
+  <script src="assets/pwa.js"></script>
+</body>
+</html>

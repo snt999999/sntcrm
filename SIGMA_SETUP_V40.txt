@@ -1,0 +1,24 @@
+Настройка SIGMA для СОЛНЦАНЕТ v40
+
+Cloudflare Pages → Settings → Environment variables:
+
+SMS_PROVIDER=sigma
+SIGMA_API_TOKEN=токен_из_личного_кабинета_SIGMA
+SIGMA_API_URL=https://user.sigmasms.ru/api
+NOCODB_SMS_ENDPOINT=API_ссылка_на_таблицу_SMS-очередь
+SMS_CRON_SECRET=SOLNCANET_SMS_CRON_2026_7B2E9C
+
+Опционально:
+SIGMA_SENDER=имя_отправителя_если_SIGMA_его_требует
+
+Если используете бесплатный/общий маршрут SIGMA — SIGMA_SENDER можно не задавать.
+
+После изменения переменных обязательно сделать Redeploy.
+
+В NocoDB для полной истории желательно иметь поля:
+ID SIGMA
+Статус доставки
+Стоимость SMS
+Баланс после отправки
+Ответ сервиса
+Дата проверки статуса
