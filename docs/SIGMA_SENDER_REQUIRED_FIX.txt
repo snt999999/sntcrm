@@ -1,0 +1,23 @@
+СОЛНЦАНЕТ — SIGMA sender required fix
+
+Ошибка:
+The 'payload.sender' field is required!
+
+Значит текущий API SIGMA не принимает отправку без payload.sender.
+Поэтому в Cloudflare обязательно должен быть указан отправитель.
+
+Cloudflare Pages → Settings → Environment variables:
+
+SIGMA_API_TOKEN=токен_sigma
+SIGMA_SENDER=Solncanet
+SIGMA_FALLBACK_SENDERS=
+
+Важно:
+1. SIGMA_SENDER должен быть точным техническим именем отправителя, которое принимает API.
+2. Если AdvFactory не принимает, попробуй B-Media или другое имя, которое даст менеджер SIGMA.
+3. Если для Tele2 подключено имя СОЛНЦАНЕТ, но на других операторах SIGMA подменяет имя на общие, менеджер должен дать техническое имя sender, которое нужно передавать в API.
+4. В этой версии система всегда передает payload.sender. Если SIGMA вернет Sender not found, система попробует имена из SIGMA_FALLBACK_SENDERS по очереди.
+5. Отправка без sender больше не используется, потому что API возвращает ошибку: payload.sender field is required.
+
+Рекомендуемый вопрос менеджеру SIGMA:
+"У нас API возвращает The 'payload.sender' field is required. Какое точное значение payload.sender нужно передавать, если для Tele2 подключено СОЛНЦАНЕТ, а на остальных операторах идет подмена на ваши общие имена AdvFactory/B-Media? Дайте одно или несколько технических значений sender для API."

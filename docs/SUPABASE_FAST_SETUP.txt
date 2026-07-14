@@ -12,7 +12,7 @@ ADMIN_PASSWORD=ваш_пароль
 
 Для SMS через SIGMA также:
 SIGMA_API_TOKEN=токен_sigma
-SIGMA_SENDER=SOLNCANET
+SIGMA_SENDER=Solncanet
 SMS_CRON_SECRET=длинный_секрет
 
 4. В GitHub Actions Secrets добавьте:

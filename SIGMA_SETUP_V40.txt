@@ -9,7 +9,7 @@ NOCODB_SMS_ENDPOINT=API_ссылка_на_таблицу_SMS-очередь
 SMS_CRON_SECRET=SOLNCANET_SMS_CRON_2026_7B2E9C
 
 Опционально:
-SIGMA_SENDER=имя_отправителя_если_SIGMA_его_требует
+SIGMA_SENDER=Solncanet
 
 Если используете бесплатный/общий маршрут SIGMA — SIGMA_SENDER можно не задавать.
 

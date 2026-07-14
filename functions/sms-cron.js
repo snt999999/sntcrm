@@ -55,13 +55,44 @@ function sigmaId(x) { return cleanText(x?.id || x?._id || x?.uuid || x?.sendingI
 function sigmaState(x) { const s = x?.state || {}; return { status: cleanText(s.status || x?.status || x?.stateStatus || "", 120), error: cleanText(s.error || x?.error || x?.message || x?.errorMessage || "", 700) }; }
 function isSigmaFailed(status, errorText) { return /failed|error|rejected|declined|cancel/i.test(String(status || "")) || Boolean(errorText && errorText !== "false"); }
 function sigmaStatusText(status, errorText) { if (errorText && errorText !== "false") return errorText; const s = String(status || "").toLowerCase(); const map = { pending: "В очереди", queued: "В очереди", created: "Создано", processing: "Обрабатывается", sent: "Отправлено", delivered: "Доставлено", failed: "Ошибка", error: "Ошибка", canceled: "Отменено", rejected: "Отклонено" }; return map[s] || status || "Принято SIGMA"; }
-function sigmaSenderValue(env) { return cleanText(env.SIGMA_SENDER || env.SMS_SENDER || env.SIGMASMS_SENDER || "", 80); }
-function sigmaSenderMode(env) { return String(env.SIGMA_SENDER_MODE || env.SMS_SENDER_MODE || "fallback").trim().toLowerCase(); }
-function shouldUseExplicitSender(sender, mode) { if (!sender) return false; if (["auto", "default", "none", "no", "off", "false", "без", "нет"].includes(String(sender).trim().toLowerCase())) return false; if (["auto", "default", "none", "no", "off", "false", "без", "нет"].includes(mode)) return false; return true; }
-function isSenderNotFoundError(text, data) { const all = `${text || ""} ${data?.message || ""} ${data?.error || ""} ${data?.name || ""} ${data?.raw || ""}`.toLowerCase(); return /sender\s+not\s+found|sender_not_found|отправител[ья][^а-яa-z0-9]*не\s+найден|имя\s+отправител[ья].*(не\s+найден|не\s+подключ)/i.test(all); }
-function buildSigmaRequestBody(phone, message, sender, mode, forceNoSender = false) { const payload = { text: message }; if (!forceNoSender && shouldUseExplicitSender(sender, mode)) payload.sender = sender; return { recipient: "+" + phone, type: "sms", payload }; }
+function sigmaPrimarySender(env) { return cleanText(env.SIGMA_SENDER || env.SMS_SENDER || env.SIGMASMS_SENDER || "Solncanet", 80); }
+function sigmaFallbackSenders(env) {
+  const raw = String(env.SIGMA_FALLBACK_SENDERS || env.SMS_FALLBACK_SENDERS || env.SIGMASMS_FALLBACK_SENDERS || "");
+  return raw.split(/[;,\n]/).map((x) => cleanText(x, 80)).filter(Boolean);
+}
+function sigmaSenderCandidates(env) {
+  const seen = new Set();
+  const out = [];
+  for (const sender of [sigmaPrimarySender(env), ...sigmaFallbackSenders(env)]) {
+    const key = String(sender || "").trim();
+    if (!key || seen.has(key)) continue;
+    seen.add(key);
+    out.push(key);
+  }
+  return out;
+}
+function isSenderNotFoundError(text, data) { const all = `${text || ""} ${data?.message || ""} ${data?.error || ""} ${data?.name || ""} ${data?.raw || ""}`.toLowerCase(); return /sender\s+not\s+found|sender_not_found|required.*sender|sender.*required|payload\.sender|отправител[ья][^а-яa-z0-9]*(не\s+найден|обязател)|имя\s+отправител[ья].*(не\s+найден|не\s+подключ|обязател)/i.test(all); }
+function buildSigmaRequestBody(phone, message, sender) { return { recipient: "+" + phone, type: "sms", payload: { text: message, sender } }; }
 async function postSigmaSms(env, token, requestBody) { const url = new URL(`${sigmaBase(env)}/sendings`); url.searchParams.set("return", "each"); const res = await fetch(url.toString(), { method: "POST", headers: { "Content-Type": "application/json", "Accept": "application/json", "Authorization": token }, body: JSON.stringify(requestBody) }); const raw = await res.text(); let data; try { data = JSON.parse(raw); } catch (_) { data = { raw }; } const item = firstSigmaItem(data); const id = sigmaId(item || data); const state = sigmaState(item || data); const errorText = state.error || data.message || data.error || data.name || data.raw || ""; const ok = res.ok && Boolean(id) && !isSigmaFailed(state.status, errorText); return { ok, provider: "sigma", httpStatus: res.status, smsId: id, id, status: state.status || (ok ? "created" : "error"), statusText: sigmaStatusText(state.status, errorText), cost: item?.cost ?? data.cost ?? "", balance: data.balance ?? "", result: data, error: ok ? "" : (sigmaStatusText(state.status, errorText) || `SIGMA не подтвердила отправку. HTTP ${res.status}`) }; }
-async function sendSigmaSms(env, to, message) { const token = sigmaToken(env); if (!token) return { ok: false, provider: "sigma", error: "Не задан SIGMA_API_TOKEN" }; const phone = normalizePhone(to); if (!phone || phone.length !== 11 || !phone.startsWith("7")) return { ok: false, provider: "sigma", error: "Неверный телефон. Нужен формат 79XXXXXXXXX", to: phone }; const sender = sigmaSenderValue(env); const mode = sigmaSenderMode(env); const explicitSender = shouldUseExplicitSender(sender, mode); const firstBody = buildSigmaRequestBody(phone, message, sender, mode, false); const first = await postSigmaSms(env, token, firstBody); first.senderRequested = explicitSender ? sender : "auto"; first.senderMode = explicitSender ? "explicit" : "auto"; if (first.ok || !explicitSender || !isSenderNotFoundError(first.error || first.statusText, first.result)) return first; const secondBody = buildSigmaRequestBody(phone, message, sender, mode, true); const second = await postSigmaSms(env, token, secondBody); second.senderRequested = "auto"; second.senderMode = "fallback_without_sender"; second.firstError = first.error || first.statusText || "Sender not found"; if (!second.ok && !second.error) second.error = first.error || "SIGMA не приняла отправителя и не приняла авто-отправителя"; return second; }
+async function sendSigmaSms(env, to, message) {
+  const token = sigmaToken(env);
+  if (!token) return { ok: false, provider: "sigma", error: "Не задан SIGMA_API_TOKEN" };
+  const phone = normalizePhone(to);
+  if (!phone || phone.length !== 11 || !phone.startsWith("7")) return { ok: false, provider: "sigma", error: "Неверный телефон. Нужен формат 79XXXXXXXXX", to: phone };
+  const senders = sigmaSenderCandidates(env);
+  if (!senders.length) return { ok: false, provider: "sigma", error: "SIGMA требует payload.sender. По ответу SIGMA используем sender Solncanet. Проверь Cloudflare: SIGMA_SENDER=Solncanet." };
+  const attempts = [];
+  for (const sender of senders) {
+    const res = await postSigmaSms(env, token, buildSigmaRequestBody(phone, message, sender));
+    res.senderRequested = sender;
+    res.senderMode = attempts.length ? "fallback" : "primary";
+    attempts.push({ sender, ok: res.ok, httpStatus: res.httpStatus, error: res.error || res.statusText || "" });
+    if (res.ok) { res.senderAttempts = attempts; return res; }
+    if (!isSenderNotFoundError(res.error || res.statusText, res.result)) { res.senderAttempts = attempts; return res; }
+  }
+  const last = attempts[attempts.length - 1] || {};
+  return { ok: false, provider: "sigma", error: `SIGMA не приняла ни одно имя отправителя. Последняя ошибка: ${last.error || "Sender not found"}`, senderAttempts: attempts };
+}
 
 const DEFAULT_SMS_LIMIT = 500;
 function checkCronAuth(request, env) { const secret = env.SMS_CRON_SECRET || ""; if (!secret) return { ok: false, status: 500, body: { ok: false, error: "SMS_CRON_SECRET is not set" } }; const provided = request.headers.get("x-cron-secret") || new URL(request.url).searchParams.get("secret") || ""; if (provided !== secret) return { ok: false, status: 401, body: { ok: false, error: "Неверный SMS_CRON_SECRET" } }; return { ok: true }; }

@@ -1,0 +1,20 @@
+SIGMA sender для СОЛНЦАНЕТ
+
+По ответу администратора SIGMA в API нужно передавать sender ровно:
+
+SIGMA_SENDER=Solncanet
+
+Именно так, латиницей, с большой S и остальными маленькими буквами.
+
+Cloudflare Pages → Settings → Environment variables:
+
+SIGMA_API_TOKEN=твой_токен_SIGMA
+SIGMA_SENDER=Solncanet
+
+Переменные SIGMA_FALLBACK_SENDERS, SIGMA_SENDER_MODE, SMS_SENDER, SIGMASMS_SENDER лучше удалить, чтобы они не мешали.
+
+SIGMA сама сделает подмену имён по операторам:
+- Tele2: Solncanet / подключённое имя;
+- остальные операторы: общие имена SIGMA, если так настроено на их стороне.
+
+Если снова будет ошибка Sender not found, нужно проверить точное написание: Solncanet, без пробелов, не SOLNCANET и не СОЛНЦАНЕТ.

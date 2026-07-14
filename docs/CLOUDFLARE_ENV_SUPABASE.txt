@@ -9,7 +9,7 @@ USER_PASSWORDS=Bebelya9,Bebelya91,Bebelya
 
 SMS, если используете SIGMA:
 SIGMA_API_TOKEN=...
-SIGMA_SENDER=SOLNCANET
+SIGMA_SENDER=Solncanet
 SMS_CRON_SECRET=любой_длинный_секрет
 
 Google/почта/Drive можно оставить как были.
