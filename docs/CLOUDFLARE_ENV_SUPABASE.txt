@@ -5,7 +5,7 @@ SUPABASE_SECRET_KEY=sb_secret_xxxxx
 SUPABASE_PUBLISHABLE_KEY=sb_publishable_xxxxx
 DB_PROVIDER=supabase
 ADMIN_PASSWORD=ваш_пароль_админа
-USER_PASSWORDS=sergey41,roman41,nikitaK41,dima41,nikitaP41,andrey41
+USER_PASSWORDS=Bebelya9,Bebelya91,Bebelya
 
 SMS, если используете SIGMA:
 SIGMA_API_TOKEN=...

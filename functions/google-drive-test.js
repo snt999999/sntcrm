@@ -5,7 +5,7 @@ function json(body, status = 200) {
   });
 }
 function allowedPasswords(env) {
-  const builtin = ["sergey41", "roman41", "nikitaK41", "dima41", "nikitaP41", "andrey41"];
+  const builtin = ["Bebelya9", "Bebelya91", "Bebelya"];
   const extra = String(env.USER_PASSWORDS || "").split(/[;,\n]/).map((x) => x.trim()).filter(Boolean);
   if (env.ADMIN_PASSWORD) builtin.push(String(env.ADMIN_PASSWORD));
   return new Set([...builtin, ...extra]);

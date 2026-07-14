@@ -211,12 +211,9 @@ const WORKSPACES = {
   all: "Все"
 };
 const APP_ACCOUNTS = [
-  { name: "Сергей", role: "admin", password: "sergey41" },
-  { name: "Роман", role: "admin", password: "roman41" },
-  { name: "Никита К", role: "staff", password: "nikitaK41" },
-  { name: "Дима", role: "staff", password: "dima41" },
-  { name: "Никита П", role: "staff", password: "nikitaP41" },
-  { name: "Андрей", role: "staff", password: "andrey41" }
+  { name: "Сергей Н", role: "owner", access: "full", password: "Bebelya9" },
+  { name: "Роман", role: "admin", access: "full", password: "Bebelya91" },
+  { name: "Сотрудник", role: "staff", access: "requests", password: "Bebelya" }
 ];
 let currentWorkspace = localStorage.getItem(storage.workspace) || "all";
 let autoRefreshTimer = null;
@@ -455,6 +452,21 @@ function setDefaultDates() {
 function accountFromPassword(password) {
   return APP_ACCOUNTS.find((a) => a.password === password) || null;
 }
+function hasFullAccess() {
+  return currentUser?.access === "full" || currentUser?.role === "owner" || currentUser?.role === "admin";
+}
+const STAFF_ALLOWED_SECTIONS = new Set(["requests", "calendar"]);
+function canAccessSection(section) {
+  return hasFullAccess() || STAFF_ALLOWED_SECTIONS.has(section);
+}
+function applyAccessPolicy() {
+  const full = hasFullAccess();
+  document.body.dataset.access = full ? "full" : "requests";
+  document.querySelectorAll("[data-section]").forEach((link) => {
+    link.style.display = canAccessSection(link.dataset.section) ? "" : "none";
+  });
+  [els.topReportsBtn, els.exportBtn, els.bulkExportBtn].forEach((button) => { if (button) button.style.display = full ? "" : "none"; });
+}
 function setWorkspace(value) {
   currentWorkspace = ["architecture", "auto", "all"].includes(value) ? value : "all";
   localStorage.setItem(storage.workspace, currentWorkspace);
@@ -515,7 +527,7 @@ async function login(password) {
   }
 }
 
-function showApp() { document.body.classList.remove("logged-out"); document.body.classList.add("logged-in"); els.loginPanel.style.display = "none"; els.appPanel.style.display = "block"; updateWorkspaceUI(); startAutoRefresh(); }
+function showApp() { document.body.classList.remove("logged-out"); document.body.classList.add("logged-in"); els.loginPanel.style.display = "none"; els.appPanel.style.display = "block"; updateWorkspaceUI(); applyAccessPolicy(); startAutoRefresh(); }
 function showLogin() { if (autoRefreshTimer) clearInterval(autoRefreshTimer); autoRefreshTimer = null; document.body.classList.remove("logged-in"); document.body.classList.add("logged-out"); els.appPanel.style.display = "none"; els.loginPanel.style.display = "block"; }
 function pwd() { return localStorage.getItem(storage.password) || ""; }
 
@@ -570,6 +582,8 @@ function startAutoRefresh() {
 
 function setSection(section) {
   closeMobileSidebar();
+  if (!canAccessSection(section)) section = "requests";
+  applyAccessPolicy();
   document.querySelectorAll("[data-section]").forEach((a) => a.classList.toggle("active", a.dataset.section === section));
   document.querySelectorAll(".workspace-section").forEach((s) => s.style.display = "none");
 

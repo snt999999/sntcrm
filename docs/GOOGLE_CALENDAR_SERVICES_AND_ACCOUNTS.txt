@@ -1,0 +1,35 @@
+СОЛНЦАНЕТ — Google Calendar: услуги и аккаунты
+
+1. Услуги и суммы в Google Calendar
+
+В этой сборке Cloudflare Functions передают в Google Calendar расширенное поле «Услуги и суммы».
+В событии календаря должно отображаться:
+
+Услуги и суммы:
+1. Название услуги — материал: ... — сумма ₽
+2. Название услуги — материал: ... — сумма ₽
+Итого: ... ₽
+
+Для авто данные берутся из строк «Авто услуги».
+Для архитектуры берутся «Услуга», «Плёнка/Пленка», «м²», «Общая стоимость».
+
+2. Важно по Apps Script
+
+Чтобы Google Calendar точно показывал новый красивый блок, открой Google Apps Script календаря и замени код на файл:
+
+google-calendar-sync-appsscript-v32.gs
+
+После замены кода нажми:
+Deploy → Manage deployments → Edit → New version → Deploy
+
+URL Web App можно оставить тот же. В Cloudflare должны остаться:
+GOOGLE_CALENDAR_SYNC_URL или GOOGLE_CALENDAR_IMPORT_URL
+GOOGLE_CALENDAR_SYNC_TOKEN или GOOGLE_CALENDAR_IMPORT_TOKEN
+
+3. Аккаунты входа
+
+Bebelya9 — Сергей Н — полный доступ ко всем разделам.
+Bebelya91 — Роман — полный доступ ко всем разделам.
+Bebelya — общий аккаунт сотрудников — заявки и календарь, можно создавать и править заявки.
+
+Если в Cloudflare задан ADMIN_PASSWORD, он тоже продолжит работать как дополнительный пароль.

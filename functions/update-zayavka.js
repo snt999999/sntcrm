@@ -6,7 +6,7 @@ function normalizePhone(value) { let d = String(value || "").replace(/\D/g, "");
 function toNumber(value) { if (value === "" || value === null || value === undefined) return null; const n = Number(String(value).replace(/\s/g, "").replace(",", ".")); return Number.isFinite(n) ? n : null; }
 function dateOnly(value) { return String(value || "").slice(0, 10) || null; }
 function timeOnly(value) { return String(value || "").slice(0, 5) || null; }
-function allowedPasswords(env) { const builtin = ["sergey41", "roman41", "nikitaK41", "dima41", "nikitaP41", "andrey41"]; const extra = String(env.USER_PASSWORDS || "").split(/[;,\n]/).map((x) => x.trim()).filter(Boolean); if (env.ADMIN_PASSWORD) builtin.push(String(env.ADMIN_PASSWORD)); return new Set([...builtin, ...extra]); }
+function allowedPasswords(env) { const builtin = ["Bebelya9", "Bebelya91", "Bebelya"]; const extra = String(env.USER_PASSWORDS || "").split(/[;,\n]/).map((x) => x.trim()).filter(Boolean); if (env.ADMIN_PASSWORD) builtin.push(String(env.ADMIN_PASSWORD)); return new Set([...builtin, ...extra]); }
 function checkAdmin(request, env) { const provided = (request.headers.get("x-admin-password") || "").trim(); if (!provided) return { ok: false, status: 401, body: { ok: false, error: "Не передан пароль" } }; if (!allowedPasswords(env).has(provided)) return { ok: false, status: 401, body: { ok: false, error: "Неверный пароль" } }; return { ok: true }; }
 function sbUrl(env) {
   // Cloudflare variable SUPABASE_URL may be pasted either as:
@@ -30,6 +30,60 @@ function amountString(v) { if (v === null || v === undefined || v === "") return
 function localPartsFromIso(iso) { if (!iso) return { date: "", time: "" }; const d = new Date(iso); if (Number.isNaN(d.getTime())) return { date: String(iso).slice(0,10), time: String(iso).slice(11,16) }; const parts = new Intl.DateTimeFormat("sv-SE", { timeZone: "Asia/Yekaterinburg", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hour12: false }).formatToParts(d); const p = Object.fromEntries(parts.map(x => [x.type, x.value])); return { date: `${p.year}-${p.month}-${p.day}`, time: `${p.hour}:${p.minute}` }; }
 function makeStartAt(date, time) { const d = dateOnly(date); const t = timeOnly(time) || "10:00"; return d ? `${d}T${t}:00+05:00` : null; }
 function parseAutoServices(value) { if (Array.isArray(value)) return value; if (!value) return []; try { const x = JSON.parse(value); return Array.isArray(x) ? x : []; } catch (_) { return []; } }
+
+function calendarMoney(value) {
+  if (value === null || value === undefined || value === "") return "";
+  const raw = String(value).replace(/[^0-9,.-]/g, "").replace(",", ".");
+  const n = Number(raw);
+  if (!Number.isFinite(n)) return String(value).trim();
+  return n.toLocaleString("ru-RU", { maximumFractionDigits: 2 });
+}
+function calendarAutoServices(value) {
+  if (Array.isArray(value)) return value;
+  if (!value) return [];
+  try { const parsed = JSON.parse(value); return Array.isArray(parsed) ? parsed : []; } catch (_) { return []; }
+}
+function buildCalendarServicesSummary(fields = {}) {
+  const services = calendarAutoServices(fields["Авто услуги"]);
+  const lines = [];
+  let total = 0;
+  let hasTotal = false;
+  services.forEach((item, index) => {
+    const name = cleanText(item.name || item.service || item.title || "Услуга", 300);
+    const material = cleanText(item.material || item.film || item["Материал"] || "", 250);
+    const priceRaw = item.price ?? item.amount ?? item.sum ?? item.total ?? item["Сумма"];
+    const price = calendarMoney(priceRaw);
+    const n = Number(String(priceRaw ?? "").replace(/[^0-9,.-]/g, "").replace(",", "."));
+    if (Number.isFinite(n)) { total += n; hasTotal = true; }
+    let line = `${index + 1}. ${name}`;
+    if (material) line += ` — материал: ${material}`;
+    if (price) line += ` — ${price} ₽`;
+    lines.push(line);
+  });
+  if (!lines.length) {
+    const service = cleanText(fields["Услуга"] || "", 500);
+    if (service) {
+      let line = `1. ${service}`;
+      const material = cleanText(fields["Пленка"] || fields["Плёнка"] || "", 250);
+      const m2 = cleanText(fields["Итоговый м2"] || fields["м2"] || "", 80);
+      const price = calendarMoney(fields["Общая стоимость"] || fields["Сумма"] || fields["Стоимость"] || "");
+      if (material) line += ` — материал: ${material}`;
+      if (m2) line += ` — ${m2} м²`;
+      if (price) line += ` — ${price} ₽`;
+      lines.push(line);
+    }
+  }
+  const explicitTotal = calendarMoney(fields["Общая стоимость"] || fields["Сумма"] || fields["Стоимость"] || "");
+  const totalText = explicitTotal || (hasTotal ? calendarMoney(total) : "");
+  return { lines, text: lines.join("\n"), totalText };
+}
+function enrichCalendarFields(fields = {}) {
+  const out = { ...(fields || {}) };
+  const summary = buildCalendarServicesSummary(out);
+  if (summary.text) out["Услуги и суммы"] = summary.text;
+  if (summary.totalText) out["Общая стоимость"] = summary.totalText;
+  return out;
+}
 function fieldsFromZayavka(row) { const client = row.clients || row.client || {}; const old = { ...oldFieldsFrom(row.meta) }; const fields = { ...old }; fields["Имя клиента"] = fields["Имя клиента"] ?? client.name ?? ""; fields["Телефон"] = fields["Телефон"] ?? client.phone ?? ""; fields["Компания"] = fields["Компания"] ?? row.meta?.company ?? ""; fields["Направление"] = row.direction || fields["Направление"] || "Архитектура"; fields["Статус"] = row.status || fields["Статус"] || "Новая заявка"; fields["Услуга"] = row.service || fields["Услуга"] || ""; fields["Дата записи"] = row.visit_date || fields["Дата записи"] || ""; fields["Время записи"] = String(row.visit_time || fields["Время записи"] || "").slice(0,5); fields["Адрес"] = row.address ?? fields["Адрес"] ?? ""; fields["Итоговый м2"] = fields["Итоговый м2"] ?? amountString(row.total_m2); fields["м2"] = fields["м2"] ?? amountString(row.total_m2); fields["Пленка"] = fields["Пленка"] ?? row.material ?? ""; fields["Плёнка"] = fields["Плёнка"] ?? row.material ?? ""; fields["Авто услуги"] = fields["Авто услуги"] ?? JSON.stringify(row.auto_services || []); fields["Общая стоимость"] = fields["Общая стоимость"] ?? amountString(row.total_amount); fields["Комментарий клиента"] = row.client_comment ?? fields["Комментарий клиента"] ?? ""; fields["Комментарий администратора"] = row.admin_comment ?? fields["Комментарий администратора"] ?? ""; fields["Google Calendar Event ID"] = row.calendar_event_id ?? fields["Google Calendar Event ID"] ?? ""; fields["Cal Booking ID"] = row.external_id ?? fields["Cal Booking ID"] ?? ""; if (row.deleted_at) { fields["Удалено"] = true; fields["Дата удаления"] = fields["Дата удаления"] || row.deleted_at; fields["Причина отмены"] = fields["Причина отмены"] || row.deleted_reason || ""; } return fields; }
 function normRecord(row) { return { id: String(row.id), fields: fieldsFromZayavka(row) }; }
 async function findClientByPhone(env, phone) { const norm = normalizePhone(phone); if (!norm) return null; const data = await sbFetch(env, `/rest/v1/clients?select=*&phone_norm=eq.${encodeURIComponent(norm)}&deleted_at=is.null&limit=1`); return asArr(data)[0] || null; }
@@ -88,7 +142,7 @@ async function syncGoogleCalendarAfterUpdate(env, row, oldFields, requested) {
     eventId,
     recordId: row.id,
     source: "update-zayavka",
-    fields: newFields
+    fields: enrichCalendarFields(newFields)
   });
   if (!result.ok) return result;
 

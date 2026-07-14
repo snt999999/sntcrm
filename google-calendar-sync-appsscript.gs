@@ -103,6 +103,59 @@ function createOrUpdateEvent_(calendar, input) {
   };
 }
 
+
+function parseAutoServicesForCalendar_(value) {
+  if (Array.isArray(value)) return value;
+  if (!value) return [];
+  try {
+    const parsed = typeof value === 'string' ? JSON.parse(value) : value;
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (err) {
+    return [];
+  }
+}
+function moneyForCalendar_(value) {
+  if (value === null || value === undefined || value === '') return '';
+  const raw = String(value).replace(/[^0-9,.-]/g, '').replace(',', '.');
+  const n = Number(raw);
+  if (!isFinite(n)) return String(value).trim();
+  return n.toLocaleString('ru-RU', { maximumFractionDigits: 2 });
+}
+function buildServicesSummary_(fields) {
+  const services = parseAutoServicesForCalendar_(fields['Авто услуги']);
+  const lines = [];
+  let total = 0;
+  let hasTotal = false;
+  services.forEach(function(item, index) {
+    const name = String(item.name || item.service || item.title || item['Услуга'] || 'Услуга').trim();
+    const material = String(item.material || item.film || item['Материал'] || '').trim();
+    const priceRaw = item.price || item.amount || item.sum || item.total || item['Сумма'] || '';
+    const price = moneyForCalendar_(priceRaw);
+    const n = Number(String(priceRaw || '').replace(/[^0-9,.-]/g, '').replace(',', '.'));
+    if (isFinite(n)) { total += n; hasTotal = true; }
+    let line = (index + 1) + '. ' + name;
+    if (material) line += ' — материал: ' + material;
+    if (price) line += ' — ' + price + ' ₽';
+    lines.push(line);
+  });
+  if (!lines.length) {
+    const service = String(fields['Услуга'] || '').trim();
+    if (service) {
+      let line = '1. ' + service;
+      const material = String(fields['Пленка'] || fields['Плёнка'] || '').trim();
+      const m2 = String(fields['Итоговый м2'] || fields['м2'] || '').trim();
+      const price = moneyForCalendar_(fields['Общая стоимость'] || fields['Сумма'] || fields['Стоимость'] || '');
+      if (material) line += ' — материал: ' + material;
+      if (m2) line += ' — ' + m2 + ' м²';
+      if (price) line += ' — ' + price + ' ₽';
+      lines.push(line);
+    }
+  }
+  const explicitTotal = moneyForCalendar_(fields['Общая стоимость'] || fields['Сумма'] || fields['Стоимость'] || '');
+  const totalText = explicitTotal || (hasTotal ? moneyForCalendar_(total) : '');
+  return { lines: lines, text: lines.join('\n'), totalText: totalText };
+}
+
 function buildTitle_(fields) {
   const name = String(fields['Имя клиента'] || fields['ФИО'] || 'Клиент').trim();
   const service = String(fields['Услуга'] || 'Запись').trim();
@@ -115,7 +168,14 @@ function buildDescription_(fields, recordId) {
   rows.push('Клиент: ' + String(fields['Имя клиента'] || fields['ФИО'] || '').trim());
   if (fields['Компания']) rows.push('Компания: ' + fields['Компания']);
   if (fields['Телефон']) rows.push('Телефон: ' + fields['Телефон']);
-  if (fields['Услуга']) rows.push('Услуга: ' + fields['Услуга']);
+
+  const generatedSummary = buildServicesSummary_(fields);
+  const serviceSummary = String(fields['Услуги и суммы'] || '').trim() || generatedSummary.text;
+  if (serviceSummary) rows.push('\nУслуги и суммы:\n' + serviceSummary);
+  else if (fields['Услуга']) rows.push('Услуга: ' + fields['Услуга']);
+
+  const totalText = moneyForCalendar_(fields['Общая стоимость'] || fields['Сумма'] || fields['Стоимость'] || generatedSummary.totalText || '');
+  if (totalText) rows.push('Итого: ' + totalText + ' ₽');
   if (fields['Адрес']) rows.push('Адрес: ' + fields['Адрес']);
   if (fields['м2'] || fields['Итоговый м2']) rows.push('м²: ' + (fields['Итоговый м2'] || fields['м2']));
   if (fields['Монтажники']) rows.push('Монтажники: ' + fields['Монтажники']);
