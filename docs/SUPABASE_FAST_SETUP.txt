@@ -1,0 +1,24 @@
+СОЛНЦАНЕТ CRM v61 Supabase Ready — быстрый запуск
+
+1. Supabase → SQL Editor → New query.
+2. Откройте файл supabase/supabase_schema.sql, скопируйте весь текст и нажмите Run.
+3. В Cloudflare Pages → Settings → Environment variables добавьте:
+
+SUPABASE_URL=https://xxxxx.supabase.co
+SUPABASE_SECRET_KEY=sb_secret_xxxxx
+SUPABASE_PUBLISHABLE_KEY=sb_publishable_xxxxx
+DB_PROVIDER=supabase
+ADMIN_PASSWORD=ваш_пароль
+
+Для SMS через SIGMA также:
+SIGMA_API_TOKEN=токен_sigma
+SIGMA_SENDER=SOLNCANET
+SMS_CRON_SECRET=длинный_секрет
+
+4. В GitHub Actions Secrets добавьте:
+SOLNCANET_SITE_URL=https://ваш-сайт.pages.dev
+SMS_CRON_SECRET=тот_же_секрет
+
+5. Загружайте на GitHub содержимое папки, не саму папку.
+6. После деплоя откройте /test и /nocodb-test. /nocodb-test теперь проверяет Supabase.
+7. Откройте /admin.html в инкогнито, войдите, создайте тестовую заявку, измените, перенесите, удалите и восстановите.

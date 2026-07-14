@@ -535,10 +535,10 @@ async function load(options = {}) {
   } catch (error) { if (!silent) msg(error.message); }
 }
 
-async function reloadRecordsFromNocoDB() {
+async function reloadRecordsFromSupabase() {
   const response = await fetch("/list-zayavki?_=" + Date.now(), { headers: { "x-admin-password": pwd() }, cache: "no-store" });
   const data = await response.json();
-  if (!response.ok || !data.ok) throw new Error(data.error || "Не удалось перечитать NocoDB после сохранения");
+  if (!response.ok || !data.ok) throw new Error(data.error || "Не удалось перечитать Supabase после сохранения");
   records = data.records || [];
   lastLoadAt = Date.now();
   return records;
@@ -593,7 +593,7 @@ function isTrashRecord(record) {
   if (f["Дата удаления"] || f["Дата отмены"] || f["Причина отмены"] || f["Deleted At"] || f["deletedAt"]) return true;
   const comment = norm(fieldText(f["Комментарий администратора"] || f["Комментарий"] || f["История изменений"] || ""));
   if (comment.includes("корзина") || comment.includes("удалено вручную") || comment.includes("перенос в корзину") || comment.includes("отмена / удаление")) return true;
-  // Последний защитный фильтр: если NocoDB хранит статус как объект/массив или в другом служебном поле,
+  // Последний защитный фильтр: если Supabase хранит статус как объект/массив или в другом служебном поле,
   // всё равно убираем запись из активных списков и календаря при любом явном признаке удаления.
   const allFields = norm(fieldText(Object.entries(f).filter(([key]) => /статус|удален|удаление|корзин|отмен|отказ|delete|trash|cancel/i.test(key)).map(([, value]) => value)));
   return allFields.includes("удал") || allFields.includes("корзин") || allFields.includes("отмен") || allFields.includes("отказ") || allFields.includes("delete") || allFields.includes("trash") || allFields.includes("cancel");
@@ -1182,18 +1182,18 @@ async function updateRecord(id, fields, successText, options = {}) {
     }
 
     const saved = data.savedFields || fields || {};
-    await reloadRecordsFromNocoDB();
+    await reloadRecordsFromSupabase();
     const fresh = records.find((r) => String(r.id) === String(id));
-    if (!fresh) throw new Error("Сохранение прошло, но запись не найдена при повторной проверке NocoDB");
+    if (!fresh) throw new Error("Сохранение прошло, но запись не найдена при повторной проверке Supabase");
 
     const misses = verifyRecordFields(fresh, saved);
     if (misses.length) {
-      throw new Error("NocoDB сохранил не все данные: " + misses.slice(0, 3).join("; ") + (misses.length > 3 ? " ..." : ""));
+      throw new Error("Supabase сохранил не все данные: " + misses.slice(0, 3).join("; ") + (misses.length > 3 ? " ..." : ""));
     }
 
     if (current && String(current.id) === String(id)) current = fresh;
     renderAll();
-    if (!options.silent) msg(successText || "Сохранено в NocoDB");
+    if (!options.silent) msg(successText || "Сохранено в Supabase");
     return { ...data, record: fresh };
   } catch (error) {
     msg("Не сохранено: " + error.message);
@@ -1224,7 +1224,7 @@ function scheduleRequestAutosave() {
 }
 async function runRequestAutosave() {
   // v61: автосохранение отключено, чтобы не было гонок и частичного сохранения.
-  // Сохранение карточки выполняется только кнопкой «Сохранить» и обязательно проверяется повторным чтением из NocoDB.
+  // Сохранение карточки выполняется только кнопкой «Сохранить» и обязательно проверяется повторным чтением из Supabase.
   return;
 }
 function getCommentsForRecord(record) {
@@ -1530,7 +1530,7 @@ function renderRequestGoogleCalendar(record) {
     els.requestGoogleOpenLink.hidden = !info.htmlLink;
     if (info.htmlLink) els.requestGoogleOpenLink.href = info.htmlLink;
   }
-  if (els.requestGoogleStatus) els.requestGoogleStatus.textContent = hasEvent ? "Можно обновить событие после изменения даты, времени, адреса или услуги." : "Создаст событие в Google Календаре и запишет ID обратно в NocoDB.";
+  if (els.requestGoogleStatus) els.requestGoogleStatus.textContent = hasEvent ? "Можно обновить событие после изменения даты, времени, адреса или услуги." : "Создаст событие в Google Календаре и запишет ID обратно в Supabase.";
 }
 
 function fieldsForGoogleFromCurrent() {
@@ -1757,7 +1757,7 @@ function getLocalHistory() { try { return JSON.parse(localStorage.getItem(storag
 function parseHistoryField(value) { if (!value) return []; if (Array.isArray(value)) return value; try { const parsed = JSON.parse(value); return Array.isArray(parsed) ? parsed : []; } catch (_) { return String(value).split("\n").filter(Boolean).map((line) => ({ at: "", action: "Запись", details: line })); } }
 function renderRequestHistory(record) { const history = getHistoryForRecord(record); els.requestHistoryBox.innerHTML = history.length ? history.map((h) => `<div class="history-item"><b>${e(h.at || "—")}</b><span>${e(h.action || "")} · ${e(h.user || "")}</span><p>${e(h.details || "")}</p></div>`).join("") : '<p class="muted-text">Истории изменений пока нет.</p>'; }
 function renderHistorySection() { const q = norm(els.historySearchInput?.value || ""); const rows = []; records.forEach((r) => getHistoryForRecord(r).forEach((h) => rows.push({ record: r, h }))); rows.sort((a, b) => String(b.h.at).localeCompare(String(a.h.at))); const filteredRows = rows.filter(({ record, h }) => { const f = record.fields || {}; const hay = norm([h.at, h.action, h.details, record.id, f["Имя клиента"], f["Телефон"]].join(" ")); return !q || hay.includes(q); }); els.historyBody.innerHTML = filteredRows.map(({ record, h }) => `<tr class="clickable-row" data-open-row="${e(record.id)}"><td>${e(h.at || "—")}</td><td>#${e(record.id)}</td><td>${e((record.fields || {})["Имя клиента"] || h.client || "—")}</td><td><b>${e(h.action || "")}</b></td><td>${e(h.details || "")}</td><td><button class="open-btn" data-open="${e(record.id)}">Открыть</button></td></tr>`).join("") || '<tr><td colspan="6">Истории пока нет</td></tr>'; bindActionButtons(); }
-function clearLocalHistory() { if (!confirm("Очистить локальную историю изменений в этом браузере? Данные в NocoDB не удаляются.")) return; localStorage.removeItem(storage.history); renderHistorySection(); msg("Локальная история очищена"); }
+function clearLocalHistory() { if (!confirm("Очистить локальную историю изменений в этом браузере? Данные в Supabase не удаляются.")) return; localStorage.removeItem(storage.history); renderHistorySection(); msg("Локальная история очищена"); }
 
 
 function openReport(type) {
@@ -2518,7 +2518,7 @@ async function uploadFiles(requestId, fileList, input, statusFn = setFilesStatus
     try {
       await updateRecord(requestId, updateFields, "Файлы загружены");
     } catch (saveError) {
-      statusFn("Файл загружен в Google Drive, но список не сохранился в NocoDB: " + saveError.message + ". Проверьте, что в таблице заявок есть поле Файлы типа Long text.");
+      statusFn("Файл загружен в Google Drive, но список не сохранился в Supabase: " + saveError.message + ". Проверьте, что в таблице заявок есть поле Файлы типа Long text.");
     }
     record.fields = { ...(record.fields || {}), ...updateFields };
     if (current && String(current.id) === String(requestId)) current.fields = { ...(current.fields || {}), ...updateFields };
@@ -2932,7 +2932,7 @@ async function loadSmsQueue(silent = false) {
     if (data.setupRequired) {
       smsQueueCache = [];
       renderSmsQueue();
-      if (!silent) setNotificationStatus(els.smsQueueStatusText, "Для автоматических SMS добавьте NOCODB_SMS_ENDPOINT", false);
+      if (!silent) setNotificationStatus(els.smsQueueStatusText, "SMS-очередь работает через Supabase", false);
       return;
     }
     if (!response.ok || !data.ok) {
@@ -3267,7 +3267,7 @@ async function scheduleSmsApi(payload, silent = false) {
   if (!silent) setNotificationStatus(els.scheduleSmsStatus, "Планирую SMS...", true);
   const response = await fetch("/sms-queue", { method: "POST", headers: { "Content-Type": "application/json", "x-admin-password": pwd() }, body: JSON.stringify({ action: "schedule", ...payload }) });
   const data = await response.json().catch(() => ({ ok: false, error: "Функция SMS-очереди вернула не JSON" }));
-  if (data.setupRequired) throw new Error("Сначала добавьте NOCODB_SMS_ENDPOINT и таблицу SMS-очереди");
+  if (data.setupRequired) throw new Error("Проверьте SUPABASE_URL и SUPABASE_SECRET_KEY в Cloudflare");
   if (!response.ok || !data.ok) throw new Error(data.error || "Ошибка планирования SMS");
   await loadSmsQueue(true);
   if (!silent) setNotificationStatus(els.scheduleSmsStatus, "SMS запланировано", true);
@@ -3370,7 +3370,7 @@ function restoreCalendarEvent(id) {
   renderCalendarImport();
 }
 function markCalendarEventImported(id) {
-  // Импортированные события определяются по Cal Booking ID = gcal-<eventId> в NocoDB.
+  // Импортированные события определяются по Cal Booking ID = gcal-<eventId> в Supabase.
   // В скрытые добавляем только личные / нерабочие события, чтобы статистика не путалась.
   if (!id) return;
 }
