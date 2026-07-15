@@ -1864,11 +1864,27 @@ function renderFiles() {
     })
     .sort((a, b) => String(b.id).localeCompare(String(a.id), "ru", { numeric: true }));
 
+  if (!els.filesBody) return;
+  els.filesBody.classList.add("files-cards");
   els.filesBody.innerHTML = rows.map(({ record, id, files }) => {
     const f = record?.fields || {};
-    const fileHtml = files.length ? files.map(fileMiniHtml).join("") : e(f["Файлы"] || "Пока нет файлов");
-    return `<tr class="clickable-row" data-open-row="${e(id)}"><td>#${e(id)}</td><td>${e(f["Имя клиента"] || files[0]?.client || "—")}</td><td>${phoneLink(f["Телефон"] || files[0]?.phone || "")}</td><td>${e(f["Адрес"] || files[0]?.address || "—")}</td><td>${fileHtml}</td><td class="status-cell"><span class="status" data-status="${e(f["Статус"] || files[0]?.status || "")}">${e(f["Статус"] || files[0]?.status || "—")}</span></td><td>${record ? `<button class="open-btn" data-open="${e(id)}">Открыть</button>` : "—"}</td></tr>`;
-  }).join("") || '<tr><td colspan="7">Нет заявок с прикреплёнными файлами</td></tr>';
+    const client = f["Имя клиента"] || files[0]?.client || "—";
+    const phone = f["Телефон"] || files[0]?.phone || "";
+    const address = f["Адрес"] || files[0]?.address || "—";
+    const status = f["Статус"] || files[0]?.status || "—";
+    const fileHtml = files.length ? files.map(fileMiniHtml).join("") : `<p class="muted-text">Пока нет файлов</p>`;
+    return `<article class="files-request-card" data-open-row="${e(id)}">
+      <div class="files-request-head">
+        <div class="files-request-id"><span>Заявка</span><b>#${e(id)}</b></div>
+        <div class="files-request-info"><span>Клиент</span><b>${e(client)}</b></div>
+        <div class="files-request-info"><span>Телефон</span><b>${phoneLink(phone) || "—"}</b></div>
+        <div class="files-request-info"><span>Адрес / объект</span><b>${e(address)}</b></div>
+        <div class="files-request-status"><span class="status" data-status="${e(status)}">${e(status)}</span></div>
+        <div class="files-request-actions">${record ? `<button class="open-btn" data-open="${e(id)}" type="button">Открыть заявку</button>` : ""}</div>
+      </div>
+      <div class="files-request-files">${fileHtml}</div>
+    </article>`;
+  }).join("") || '<div class="files-empty-state">Нет заявок с прикреплёнными файлами</div>';
   bindActionButtons();
 }
 

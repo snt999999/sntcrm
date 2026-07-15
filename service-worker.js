@@ -1,4 +1,4 @@
-const CACHE_NAME = 'solncanet-v61-supabase-bebelya-menu-strong-v2';
+const CACHE_NAME = 'solncanet-v61-supabase-files-layout-fix';
 const APP_SHELL = [
   '/',
   '/index.html',
