@@ -460,21 +460,41 @@ function canAccessSection(section) {
 function applyAccessPolicy() {
   const full = hasFullAccess();
   document.body.dataset.access = full ? "full" : "staff";
+  document.body.classList.toggle("access-staff", !full);
+  document.body.classList.toggle("access-full", full);
   document.querySelectorAll("[data-section]").forEach((link) => {
     const allowed = canAccessSection(link.dataset.section);
     link.hidden = !allowed;
     link.classList.toggle("access-hidden", !allowed);
     link.setAttribute("aria-hidden", allowed ? "false" : "true");
     link.tabIndex = allowed ? 0 : -1;
-    link.style.display = allowed ? "" : "none";
+    if (allowed) {
+      link.style.removeProperty("display");
+      link.style.removeProperty("pointer-events");
+    } else {
+      link.style.setProperty("display", "none", "important");
+      link.style.setProperty("pointer-events", "none", "important");
+    }
   });
   document.querySelectorAll("#sidebar .sidebar-nav [data-section]").forEach((link) => {
     const allowed = canAccessSection(link.dataset.section);
     link.hidden = !allowed;
     link.classList.toggle("access-hidden", !allowed);
-    link.style.display = allowed ? "" : "none";
+    link.setAttribute("aria-hidden", allowed ? "false" : "true");
+    link.tabIndex = allowed ? 0 : -1;
+    if (allowed) {
+      link.style.removeProperty("display");
+      link.style.removeProperty("pointer-events");
+    } else {
+      link.style.setProperty("display", "none", "important");
+      link.style.setProperty("pointer-events", "none", "important");
+    }
   });
-  [els.topReportsBtn, els.exportBtn, els.bulkExportBtn].forEach((button) => { if (button) button.style.display = full ? "" : "none"; });
+  [els.topReportsBtn, els.exportBtn, els.bulkExportBtn].forEach((button) => {
+    if (!button) return;
+    if (full) button.style.removeProperty("display");
+    else button.style.setProperty("display", "none", "important");
+  });
 }
 function setWorkspace(value) {
   currentWorkspace = ["architecture", "auto", "all"].includes(value) ? value : "all";

@@ -401,3 +401,16 @@ body{font-family:Inter,"Segoe UI",Roboto,Arial,sans-serif;background:linear-grad
 /* v61 access policy: hide unavailable left-menu buttons for staff account */
 .access-hidden,[hidden].access-hidden{display:none!important;visibility:hidden!important;pointer-events:none!important}
 body[data-access="staff"] #sidebar .sidebar-nav a.access-hidden{display:none!important}
+
+
+/* v61: жесткое скрытие недоступных пунктов левого меню для общего аккаунта Bebelya */
+html.pre-staff-access .sidebar-nav [data-section]:not([data-section="requests"]):not([data-section="calendar"]):not([data-section="clients"]):not([data-section="objects"]):not([data-section="files"]),
+body[data-access="staff"] .sidebar-nav [data-section]:not([data-section="requests"]):not([data-section="calendar"]):not([data-section="clients"]):not([data-section="objects"]):not([data-section="files"]),
+body.access-staff .sidebar-nav [data-section]:not([data-section="requests"]):not([data-section="calendar"]):not([data-section="clients"]):not([data-section="objects"]):not([data-section="files"]),
+.sidebar-nav [data-section].access-hidden{display:none!important;visibility:hidden!important;pointer-events:none!important}
+body[data-access="staff"] #topReportsBtn,
+body[data-access="staff"] #exportBtn,
+body[data-access="staff"] #bulkExportBtn,
+body.access-staff #topReportsBtn,
+body.access-staff #exportBtn,
+body.access-staff #bulkExportBtn{display:none!important;visibility:hidden!important;pointer-events:none!important}

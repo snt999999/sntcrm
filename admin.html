@@ -13,6 +13,15 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png" />
   <link rel="stylesheet" href="assets/admin.css" />
+
+  <script>
+    (function(){
+      try{
+        var p=localStorage.getItem('solncanet_admin_password_v41')||'';
+        if(p==='Bebelya') document.documentElement.classList.add('pre-staff-access');
+      }catch(e){}
+    })();
+  </script>
 </head>
 <body class="logged-out">
   <button id="mobileMenuBtn" class="mobile-menu-btn" type="button" aria-label="Открыть меню">☰ Меню</button>
