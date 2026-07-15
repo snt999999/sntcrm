@@ -364,3 +364,15 @@ body{font-family:Inter,"Segoe UI",Roboto,Arial,sans-serif;background:linear-grad
 @media(max-width:720px){
   .auto-suggest-box{position:static;right:auto;margin-top:6px;}
 }
+
+
+/* v61 calendar day detailed timeline */
+.calendar-day-agenda-flash{box-shadow:0 0 0 2px rgba(59,130,246,.18),0 14px 30px rgba(37,99,235,.10)!important;transition:box-shadow .25s ease}
+.calendar-timeline{display:grid;gap:12px}
+.calendar-time-slot{display:grid;grid-template-columns:90px 1fr;gap:12px;align-items:start}
+.calendar-time-slot-label{position:sticky;top:0;background:#eef4ff;color:#1d4ed8;border:1px solid #dbeafe;border-radius:12px;padding:10px 12px;font-weight:900;text-align:center;line-height:1.1}
+.calendar-time-slot-items{display:grid;gap:10px;position:relative}
+.calendar-time-slot-items:before{content:"";position:absolute;left:-7px;top:6px;bottom:6px;width:2px;background:#e5eefc;border-radius:999px}
+.calendar-time-slot-items .calendar-agenda-item{position:relative}
+.calendar-time-slot-items .calendar-agenda-item:before{content:"";position:absolute;left:-14px;top:26px;width:10px;height:10px;border-radius:999px;background:#93c5fd;border:2px solid #fff;box-shadow:0 0 0 2px #dbeafe}
+@media(max-width:760px){.calendar-time-slot{grid-template-columns:1fr;gap:8px}.calendar-time-slot-label{position:static;text-align:left;padding:8px 10px}.calendar-time-slot-items:before{left:10px;top:0;bottom:0}.calendar-time-slot-items .calendar-agenda-item{margin-left:22px}.calendar-time-slot-items .calendar-agenda-item:before{left:-18px;top:20px}}

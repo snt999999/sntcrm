@@ -710,6 +710,7 @@ function bindCalendarMonthButtons() {
       event.stopPropagation();
       selectedCalendarDate = button.dataset.calendarSelectDay;
       render();
+      openCalendarDayAgenda(true);
     };
   });
   document.querySelectorAll("[data-calendar-day]").forEach((day) => {
@@ -717,6 +718,7 @@ function bindCalendarMonthButtons() {
       if (event.target.closest("[data-open], [data-calendar-select-day]")) return;
       selectedCalendarDate = day.dataset.calendarDay;
       render();
+      openCalendarDayAgenda(true);
     };
   });
 }
@@ -726,7 +728,60 @@ function renderCalendarSelectedDay(items) {
   const title = selectedCalendarDate ? formatDateRu(selectedCalendarDate, true) : "Выберите день";
   els.calendarSelectedDateTitle.textContent = title;
   els.calendarSelectedDateSummary.textContent = `${items.length} ${plural(items.length, "событие", "события", "событий")} на выбранный день`;
-  els.calendarSelectedEvents.innerHTML = items.map(calendarAgendaItemHtml).join("") || `<div class="calendar-agenda-empty">На этот день заявок нет.</div>`;
+  if (!items.length) {
+    els.calendarSelectedEvents.innerHTML = `<div class="calendar-agenda-empty">На этот день заявок нет.</div>`;
+    return;
+  }
+  const sorted = [...items].sort((a, b) => timeToMinutes((a.fields || {})["Время записи"]) - timeToMinutes((b.fields || {})["Время записи"]));
+  els.calendarSelectedEvents.innerHTML = calendarDayTimelineHtml(sorted);
+}
+
+function openCalendarDayAgenda(scroll = false) {
+  if (!els.calendarDayAgenda) return;
+  els.calendarDayAgenda.classList.remove("calendar-day-agenda-flash");
+  if (scroll) {
+    requestAnimationFrame(() => {
+      els.calendarDayAgenda.scrollIntoView({ behavior: "smooth", block: "start" });
+      setTimeout(() => els.calendarDayAgenda.classList.add("calendar-day-agenda-flash"), 120);
+      setTimeout(() => els.calendarDayAgenda.classList.remove("calendar-day-agenda-flash"), 1400);
+    });
+  }
+}
+
+function timeToMinutes(value) {
+  const raw = String(value || "").trim();
+  const m = raw.match(/^(\d{1,2}):(\d{2})$/);
+  if (!m) return 24 * 60 + 1;
+  const hh = Math.max(0, Math.min(23, Number(m[1]) || 0));
+  const mm = Math.max(0, Math.min(59, Number(m[2]) || 0));
+  return hh * 60 + mm;
+}
+
+function timelineHourLabel(minutes) {
+  const safe = Number.isFinite(minutes) ? Math.max(0, minutes) : 0;
+  const hh = String(Math.floor(safe / 60)).padStart(2, "0");
+  return `${hh}:00`;
+}
+
+function calendarDayTimelineHtml(items) {
+  const groups = new Map();
+  items.forEach((record) => {
+    const mins = timeToMinutes((record.fields || {})["Время записи"]);
+    const hour = mins > 24 * 60 ? "unknown" : Math.floor(mins / 60);
+    const key = String(hour);
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(record);
+  });
+  const ordered = [...groups.keys()].sort((a, b) => {
+    if (a === "unknown") return 1;
+    if (b === "unknown") return -1;
+    return Number(a) - Number(b);
+  });
+  return `<div class="calendar-timeline">${ordered.map((key) => {
+    const groupItems = groups.get(key) || [];
+    const label = key === "unknown" ? "Без времени" : timelineHourLabel(Number(key) * 60);
+    return `<section class="calendar-time-slot"><div class="calendar-time-slot-label">${e(label)}</div><div class="calendar-time-slot-items">${groupItems.map(calendarAgendaItemHtml).join("")}</div></section>`;
+  }).join("")}</div>`;
 }
 
 function calendarAgendaItemHtml(record) {

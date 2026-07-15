@@ -1,4 +1,4 @@
-const CACHE_NAME = 'solncanet-v61-supabase-sigma-date-v-preposition-fix';
+const CACHE_NAME = 'solncanet-v61-supabase-calendar-day-detail-v1';
 const APP_SHELL = [
   '/',
   '/index.html',
