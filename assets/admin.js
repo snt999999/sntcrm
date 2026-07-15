@@ -241,10 +241,10 @@ const els = {
 };
 
 const NOTIFICATION_TEMPLATES = {
-  confirm: { title: "Подтверждение записи", text: "СОЛНЦАНЕТ: запись оформлена на {date} {time}." },
-  reminder: { title: "Напоминание за день", text: "СОЛНЦАНЕТ: напоминаем о записи {date}, {time}." },
+  confirm: { title: "Подтверждение записи", text: "СОЛНЦАНЕТ: запись оформлена на {date} в {time}." },
+  reminder: { title: "Напоминание за день", text: "СОЛНЦАНЕТ: напоминаем о записи {date} в {time}." },
   reminder2h: { title: "Напоминание за 2 часа", text: "СОЛНЦАНЕТ: до записи осталось 2 часа." },
-  reschedule: { title: "Перенос записи", text: "СОЛНЦАНЕТ: запись перенесена на {date} {time}." },
+  reschedule: { title: "Перенос записи", text: "СОЛНЦАНЕТ: запись перенесена на {date} в {time}." },
   review: { title: "Благодарность + отзыв", text: "Спасибо, что выбрали СОЛНЦАНЕТ! Оставьте отзыв: https://clck.su/solncanet" }
 };
 

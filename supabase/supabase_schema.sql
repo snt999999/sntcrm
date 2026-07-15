@@ -343,10 +343,10 @@ insert into public.settings (key, value, comment)
 values
   ('crm', '{"timezone_offset_minutes":300,"timezone":"Asia/Yekaterinburg"}'::jsonb, 'Основные настройки CRM'),
   ('sms_templates', '{
-    "confirmation":"СОЛНЦАНЕТ: запись оформлена на {Дата} {Время}.",
-    "reminder_day":"СОЛНЦАНЕТ: напоминаем о записи {Дата}, {Время}.",
+    "confirmation":"СОЛНЦАНЕТ: запись оформлена на {Дата} в {Время}.",
+    "reminder_day":"СОЛНЦАНЕТ: напоминаем о записи {Дата} в {Время}.",
     "reminder_2h":"СОЛНЦАНЕТ: до записи осталось 2 часа.",
-    "reschedule":"СОЛНЦАНЕТ: запись перенесена на {Дата} {Время}.",
+    "reschedule":"СОЛНЦАНЕТ: запись перенесена на {Дата} в {Время}.",
     "review":"Спасибо, что выбрали СОЛНЦАНЕТ! Оставьте отзыв: https://clck.su/solncanet"
   }'::jsonb, 'SMS шаблоны')
 on conflict (key) do update set
