@@ -376,3 +376,24 @@ body{font-family:Inter,"Segoe UI",Roboto,Arial,sans-serif;background:linear-grad
 .calendar-time-slot-items .calendar-agenda-item{position:relative}
 .calendar-time-slot-items .calendar-agenda-item:before{content:"";position:absolute;left:-14px;top:26px;width:10px;height:10px;border-radius:999px;background:#93c5fd;border:2px solid #fff;box-shadow:0 0 0 2px #dbeafe}
 @media(max-width:760px){.calendar-time-slot{grid-template-columns:1fr;gap:8px}.calendar-time-slot-label{position:static;text-align:left;padding:8px 10px}.calendar-time-slot-items:before{left:10px;top:0;bottom:0}.calendar-time-slot-items .calendar-agenda-item{margin-left:22px}.calendar-time-slot-items .calendar-agenda-item:before{left:-18px;top:20px}}
+
+
+/* v61 request full client card */
+.request-info{display:block!important}
+.request-client-card{background:linear-gradient(180deg,#f8fbff,#fff);border:1px solid #dbeafe;border-radius:18px;padding:16px;margin:0 0 14px;color:#0f2347}
+.request-client-card-head{display:flex;justify-content:space-between;gap:14px;align-items:flex-start;margin-bottom:12px}
+.request-client-card-kicker{display:inline-block;color:#2563eb;font-size:12px;font-weight:900;text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px}
+.request-client-card h3{margin:0 0 4px;font-size:22px;color:#0b2a63}
+.request-client-card p{margin:0;color:#334155;font-weight:750;line-height:1.45}
+.request-client-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:12px 0}
+.request-client-stats span{background:#fff;border:1px solid #e5eefc;border-radius:14px;padding:10px 12px;display:grid;gap:2px}
+.request-client-stats b{font-size:18px;color:#0b2a63}.request-client-stats small{font-weight:800;color:#64748b}
+.request-client-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 14px;background:#fff;border:1px solid #e5eefc;border-radius:14px;padding:12px}
+.request-client-grid p{font-size:14px;word-break:break-word}.request-client-comments,.request-client-last{margin-top:10px;background:#fff;border:1px solid #e5eefc;border-radius:14px;padding:10px 12px}
+.request-client-comments summary,.request-client-last summary{cursor:pointer;font-weight:900;color:#0b2a63}
+.request-client-comments div{margin-top:8px;padding:8px 0;border-top:1px solid #eef2f7;color:#334155;font-weight:700}
+.request-current-summary{background:#fff;border:1px dashed #cbd5e1;border-radius:14px;padding:12px;color:#334155;font-weight:750}
+@media(max-width:760px){.request-client-card-head{display:grid}.request-client-card-head .open-btn{width:100%}.request-client-stats,.request-client-grid{grid-template-columns:1fr}}
+
+/* Request brief client card */
+.request-client-card-brief .request-client-grid-brief{grid-template-columns:repeat(3,minmax(0,1fr))}.request-client-card-brief .request-client-card-kicker{letter-spacing:.04em;text-transform:uppercase}@media(max-width:820px){.request-client-card-brief .request-client-grid-brief{grid-template-columns:1fr}}

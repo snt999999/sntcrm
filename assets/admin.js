@@ -1109,12 +1109,40 @@ function updateEditDirectionUI() {
   ensureRomanInstallerForAuto("edit");
 }
 
+function requestClientCardHtml(record) {
+  const f = record.fields || {};
+  const key = clientKeyFromFields(f);
+  const rows = clientRecordsByKey(key);
+  const s = rows.length ? clientSummaryFromRows(rows) : {
+    name: f["Имя клиента"] || "Без имени",
+    company: f["Компания"] || "",
+    phone: f["Телефон"] || ""
+  };
+  const phones = uniqueValues(rows.map((r) => (r.fields || {})["Телефон"]).concat(f["Телефон"] || ""));
+  const companies = uniqueValues(rows.map((r) => (r.fields || {})["Компания"]).concat(f["Компания"] || ""));
+  return `<section class="request-client-card request-client-card-brief">
+    <div class="request-client-card-head">
+      <div>
+        <span class="request-client-card-kicker">Клиент</span>
+        <h3>${e(s.name || "Без имени")}</h3>
+        <p>${phones.length ? phones.map(phoneLink).join(", ") : "Телефон не указан"}</p>
+      </div>
+      <button class="open-btn" type="button" data-open-client="${e(key)}">Открыть полную карточку</button>
+    </div>
+    <div class="request-client-grid request-client-grid-brief">
+      <p><b>ФИО:</b> ${e(s.name || "—")}</p>
+      <p><b>Телефон:</b> ${phones.length ? phones.map(phoneLink).join("<br>") : "—"}</p>
+      <p><b>Компания:</b> ${e(companies.join(", ") || s.company || "—")}</p>
+    </div>
+  </section>`;
+}
+
 function openRequest(id) {
   current = records.find((r) => String(r.id) === String(id));
   if (!current) return;
   const f = current.fields || {};
   els.dialogTitle.textContent = "Заявка #" + current.id;
-  els.requestInfo.innerHTML = `<b>${e(f["Имя клиента"] || "—")}</b>${f["Компания"] ? `<br><b>Компания:</b> ${e(f["Компания"])}` : ""}<br>${phoneLink(f["Телефон"])}<br>${e(f["Дата записи"] || "")} ${e(f["Время записи"] || "")}<br>${e(f["Услуга"] || "")}<br>${recordDirection(current)==="auto" ? `<b>Авто:</b> ${e(f["Авто"]||"—")}<br><b>Плёнка:</b> ${e(f["Пленка"]||"—")}<br><b>Стоимость:</b> ${e(f["Общая стоимость"]||"0")} ₽<br>` : ""}${e(f["Адрес"] || "")}<br><br>${nl2br(f["Комментарий клиента"] || f["Комментарий"] || "")}`;
+  els.requestInfo.innerHTML = requestClientCardHtml(current) + `<div class="request-current-summary"><b>Текущая заявка #${e(current.id)}</b><br>${e(f["Дата записи"] || "")} ${e(f["Время записи"] || "")}<br>${e(f["Услуга"] || "")}<br>${recordDirection(current)==="auto" ? `<b>Авто:</b> ${e(f["Авто"]||"—")}<br><b>Плёнка:</b> ${e(f["Пленка"]||"—")}<br><b>Стоимость:</b> ${e(f["Общая стоимость"]||"0")} ₽<br>` : ""}${e(f["Адрес"] || "")}<br><br>${nl2br(f["Комментарий клиента"] || f["Комментарий"] || "")}</div>`;
   els.editDate.value = f["Дата записи"] || "";
   els.editTime.value = f["Время записи"] || "";
   els.editStatus.value = f["Статус"] || "Новая заявка";
