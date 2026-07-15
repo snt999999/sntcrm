@@ -25,7 +25,7 @@ async function sbFetch(env, path, options = {}) { const err = checkSupabaseEnv(e
 function asArr(data) { return Array.isArray(data) ? data : (data ? [data] : []); }
 function oldFieldsFrom(meta) { return (meta && typeof meta === "object" && meta.old_fields && typeof meta.old_fields === "object") ? meta.old_fields : {}; }
 function mergeOldFields(meta, incoming) { const old = { ...oldFieldsFrom(meta) }; for (const [k,v] of Object.entries(incoming || {})) { if (String(k).startsWith("__")) continue; old[k] = v; } return old; }
-function ruDate(value) { const d = String(value || "").slice(0,10); if (!/^\d{4}-\d{2}-\d{2}$/.test(d)) return d; return `${d.slice(8,10)}.${d.slice(5,7)}.${d.slice(0,4)}`; }
+function ruDate(value) { const d = String(value || "").slice(0,10); if (!/^\d{4}-\d{2}-\d{2}$/.test(d)) return String(value || "").replace(/^(\d{2}\.\d{2})(?:\.\d{4})?.*$/, "$1"); return `${d.slice(8,10)}.${d.slice(5,7)}`; }
 function amountString(v) { if (v === null || v === undefined || v === "") return ""; const n = Number(v); return Number.isFinite(n) ? String(n).replace(/\.00$/, "") : String(v); }
 function localPartsFromIso(iso) { if (!iso) return { date: "", time: "" }; const d = new Date(iso); if (Number.isNaN(d.getTime())) return { date: String(iso).slice(0,10), time: String(iso).slice(11,16) }; const parts = new Intl.DateTimeFormat("sv-SE", { timeZone: "Asia/Yekaterinburg", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hour12: false }).formatToParts(d); const p = Object.fromEntries(parts.map(x => [x.type, x.value])); return { date: `${p.year}-${p.month}-${p.day}`, time: `${p.hour}:${p.minute}` }; }
 function makeStartAt(date, time) { const d = dateOnly(date); const t = timeOnly(time) || "10:00"; return d ? `${d}T${t}:00+05:00` : null; }
@@ -90,14 +90,15 @@ function smsKindFromAny(...values) {
 }
 function partsFromMessageText(message) {
   const text = normalizeForSigmaTemplate(message);
-  let m = text.match(/(?:оформлена|перенесена)\s+на\s+(\d{2}\.\d{2}\.\d{4})\s+(\d{1,2}:\d{2})/i);
+  let m = text.match(/(?:оформлена|перенесена)\s+на\s+(\d{2}\.\d{2}(?:\.\d{4})?)\s+(\d{1,2}:\d{2})/i);
   if (m) return { date: m[1], time: m[2].padStart(5, "0") };
-  m = text.match(/о\s+записи\s+(\d{2}\.\d{2}\.\d{4})\s*,\s*(\d{1,2}:\d{2})/i);
+  m = text.match(/о\s+записи\s+(\d{2}\.\d{2}(?:\.\d{4})?)\s*,\s*(\d{1,2}:\d{2})/i);
   if (m) return { date: m[1], time: m[2].padStart(5, "0") };
   return { date: "", time: "" };
 }
+function sigmaShortDate(value) { const s = String(value || "").trim(); const m = s.match(/(\d{2})\.(\d{2})(?:\.\d{4})?/); if (m) return `${m[1]}.${m[2]}`; const iso = s.slice(0,10); if (/^\d{4}-\d{2}-\d{2}$/.test(iso)) return `${iso.slice(8,10)}.${iso.slice(5,7)}`; return s; }
 function approvedTemplateText(kind, date, time) {
-  const d = String(date || "").trim();
+  const d = sigmaShortDate(date);
   const t = String(time || "").trim();
   if (kind === "confirmation" && d && t) return `СОЛНЦАНЕТ: запись оформлена на ${d} ${t}.`;
   if (kind === "reminder_day" && d && t) return `СОЛНЦАНЕТ: напоминаем о записи ${d}, ${t}.`;

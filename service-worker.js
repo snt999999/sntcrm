@@ -1,4 +1,4 @@
-const CACHE_NAME = 'solncanet-v61-supabase-sigma-template-debug';
+const CACHE_NAME = 'solncanet-v61-supabase-sigma-date-ddmm-fix';
 const APP_SHELL = [
   '/',
   '/index.html',

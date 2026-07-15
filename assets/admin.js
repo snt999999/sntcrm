@@ -2765,9 +2765,12 @@ function fillNotificationTemplate(template, record) {
 function formatRuDate(value) {
   if (!value) return "";
   try {
-    const [y, m, d] = String(value).slice(0, 10).split("-").map(Number);
-    if (!y || !m || !d) return value;
-    return new Intl.DateTimeFormat("ru-RU", { day: "2-digit", month: "2-digit", year: "numeric" }).format(new Date(y, m - 1, d));
+    const raw = String(value).trim();
+    const mRu = raw.match(/^(\d{2})\.(\d{2})(?:\.\d{4})?/);
+    if (mRu) return `${mRu[1]}.${mRu[2]}`;
+    const [y, m, d] = raw.slice(0, 10).split("-").map(Number);
+    if (!y || !m || !d) return raw;
+    return `${String(d).padStart(2, "0")}.${String(m).padStart(2, "0")}`;
   } catch (_) { return value; }
 }
 
