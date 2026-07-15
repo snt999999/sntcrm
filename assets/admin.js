@@ -453,13 +453,13 @@ function accountFromPassword(password) {
 function hasFullAccess() {
   return currentUser?.access === "full" || currentUser?.role === "owner" || currentUser?.role === "admin";
 }
-const STAFF_ALLOWED_SECTIONS = new Set(["requests", "calendar"]);
+const STAFF_ALLOWED_SECTIONS = new Set(["requests", "calendar", "clients", "objects", "files"]);
 function canAccessSection(section) {
   return hasFullAccess() || STAFF_ALLOWED_SECTIONS.has(section);
 }
 function applyAccessPolicy() {
   const full = hasFullAccess();
-  document.body.dataset.access = full ? "full" : "requests";
+  document.body.dataset.access = full ? "full" : "staff";
   document.querySelectorAll("[data-section]").forEach((link) => {
     link.style.display = canAccessSection(link.dataset.section) ? "" : "none";
   });

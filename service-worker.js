@@ -1,4 +1,4 @@
-const CACHE_NAME = 'solncanet-v61-supabase-calendar-day-detail-v1';
+const CACHE_NAME = 'solncanet-v61-supabase-staff-menu-clients-files-v1';
 const APP_SHELL = [
   '/',
   '/index.html',
