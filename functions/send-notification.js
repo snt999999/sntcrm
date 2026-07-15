@@ -73,6 +73,80 @@ function sigmaSenderCandidates(env) {
 }
 function isSenderNotFoundError(text, data) { const all = `${text || ""} ${data?.message || ""} ${data?.error || ""} ${data?.name || ""} ${data?.raw || ""}`.toLowerCase(); return /sender\s+not\s+found|sender_not_found|required.*sender|sender.*required|payload\.sender|отправител[ья][^а-яa-z0-9]*(не\s+найден|обязател)|имя\s+отправител[ья].*(не\s+найден|не\s+подключ|обязател)/i.test(all); }
 function buildSigmaRequestBody(phone, message, sender) { return { recipient: "+" + phone, type: "sms", payload: { text: message, sender } }; }
+
+// SIGMA принимает только тексты, совпадающие с утверждёнными шаблонами.
+// Перед отправкой принудительно приводим SMS к одному из 5 утверждённых текстов.
+function normalizeForSigmaTemplate(value) {
+  return cleanText(value, 1000).replace(/\u00a0/g, " ").replace(/\s+/g, " ").trim();
+}
+function smsKindFromAny(...values) {
+  const s = values.map((v) => String(v || "")).join(" ").toLowerCase();
+  if (/confirmation|confirm|подтверж|оформлена/.test(s)) return "confirmation";
+  if (/reminder_day|за\s*день|напоминаем/.test(s)) return "reminder_day";
+  if (/reminder_2h|2\s*час|два\s*час|осталось\s*2/.test(s)) return "reminder_2h";
+  if (/reschedule|перен[оё]с|перенесена/.test(s)) return "reschedule";
+  if (/review|отзыв|благодар/.test(s)) return "review";
+  return "";
+}
+function partsFromMessageText(message) {
+  const text = normalizeForSigmaTemplate(message);
+  let m = text.match(/(?:оформлена|перенесена)\s+на\s+(\d{2}\.\d{2}\.\d{4})\s+(\d{1,2}:\d{2})/i);
+  if (m) return { date: m[1], time: m[2].padStart(5, "0") };
+  m = text.match(/о\s+записи\s+(\d{2}\.\d{2}\.\d{4})\s*,\s*(\d{1,2}:\d{2})/i);
+  if (m) return { date: m[1], time: m[2].padStart(5, "0") };
+  return { date: "", time: "" };
+}
+function approvedTemplateText(kind, date, time) {
+  const d = String(date || "").trim();
+  const t = String(time || "").trim();
+  if (kind === "confirmation" && d && t) return `СОЛНЦАНЕТ: запись оформлена на ${d} ${t}.`;
+  if (kind === "reminder_day" && d && t) return `СОЛНЦАНЕТ: напоминаем о записи ${d}, ${t}.`;
+  if (kind === "reminder_2h") return "СОЛНЦАНЕТ: до записи осталось 2 часа.";
+  if (kind === "reschedule" && d && t) return `СОЛНЦАНЕТ: запись перенесена на ${d} ${t}.`;
+  if (kind === "review") return "Спасибо, что выбрали СОЛНЦАНЕТ! Оставьте отзыв: https://clck.su/solncanet";
+  return "";
+}
+function dateTimeFromOldFields(old) {
+  const dateRaw = old?.["Дата записи"] || old?.visit_date || old?.date || "";
+  const timeRaw = old?.["Время записи"] || old?.visit_time || old?.time || "";
+  const d = ruDate(dateRaw);
+  const t = timeOnly(timeRaw);
+  return { date: d, time: t };
+}
+async function dateTimeFromZayavka(env, zayavkaId) {
+  if (!zayavkaId) return { date: "", time: "" };
+  try {
+    const data = await sbFetch(env, `/rest/v1/zayavki?select=visit_date,visit_time,meta&id=eq.${encodeURIComponent(zayavkaId)}&limit=1`);
+    const row = asArr(data)[0] || {};
+    const old = oldFieldsFrom(row.meta || {});
+    const date = ruDate(row.visit_date || old["Дата записи"] || "");
+    const time = timeOnly(row.visit_time || old["Время записи"] || "");
+    return { date, time };
+  } catch (_) {
+    return { date: "", time: "" };
+  }
+}
+async function approvedSmsMessageForQueue(env, row) {
+  const old = oldFieldsFrom(row.meta || {});
+  const raw = normalizeForSigmaTemplate(row.message || old["Текст SMS"] || "");
+  const kind = smsKindFromAny(row.sms_type, row.template_name, old["Тип уведомления"], raw);
+  if (!kind) return "";
+  if (kind === "reminder_2h" || kind === "review") return approvedTemplateText(kind);
+  let parts = dateTimeFromOldFields(old);
+  if (!parts.date || !parts.time) parts = partsFromMessageText(raw);
+  if (!parts.date || !parts.time) parts = await dateTimeFromZayavka(env, row.zayavka_id || old["ID заявки"] || "");
+  return normalizeForSigmaTemplate(approvedTemplateText(kind, parts.date, parts.time));
+}
+function approvedSmsMessageFromBody(body, rawMessage) {
+  const raw = normalizeForSigmaTemplate(rawMessage);
+  const kind = smsKindFromAny(body?.type, body?.template, body?.["Тип уведомления"], raw);
+  if (!kind) return "";
+  if (kind === "reminder_2h" || kind === "review") return approvedTemplateText(kind);
+  let parts = { date: ruDate(body?.visitDate || body?.recordDate || body?.appointmentDate || body?.["Дата записи"] || ""), time: timeOnly(body?.visitTime || body?.recordTime || body?.appointmentTime || body?.["Время записи"] || "") };
+  if (!parts.date || !parts.time) parts = partsFromMessageText(raw);
+  return normalizeForSigmaTemplate(approvedTemplateText(kind, parts.date, parts.time));
+}
+
 async function postSigmaSms(env, token, requestBody) { const url = new URL(`${sigmaBase(env)}/sendings`); url.searchParams.set("return", "each"); const res = await fetch(url.toString(), { method: "POST", headers: { "Content-Type": "application/json", "Accept": "application/json", "Authorization": token }, body: JSON.stringify(requestBody) }); const raw = await res.text(); let data; try { data = JSON.parse(raw); } catch (_) { data = { raw }; } const item = firstSigmaItem(data); const id = sigmaId(item || data); const state = sigmaState(item || data); const errorText = state.error || data.message || data.error || data.name || data.raw || ""; const ok = res.ok && Boolean(id) && !isSigmaFailed(state.status, errorText); return { ok, provider: "sigma", httpStatus: res.status, smsId: id, id, status: state.status || (ok ? "created" : "error"), statusText: sigmaStatusText(state.status, errorText), cost: item?.cost ?? data.cost ?? "", balance: data.balance ?? "", result: data, error: ok ? "" : (sigmaStatusText(state.status, errorText) || `SIGMA не подтвердила отправку. HTTP ${res.status}`) }; }
 async function sendSigmaSms(env, to, message) {
   const token = sigmaToken(env);
@@ -98,6 +172,6 @@ async function createSmsLog(env, fields, smsPayload) { try { const sms = await c
 function nowYParts() { return localPartsFromIso(new Date().toISOString()); }
 async function logDirectSms({ env, body, to, message, smsPayload }) { const now = nowYParts(); const fields = { "ID заявки": cleanText(body.recordId || body.requestId || "TEST-" + Date.now(), 80), "ФИО": cleanText(body.client || body.name || "Тестовая отправка", 160), "Компания": cleanText(body.company || "", 160), "Телефон": normalizePhone(to), "Канал": "sms", "Тип уведомления": cleanText(body.type || "Тестовая / ручная отправка", 120), "Текст SMS": message, "Дата отправки": now.date, "Время отправки": now.time, "Ошибка": smsPayload?.ok ? "" : cleanText(smsPayload?.error || "Ошибка отправки", 700), "Дата фактической отправки": smsPayload?.ok ? new Date().toISOString() : "", "Создано": new Date().toISOString(), __zayavka_id: body.recordId || null }; await createSmsLog(env, fields, smsPayload); }
 async function sendTelegram({ env, chatId, message }) { const token = env.TELEGRAM_BOT_TOKEN || ""; if (!token) return json({ ok: false, error: "Не задан TELEGRAM_BOT_TOKEN в Cloudflare" }, 400); const response = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ chat_id: chatId, text: message, disable_web_page_preview: true }) }); const data = await response.json().catch(() => ({})); return json({ ok: Boolean(data.ok), provider: "telegram", chatId, result: data, error: data.ok ? "" : (data.description || "Telegram не подтвердил отправку") }, 200); }
-export async function onRequestPost({ request, env }) { try { const password = request.headers.get("x-admin-password") || ""; if (!env.ADMIN_PASSWORD || password !== env.ADMIN_PASSWORD) return json({ ok: false, error: "Неверный пароль администратора" }, 401); const body = await request.json().catch(() => ({})); const channel = String(body.channel || "sms").toLowerCase(); const message = cleanText(body.message || body.text || ""); const to = normalizePhone(body.to || body.phone || body.chatId || ""); if (!message) return json({ ok: false, error: "Пустой текст уведомления" }, 400); if (channel === "sms") { if (!to) return json({ ok: false, error: "Не указан номер телефона клиента" }, 400); const smsPayload = await sendSigmaSms(env, to, message); if (!body.skipSmsLog && !body.queueId) await logDirectSms({ env, body, to, message, smsPayload }); return json(smsPayload, 200); } if (channel === "telegram" || channel === "admin_telegram") { const chatId = to || env.TELEGRAM_ADMIN_CHAT_ID || ""; if (!chatId) return json({ ok: false, error: "Не указан TELEGRAM_ADMIN_CHAT_ID" }, 400); return await sendTelegram({ env, chatId, message }); } return json({ ok: false, error: "Неизвестный канал уведомлений: " + channel }, 400); } catch (error) { return json({ ok: false, error: error.message || String(error) }, 500); } }
+export async function onRequestPost({ request, env }) { try { const password = request.headers.get("x-admin-password") || ""; if (!env.ADMIN_PASSWORD || password !== env.ADMIN_PASSWORD) return json({ ok: false, error: "Неверный пароль администратора" }, 401); const body = await request.json().catch(() => ({})); const channel = String(body.channel || "sms").toLowerCase(); let message = cleanText(body.message || body.text || ""); const to = normalizePhone(body.to || body.phone || body.chatId || ""); if (!message) return json({ ok: false, error: "Пустой текст уведомления" }, 400); if (channel === "sms") { if (!to) return json({ ok: false, error: "Не указан номер телефона клиента" }, 400); const approved = approvedSmsMessageFromBody(body, message); if (!approved) return json({ ok: false, provider: "sigma", error: "Текст SMS не совпадает с утверждёнными шаблонами SIGMA. Используйте только: подтверждение, напоминание за день, напоминание за 2 часа, перенос, отзыв." }, 400); message = approved; const smsPayload = await sendSigmaSms(env, to, message); if (!body.skipSmsLog && !body.queueId) await logDirectSms({ env, body, to, message, smsPayload }); return json(smsPayload, 200); } if (channel === "telegram" || channel === "admin_telegram") { const chatId = to || env.TELEGRAM_ADMIN_CHAT_ID || ""; if (!chatId) return json({ ok: false, error: "Не указан TELEGRAM_ADMIN_CHAT_ID" }, 400); return await sendTelegram({ env, chatId, message }); } return json({ ok: false, error: "Неизвестный канал уведомлений: " + channel }, 400); } catch (error) { return json({ ok: false, error: error.message || String(error) }, 500); } }
 export async function onRequestGet({ request, env }) { const password = request.headers.get("x-admin-password") || ""; if (!env.ADMIN_PASSWORD || password !== env.ADMIN_PASSWORD) return json({ ok: false, error: "Неверный пароль администратора" }, 401); return json({ ok: true, sms: Boolean(sigmaToken(env)), telegram: Boolean(env.TELEGRAM_BOT_TOKEN && env.TELEGRAM_ADMIN_CHAT_ID), provider: "sigma", database: Boolean(sbUrl(env) && sbKey(env)), apiBase: sigmaBase(env), sender: sigmaPrimarySender(env), fallbackSenders: sigmaFallbackSenders(env), testMode: false }); }
 export async function onRequest(context) { if (context.request.method === "GET") return onRequestGet({ request: context.request, env: context.env }); if (context.request.method === "POST") return onRequestPost({ request: context.request, env: context.env }); return json({ ok: false, error: "Only GET/POST" }, 405); }

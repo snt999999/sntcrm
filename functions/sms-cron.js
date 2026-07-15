@@ -73,6 +73,80 @@ function sigmaSenderCandidates(env) {
 }
 function isSenderNotFoundError(text, data) { const all = `${text || ""} ${data?.message || ""} ${data?.error || ""} ${data?.name || ""} ${data?.raw || ""}`.toLowerCase(); return /sender\s+not\s+found|sender_not_found|required.*sender|sender.*required|payload\.sender|отправител[ья][^а-яa-z0-9]*(не\s+найден|обязател)|имя\s+отправител[ья].*(не\s+найден|не\s+подключ|обязател)/i.test(all); }
 function buildSigmaRequestBody(phone, message, sender) { return { recipient: "+" + phone, type: "sms", payload: { text: message, sender } }; }
+
+// SIGMA принимает только тексты, совпадающие с утверждёнными шаблонами.
+// Перед отправкой принудительно приводим SMS к одному из 5 утверждённых текстов.
+function normalizeForSigmaTemplate(value) {
+  return cleanText(value, 1000).replace(/\u00a0/g, " ").replace(/\s+/g, " ").trim();
+}
+function smsKindFromAny(...values) {
+  const s = values.map((v) => String(v || "")).join(" ").toLowerCase();
+  if (/confirmation|confirm|подтверж|оформлена/.test(s)) return "confirmation";
+  if (/reminder_day|за\s*день|напоминаем/.test(s)) return "reminder_day";
+  if (/reminder_2h|2\s*час|два\s*час|осталось\s*2/.test(s)) return "reminder_2h";
+  if (/reschedule|перен[оё]с|перенесена/.test(s)) return "reschedule";
+  if (/review|отзыв|благодар/.test(s)) return "review";
+  return "";
+}
+function partsFromMessageText(message) {
+  const text = normalizeForSigmaTemplate(message);
+  let m = text.match(/(?:оформлена|перенесена)\s+на\s+(\d{2}\.\d{2}\.\d{4})\s+(\d{1,2}:\d{2})/i);
+  if (m) return { date: m[1], time: m[2].padStart(5, "0") };
+  m = text.match(/о\s+записи\s+(\d{2}\.\d{2}\.\d{4})\s*,\s*(\d{1,2}:\d{2})/i);
+  if (m) return { date: m[1], time: m[2].padStart(5, "0") };
+  return { date: "", time: "" };
+}
+function approvedTemplateText(kind, date, time) {
+  const d = String(date || "").trim();
+  const t = String(time || "").trim();
+  if (kind === "confirmation" && d && t) return `СОЛНЦАНЕТ: запись оформлена на ${d} ${t}.`;
+  if (kind === "reminder_day" && d && t) return `СОЛНЦАНЕТ: напоминаем о записи ${d}, ${t}.`;
+  if (kind === "reminder_2h") return "СОЛНЦАНЕТ: до записи осталось 2 часа.";
+  if (kind === "reschedule" && d && t) return `СОЛНЦАНЕТ: запись перенесена на ${d} ${t}.`;
+  if (kind === "review") return "Спасибо, что выбрали СОЛНЦАНЕТ! Оставьте отзыв: https://clck.su/solncanet";
+  return "";
+}
+function dateTimeFromOldFields(old) {
+  const dateRaw = old?.["Дата записи"] || old?.visit_date || old?.date || "";
+  const timeRaw = old?.["Время записи"] || old?.visit_time || old?.time || "";
+  const d = ruDate(dateRaw);
+  const t = timeOnly(timeRaw);
+  return { date: d, time: t };
+}
+async function dateTimeFromZayavka(env, zayavkaId) {
+  if (!zayavkaId) return { date: "", time: "" };
+  try {
+    const data = await sbFetch(env, `/rest/v1/zayavki?select=visit_date,visit_time,meta&id=eq.${encodeURIComponent(zayavkaId)}&limit=1`);
+    const row = asArr(data)[0] || {};
+    const old = oldFieldsFrom(row.meta || {});
+    const date = ruDate(row.visit_date || old["Дата записи"] || "");
+    const time = timeOnly(row.visit_time || old["Время записи"] || "");
+    return { date, time };
+  } catch (_) {
+    return { date: "", time: "" };
+  }
+}
+async function approvedSmsMessageForQueue(env, row) {
+  const old = oldFieldsFrom(row.meta || {});
+  const raw = normalizeForSigmaTemplate(row.message || old["Текст SMS"] || "");
+  const kind = smsKindFromAny(row.sms_type, row.template_name, old["Тип уведомления"], raw);
+  if (!kind) return "";
+  if (kind === "reminder_2h" || kind === "review") return approvedTemplateText(kind);
+  let parts = dateTimeFromOldFields(old);
+  if (!parts.date || !parts.time) parts = partsFromMessageText(raw);
+  if (!parts.date || !parts.time) parts = await dateTimeFromZayavka(env, row.zayavka_id || old["ID заявки"] || "");
+  return normalizeForSigmaTemplate(approvedTemplateText(kind, parts.date, parts.time));
+}
+function approvedSmsMessageFromBody(body, rawMessage) {
+  const raw = normalizeForSigmaTemplate(rawMessage);
+  const kind = smsKindFromAny(body?.type, body?.template, body?.["Тип уведомления"], raw);
+  if (!kind) return "";
+  if (kind === "reminder_2h" || kind === "review") return approvedTemplateText(kind);
+  let parts = { date: ruDate(body?.visitDate || body?.recordDate || body?.appointmentDate || body?.["Дата записи"] || ""), time: timeOnly(body?.visitTime || body?.recordTime || body?.appointmentTime || body?.["Время записи"] || "") };
+  if (!parts.date || !parts.time) parts = partsFromMessageText(raw);
+  return normalizeForSigmaTemplate(approvedTemplateText(kind, parts.date, parts.time));
+}
+
 async function postSigmaSms(env, token, requestBody) { const url = new URL(`${sigmaBase(env)}/sendings`); url.searchParams.set("return", "each"); const res = await fetch(url.toString(), { method: "POST", headers: { "Content-Type": "application/json", "Accept": "application/json", "Authorization": token }, body: JSON.stringify(requestBody) }); const raw = await res.text(); let data; try { data = JSON.parse(raw); } catch (_) { data = { raw }; } const item = firstSigmaItem(data); const id = sigmaId(item || data); const state = sigmaState(item || data); const errorText = state.error || data.message || data.error || data.name || data.raw || ""; const ok = res.ok && Boolean(id) && !isSigmaFailed(state.status, errorText); return { ok, provider: "sigma", httpStatus: res.status, smsId: id, id, status: state.status || (ok ? "created" : "error"), statusText: sigmaStatusText(state.status, errorText), cost: item?.cost ?? data.cost ?? "", balance: data.balance ?? "", result: data, error: ok ? "" : (sigmaStatusText(state.status, errorText) || `SIGMA не подтвердила отправку. HTTP ${res.status}`) }; }
 async function sendSigmaSms(env, to, message) {
   const token = sigmaToken(env);
@@ -100,5 +174,5 @@ async function listDueSms(env) { const now = new Date().toISOString(); const dat
 async function patchSmsStatus(env, id, patch, metaPatch = {}) { const existingData = await sbFetch(env, `/rest/v1/sms_queue?select=*&id=eq.${encodeURIComponent(id)}&limit=1`); const existing = asArr(existingData)[0] || {}; const meta = { ...(existing.meta || {}), ...metaPatch }; const data = await sbFetch(env, `/rest/v1/sms_queue?id=eq.${encodeURIComponent(id)}&select=*`, { method: "PATCH", headers: { "Prefer": "return=representation" }, body: JSON.stringify({ ...patch, meta }) }); return asArr(data)[0]; }
 export async function onRequestGet({ request, env }) { return runSmsCron({ request, env, source: "http" }); }
 export async function onRequestPost({ request, env }) { return runSmsCron({ request, env, source: "http" }); }
-async function runSmsCron({ request, env, source }) { const auth = checkCronAuth(request, env); if (!auth.ok) return json(auth.body, auth.status); try { const due = await listDueSms(env); const results = []; for (const record of due.slice(0, 25)) { const to = normalizePhone(record.phone || ""); const message = cleanText(record.message || ""); if (!to || !message) { await patchSmsStatus(env, record.id, { status: "failed", error: !to ? "Нет телефона" : "Нет текста SMS" }); results.push({ id: record.id, ok: false, error: !to ? "Нет телефона" : "Нет текста SMS" }); continue; } await patchSmsStatus(env, record.id, { status: "sending", error: "" }); const sent = await sendSigmaSms(env, to, message); if (sent.ok) { await patchSmsStatus(env, record.id, { status: "sent", sent_at: new Date().toISOString(), provider_message_id: sent.smsId || "", error: "" }, { delivery_status: sent.status || "created", service_response: compactJson(sent.result || sent), cost: String(sent.cost ?? ""), balance: String(sent.balance ?? ""), status_checked_at: new Date().toISOString() }); } else { await patchSmsStatus(env, record.id, { status: "failed", error: sent.error || "Ошибка отправки" }, { delivery_status: sent.status || "ERROR", service_response: compactJson(sent.result || sent), status_checked_at: new Date().toISOString() }); } results.push({ id: record.id, to, ok: sent.ok, error: sent.error || "", provider: "sigma", smsId: sent.smsId || "", deliveryStatus: sent.status || "" }); } return json({ ok: true, provider: "supabase+sigma", source, checked: due.length, due: due.length, processed: results.length, results }); } catch (error) { return json({ ok: false, provider: "supabase", error: error.message, supabaseResponse: error.response || null }, error.status || 500); } }
+async function runSmsCron({ request, env, source }) { const auth = checkCronAuth(request, env); if (!auth.ok) return json(auth.body, auth.status); try { const due = await listDueSms(env); const results = []; for (const record of due.slice(0, 25)) { const to = normalizePhone(record.phone || ""); const message = await approvedSmsMessageForQueue(env, record); if (!to || !message) { await patchSmsStatus(env, record.id, { status: "failed", error: !to ? "Нет телефона" : "Текст SMS не совпадает с утверждёнными шаблонами SIGMA" }); results.push({ id: record.id, ok: false, error: !to ? "Нет телефона" : "Текст SMS не совпадает с утверждёнными шаблонами SIGMA" }); continue; } await patchSmsStatus(env, record.id, { status: "sending", error: "", message }); const sent = await sendSigmaSms(env, to, message); if (sent.ok) { await patchSmsStatus(env, record.id, { status: "sent", sent_at: new Date().toISOString(), provider_message_id: sent.smsId || "", error: "", message }, { delivery_status: sent.status || "created", service_response: compactJson(sent.result || sent), cost: String(sent.cost ?? ""), balance: String(sent.balance ?? ""), status_checked_at: new Date().toISOString(), sigma_approved_template_text: message }); } else { await patchSmsStatus(env, record.id, { status: "failed", error: sent.error || "Ошибка отправки", message }, { delivery_status: sent.status || "ERROR", service_response: compactJson(sent.result || sent), status_checked_at: new Date().toISOString(), sigma_approved_template_text: message }); } results.push({ id: record.id, to, ok: sent.ok, error: sent.error || "", provider: "sigma", smsId: sent.smsId || "", deliveryStatus: sent.status || "", message }); } return json({ ok: true, provider: "supabase+sigma", source, checked: due.length, due: due.length, processed: results.length, results }); } catch (error) { return json({ ok: false, provider: "supabase", error: error.message, supabaseResponse: error.response || null }, error.status || 500); } }
 export async function onRequest(context) { if (context.request.method === "GET") return onRequestGet({ request: context.request, env: context.env }); if (context.request.method === "POST") return onRequestPost({ request: context.request, env: context.env }); return json({ ok: false, error: "Only GET/POST" }, 405); }
