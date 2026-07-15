@@ -461,7 +461,18 @@ function applyAccessPolicy() {
   const full = hasFullAccess();
   document.body.dataset.access = full ? "full" : "staff";
   document.querySelectorAll("[data-section]").forEach((link) => {
-    link.style.display = canAccessSection(link.dataset.section) ? "" : "none";
+    const allowed = canAccessSection(link.dataset.section);
+    link.hidden = !allowed;
+    link.classList.toggle("access-hidden", !allowed);
+    link.setAttribute("aria-hidden", allowed ? "false" : "true");
+    link.tabIndex = allowed ? 0 : -1;
+    link.style.display = allowed ? "" : "none";
+  });
+  document.querySelectorAll("#sidebar .sidebar-nav [data-section]").forEach((link) => {
+    const allowed = canAccessSection(link.dataset.section);
+    link.hidden = !allowed;
+    link.classList.toggle("access-hidden", !allowed);
+    link.style.display = allowed ? "" : "none";
   });
   [els.topReportsBtn, els.exportBtn, els.bulkExportBtn].forEach((button) => { if (button) button.style.display = full ? "" : "none"; });
 }
@@ -525,7 +536,7 @@ async function login(password) {
   }
 }
 
-function showApp() { document.body.classList.remove("logged-out"); document.body.classList.add("logged-in"); els.loginPanel.style.display = "none"; els.appPanel.style.display = "block"; updateWorkspaceUI(); applyAccessPolicy(); startAutoRefresh(); }
+function showApp() { document.body.classList.remove("logged-out"); document.body.classList.add("logged-in"); applyAccessPolicy(); els.loginPanel.style.display = "none"; els.appPanel.style.display = "block"; updateWorkspaceUI(); applyAccessPolicy(); startAutoRefresh(); }
 function showLogin() { if (autoRefreshTimer) clearInterval(autoRefreshTimer); autoRefreshTimer = null; document.body.classList.remove("logged-in"); document.body.classList.add("logged-out"); els.appPanel.style.display = "none"; els.loginPanel.style.display = "block"; }
 function pwd() { return localStorage.getItem(storage.password) || ""; }
 

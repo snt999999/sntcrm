@@ -397,3 +397,7 @@ body{font-family:Inter,"Segoe UI",Roboto,Arial,sans-serif;background:linear-grad
 
 /* Request brief client card */
 .request-client-card-brief .request-client-grid-brief{grid-template-columns:repeat(3,minmax(0,1fr))}.request-client-card-brief .request-client-card-kicker{letter-spacing:.04em;text-transform:uppercase}@media(max-width:820px){.request-client-card-brief .request-client-grid-brief{grid-template-columns:1fr}}
+
+/* v61 access policy: hide unavailable left-menu buttons for staff account */
+.access-hidden,[hidden].access-hidden{display:none!important;visibility:hidden!important;pointer-events:none!important}
+body[data-access="staff"] #sidebar .sidebar-nav a.access-hidden{display:none!important}

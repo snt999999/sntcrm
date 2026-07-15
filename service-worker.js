@@ -1,4 +1,4 @@
-const CACHE_NAME = 'solncanet-v61-supabase-request-client-brief-card';
+const CACHE_NAME = 'solncanet-v61-supabase-bebelya-menu-hide-v1';
 const APP_SHELL = [
   '/',
   '/index.html',
