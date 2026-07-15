@@ -86,7 +86,12 @@ async function sendSigmaSms(env, to, message) {
     const res = await postSigmaSms(env, token, buildSigmaRequestBody(phone, message, sender));
     res.senderRequested = sender;
     res.senderMode = attempts.length ? "fallback" : "primary";
-    attempts.push({ sender, ok: res.ok, httpStatus: res.httpStatus, error: res.error || res.statusText || "" });
+    res.outgoingText = message;
+    res.templateHelp = "Если ошибка SIGMA: Could not find matching template — отправьте менеджеру SIGMA outgoingText из ответа. Шаблон в ЛК должен быть создан с переменными, а не с буквальным текстом {Дата}/{Время}.";
+    if ((res.error || res.statusText || "").toLowerCase().includes("matching template")) {
+      res.error = `${res.error || res.statusText}. Точный текст, который ушёл в SIGMA: ${message}`;
+    }
+    attempts.push({ sender, ok: res.ok, httpStatus: res.httpStatus, error: res.error || res.statusText || "", outgoingText: message });
     if (res.ok) { res.senderAttempts = attempts; return res; }
     if (!isSenderNotFoundError(res.error || res.statusText, res.result)) { res.senderAttempts = attempts; return res; }
   }
