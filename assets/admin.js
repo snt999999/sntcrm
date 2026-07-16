@@ -1045,9 +1045,10 @@ function autoServicesTotal(list) {
 }
 function autoServiceContainer(prefix) { return prefix === "quick" ? els.quickAutoServices : els.editAutoServices; }
 function initAutoServiceDatalist() {
+  // Встроенный браузерный datalist отключён, чтобы не было двух списков подсказок.
+  // Оставляем только наш красивый список .auto-suggest-box.
   const dl = document.getElementById("autoServiceDatalist");
-  if (!dl) return;
-  dl.innerHTML = AUTO_PAY_RATES.map((r) => `<option value="${e(String(r.service || "").trim())}"></option>`).join("");
+  if (dl) dl.innerHTML = "";
 }
 function autoRateForService(name) {
   const n = norm(name);
@@ -1148,7 +1149,7 @@ function renderAutoServiceRows(prefix, list = null) {
   const box = autoServiceContainer(prefix);
   if (!box) return;
   const arr = list && list.length ? list : [{ name: "", material: "", price: "" }];
-  box.innerHTML = arr.map((item, i) => `<div class="auto-service-row" data-auto-service-row><input class="auto-service-name" list="autoServiceDatalist" placeholder="Полное название услуги" value="${e(item.name || "")}" /><input class="auto-service-material" placeholder="Материал" value="${e(item.material || item["Материал"] || "")}" /><input class="auto-service-price" type="number" step="1" placeholder="Сумма" value="${e(item.price || "")}" /><button type="button" class="ghost-small" data-auto-service-remove>×</button></div>`).join("");
+  box.innerHTML = arr.map((item, i) => `<div class="auto-service-row" data-auto-service-row><input class="auto-service-name" autocomplete="off" placeholder="Полное название услуги" value="${e(item.name || "")}" /><input class="auto-service-material" placeholder="Материал" value="${e(item.material || item["Материал"] || "")}" /><input class="auto-service-price" type="number" step="1" placeholder="Сумма" value="${e(item.price || "")}" /><button type="button" class="ghost-small" data-auto-service-remove>×</button></div>`).join("");
   box.querySelectorAll(".auto-service-name").forEach((input) => {
     input.addEventListener("input", () => { showAutoServiceSuggestions(input, prefix); updateAutoTotal(prefix); });
     input.addEventListener("focus", () => { showAutoServiceSuggestions(input, prefix); });
