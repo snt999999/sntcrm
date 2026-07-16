@@ -1,4 +1,4 @@
-const CACHE_NAME = 'solncanet-v61-supabase-files-layout-fix';
+const CACHE_NAME = 'solncanet-v61-supabase-architecture-services-only';
 const APP_SHELL = [
   '/',
   '/index.html',

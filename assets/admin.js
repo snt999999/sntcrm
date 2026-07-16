@@ -8,6 +8,15 @@ const WORKER_PROFILES = [
 const WORKERS = WORKER_PROFILES.map((w) => w.key);
 const WORKER_BY_KEY = Object.fromEntries(WORKER_PROFILES.map((w) => [w.key, w]));
 
+const ARCHITECTURE_SERVICES = [
+  "Тонировка балконов и окон",
+  "Тонировка витрин",
+  "Бронирование стекол и витрин",
+  "Декоративные пленки для офисных перегородок",
+  "Замер / консультация",
+  "Другое по архитектуре"
+];
+
 const AUTO_DEFAULT_INSTALLER = "Роман З";
 const AUTO_DEFAULT_RESPONSIBLE = "Роман";
 const AUTO_PAY_RATES = [
@@ -654,7 +663,7 @@ function filtered(includeTrash = false) {
     const f = r.fields || {};
     const date = String(f["Дата записи"] || "");
     const installers = splitInstallers(f["Монтажники"]);
-    const hay = norm(["#" + r.id, f["Имя клиента"], f["Компания"], f["Телефон"], f["Услуга"], f["Адрес"], f["Монтажники"], f["Статус"], f["Комментарий клиента"], f["Комментарий администратора"], f["Cal Booking ID"]].join(" "));
+    const hay = norm([requestDisplayNumber(r), "#" + r.id, f["Имя клиента"], f["Компания"], f["Телефон"], f["Услуга"], f["Адрес"], f["Монтажники"], f["Статус"], f["Комментарий клиента"], f["Комментарий администратора"], f["Cal Booking ID"]].join(" "));
     if (status && f["Статус"] !== status) return false;
     if (installer && !installers.includes(installer)) return false;
     if (from && date && date < from) return false;
@@ -678,7 +687,7 @@ function render() {
 }
 function requestRow(r) {
   const f = r.fields || {}, status = e(f["Статус"] || ""), dir = recordDirection(r), checked = selectedRequestIds.has(String(r.id)) ? "checked" : "";
-  return `<tr class="clickable-row direction-${dir}" data-open-row="${e(r.id)}" data-context-row="${e(r.id)}"><td class="bulk-check-cell"><input type="checkbox" class="bulk-row-check" data-bulk-id="${e(r.id)}" ${checked} /></td><td>${e(f["Дата записи"])}</td><td>${e(f["Время записи"])}</td><td><span class="direction-dot direction-${dir}"></span><b>${e(f["Имя клиента"])}</b></td><td>${e(f["Компания"] || "—")}</td><td>${phoneLink(f["Телефон"])}</td><td>${e(f["Услуга"])}</td><td>${e(f["Адрес"])}</td><td>${e(f["Итоговый м2"] || f["м2"])}</td><td>${e(f["Монтажники"])}</td><td class="status-cell"><span class="status" data-status="${status}">${status || "—"}</span></td><td><button class="open-btn" data-open="${e(r.id)}">Открыть</button></td></tr>`;
+  return `<tr class="clickable-row direction-${dir}" data-open-row="${e(r.id)}" data-context-row="${e(r.id)}"><td class="bulk-check-cell"><input type="checkbox" class="bulk-row-check" data-bulk-id="${e(r.id)}" ${checked} /></td><td>${e(f["Дата записи"])}<br><small>${e(requestDisplayNumber(r))}</small></td><td>${e(f["Время записи"])}</td><td><span class="direction-dot direction-${dir}"></span><b>${e(f["Имя клиента"])}</b></td><td>${e(f["Компания"] || "—")}</td><td>${phoneLink(f["Телефон"])}</td><td>${e(f["Услуга"])}</td><td>${e(f["Адрес"])}</td><td>${e(f["Итоговый м2"] || f["м2"])}</td><td>${e(f["Монтажники"])}</td><td class="status-cell"><span class="status" data-status="${status}">${status || "—"}</span></td><td><button class="open-btn" data-open="${e(r.id)}">Открыть</button></td></tr>`;
 }
 
 function renderCalendar(arr) {
@@ -828,6 +837,45 @@ function calendarAgendaItemHtml(record) {
     </div>
     <button class="open-btn" type="button" data-open="${e(record.id)}">Открыть</button>
   </article>`;
+}
+
+
+function requestDisplayNumber(recordOrId) {
+  const record = typeof recordOrId === "object" && recordOrId ? recordOrId : records.find((r) => String(r.id) === String(recordOrId));
+  if (!record) return recordOrId ? String(recordOrId) : "";
+  const f = record.fields || {};
+  const date = requestDateShort(f["Дата записи"] || f["Дата создания"] || f["Создано"] || f["CreatedAt"] || f["created_at"] || "");
+  const base = requestNumberBase(record, f);
+  return `${base}-${date || "БЕЗДАТЫ"}`;
+}
+
+function requestNumberBase(record, f = {}) {
+  const dir = record ? recordDirection(record) : String(f["Направление"] || "").toLowerCase();
+  let raw = "";
+  if (dir === "auto") raw = f["Авто"] || f["Автомобиль"] || f["Марка авто"] || f["Имя клиента"] || f["Компания"] || f["Услуга"];
+  else raw = f["Адрес"] || f["Адрес объекта"] || f["Объект"] || f["Компания"] || f["Имя клиента"] || f["Услуга"];
+  raw = String(raw || "ЗАЯВКА").trim();
+  let value = raw
+    .replace(/ё/g, "е").replace(/Ё/g, "Е")
+    .replace(/\b(г\.?|город|екатеринбург|ул\.?|улица|пр\.?|проспект|пер\.?|переулок|дом|д\.?|офис|оф\.?|кв\.?)\b/gi, " ")
+    .replace(/[^0-9a-zа-я]+/gi, " ")
+    .trim()
+    .replace(/\s+/g, "")
+    .toUpperCase();
+  if (!value) value = dir === "auto" ? "АВТО" : "ЗАЯВКА";
+  return value.slice(0, 22);
+}
+
+function requestDateShort(value) {
+  const raw = String(value || "").trim();
+  if (!raw) return "";
+  const iso = raw.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (iso) return `${iso[3]}.${iso[2]}`;
+  const ru = raw.match(/^(\d{1,2})[.\/\-](\d{1,2})(?:[.\/\-]\d{2,4})?/);
+  if (ru) return `${String(ru[1]).padStart(2,"0")}.${String(ru[2]).padStart(2,"0")}`;
+  const d = new Date(raw);
+  if (!Number.isNaN(d.getTime())) return `${String(d.getDate()).padStart(2,"0")}.${String(d.getMonth()+1).padStart(2,"0")}`;
+  return raw.slice(0, 5).replace(/\/$/, "");
 }
 
 function formatDateRu(ymd, long = false) {
@@ -1126,8 +1174,16 @@ function updateAutoTotal(prefix) {
   const target = prefix === "quick" ? els.quickAutoTotal : els.editAutoTotal;
   if (target) target.textContent = money(total) + " ₽";
 }
+function fillArchitectureServiceSelect() {
+  if (!els.quickService) return;
+  const current = els.quickService.value;
+  els.quickService.innerHTML = ARCHITECTURE_SERVICES.map((name) => `<option>${e(name)}</option>`).join("");
+  if (ARCHITECTURE_SERVICES.includes(current)) els.quickService.value = current;
+}
+
 function updateQuickDirectionUI() {
   const isAuto = (els.quickDirection?.value || currentWorkspace) === "auto";
+  if (!isAuto) fillArchitectureServiceSelect();
   if (els.quickAutoFields) els.quickAutoFields.style.display = isAuto ? "block" : "none";
   [els.quickServiceLabel, els.quickM2Label, els.quickAddressLabel].forEach((node) => { if (node) node.style.display = isAuto ? "none" : ""; });
   if (isAuto && els.quickAutoServices && !els.quickAutoServices.children.length) renderAutoServiceRows("quick");
@@ -1172,8 +1228,8 @@ function openRequest(id) {
   current = records.find((r) => String(r.id) === String(id));
   if (!current) return;
   const f = current.fields || {};
-  els.dialogTitle.textContent = "Заявка #" + current.id;
-  els.requestInfo.innerHTML = requestClientCardHtml(current) + `<div class="request-current-summary"><b>Текущая заявка #${e(current.id)}</b><br>${e(f["Дата записи"] || "")} ${e(f["Время записи"] || "")}<br>${e(f["Услуга"] || "")}<br>${recordDirection(current)==="auto" ? `<b>Авто:</b> ${e(f["Авто"]||"—")}<br><b>Плёнка:</b> ${e(f["Пленка"]||"—")}<br><b>Стоимость:</b> ${e(f["Общая стоимость"]||"0")} ₽<br>` : ""}${e(f["Адрес"] || "")}<br><br>${nl2br(f["Комментарий клиента"] || f["Комментарий"] || "")}</div>`;
+  els.dialogTitle.textContent = "Заявка " + requestDisplayNumber(current);
+  els.requestInfo.innerHTML = requestClientCardHtml(current) + `<div class="request-current-summary"><b>Текущая заявка ${e(requestDisplayNumber(current))}</b><br>${e(f["Дата записи"] || "")} ${e(f["Время записи"] || "")}<br>${e(f["Услуга"] || "")}<br>${recordDirection(current)==="auto" ? `<b>Авто:</b> ${e(f["Авто"]||"—")}<br><b>Плёнка:</b> ${e(f["Пленка"]||"—")}<br><b>Стоимость:</b> ${e(f["Общая стоимость"]||"0")} ₽<br>` : ""}${e(f["Адрес"] || "")}<br><br>${nl2br(f["Комментарий клиента"] || f["Комментарий"] || "")}</div>`;
   els.editDate.value = f["Дата записи"] || "";
   els.editTime.value = f["Время записи"] || "";
   els.editStatus.value = f["Статус"] || "Новая заявка";
@@ -1546,7 +1602,7 @@ function openQuickAdd(prefill = null) {
   }
   if (els.quickGoogleSync) els.quickGoogleSync.checked = true;
   hideQuickClientSuggestions();
-  if (els.quickService && prefill?.service) els.quickService.value = prefill.service;
+  if (els.quickService && prefill?.service && ARCHITECTURE_SERVICES.includes(prefill.service)) els.quickService.value = prefill.service;
   if (els.quickDate && prefill?.date) els.quickDate.value = prefill.date;
   if (els.quickTime && prefill?.time) els.quickTime.value = prefill.time;
   els.quickAddress.value = prefill?.address || "";
@@ -1705,7 +1761,7 @@ async function createOrUpdateGoogleCalendarForCurrent() {
 
 
 function recordHay(f, id = "") {
-  return norm(["#" + id, f["Имя клиента"], f["Компания"], f["Телефон"], f["Услуга"], f["Адрес"], f["Монтажники"], f["Статус"], f["Комментарий клиента"], f["Комментарий администратора"], f["Файлы"], f["Cal Booking ID"]].join(" "));
+  return norm([requestDisplayNumber(records.find((r) => String(r.id) === String(id)) || id), "#" + id, f["Имя клиента"], f["Компания"], f["Телефон"], f["Услуга"], f["Адрес"], f["Монтажники"], f["Статус"], f["Комментарий клиента"], f["Комментарий администратора"], f["Файлы"], f["Cal Booking ID"]].join(" "));
 }
 function sectionRecords(opts = {}) {
   const { q = "", from = "", to = "", service = "", status = "", installer = "", film = "", m2Min = "", m2Max = "", includeTrash = false } = opts;
@@ -1755,7 +1811,7 @@ function renderObjects() {
   if (els.objectsStatM2) els.objectsStatM2.textContent = moneyNumber(rows.reduce((s, r) => s + getM2(r.fields || {}), 0));
   if (els.objectsStatDone) els.objectsStatDone.textContent = rows.filter((r) => PAYROLL_STATUSES.has((r.fields || {})["Статус"] || "")).length;
   if (els.objectsStatWork) els.objectsStatWork.textContent = rows.filter((r) => (r.fields || {})["Статус"] === "В работе").length;
-  els.objectsBody.innerHTML = rows.map((r) => { const f = r.fields || {}; return `<tr class="clickable-row" data-open-row="${e(r.id)}"><td>${e(f["Дата записи"] || "")}</td><td><b>${e(f["Имя клиента"] || "—")}</b><br>${phoneLink(f["Телефон"])}</td><td>${e(f["Компания"] || "—")}</td><td>${e(f["Адрес"] || "—")}</td><td>${e(f["Услуга"] || "—")}</td><td>${moneyNumber(getM2(f))}</td><td>${e(displayInstallers(f["Монтажники"]) || "—")}</td><td class="status-cell"><span class="status" data-status="${e(f["Статус"] || "")}">${e(f["Статус"] || "—")}</span></td><td><button class="open-btn" data-open="${e(r.id)}">Открыть</button></td></tr>`; }).join("") || '<tr><td colspan="9">Объекты не найдены</td></tr>';
+  els.objectsBody.innerHTML = rows.map((r) => { const f = r.fields || {}; return `<tr class="clickable-row" data-open-row="${e(r.id)}"><td>${e(f["Дата записи"] || "")}<br><small>${e(requestDisplayNumber(r))}</small></td><td><b>${e(f["Имя клиента"] || "—")}</b><br>${phoneLink(f["Телефон"])}</td><td>${e(f["Компания"] || "—")}</td><td>${e(f["Адрес"] || "—")}</td><td>${e(f["Услуга"] || "—")}</td><td>${moneyNumber(getM2(f))}</td><td>${e(displayInstallers(f["Монтажники"]) || "—")}</td><td class="status-cell"><span class="status" data-status="${e(f["Статус"] || "")}">${e(f["Статус"] || "—")}</span></td><td><button class="open-btn" data-open="${e(r.id)}">Открыть</button></td></tr>`; }).join("") || '<tr><td colspan="9">Объекты не найдены</td></tr>';
   bindActionButtons();
 }
 function installerRowsForSection() {
@@ -1832,7 +1888,7 @@ function renderInstallerDetails() {
     const f = r.fields || {};
     const calc = detailsById.get(String(r.id));
     const status = e(f["Статус"] || "");
-    return `<tr class="clickable-row" data-open-row="${e(r.id)}"><td>${e(f["Дата записи"] || "")}<br><small>${e(f["Время записи"] || "")}</small></td><td><b>${e(f["Имя клиента"] || "—")}</b></td><td>${e(f["Компания"] || "—")}</td><td>${phoneLink(f["Телефон"])}</td><td>${e(f["Адрес"] || "—")}</td><td>${e(f["Услуга"] || "—")}</td><td>${moneyNumber(getM2(f))}</td><td>${e(displayInstallers(f["Монтажники"]) || "—")}</td><td>${calc ? moneyNumber(calc.rate) : "—"}</td><td>${calc ? money(calc.amount) : "—"}</td><td class="status-cell"><span class="status" data-status="${status}">${status || "—"}</span></td><td><button class="open-btn" data-open="${e(r.id)}">Открыть / редактировать</button></td></tr>`;
+    return `<tr class="clickable-row" data-open-row="${e(r.id)}"><td>${e(f["Дата записи"] || "")}<br><small>${e(f["Время записи"] || "")} · ${e(requestDisplayNumber(r))}</small></td><td><b>${e(f["Имя клиента"] || "—")}</b></td><td>${e(f["Компания"] || "—")}</td><td>${phoneLink(f["Телефон"])}</td><td>${e(f["Адрес"] || "—")}</td><td>${e(f["Услуга"] || "—")}</td><td>${moneyNumber(getM2(f))}</td><td>${e(displayInstallers(f["Монтажники"]) || "—")}</td><td>${calc ? moneyNumber(calc.rate) : "—"}</td><td>${calc ? money(calc.amount) : "—"}</td><td class="status-cell"><span class="status" data-status="${status}">${status || "—"}</span></td><td><button class="open-btn" data-open="${e(r.id)}">Открыть / редактировать</button></td></tr>`;
   });
   const amount = [...detailsById.values()].reduce((s, d) => s + d.amount, 0);
   const m2 = rows.reduce((s, r) => s + getM2(r.fields || {}), 0);
@@ -1846,7 +1902,7 @@ function renderInstallerDetails() {
   els.installerDetailsBody.innerHTML = detailRows.join("") || '<tr><td colspan="12">По этому монтажнику ничего не найдено</td></tr>';
   bindActionButtons();
 }
-function renderTrash() { const arr = records.filter(isTrashRecord).sort(sortByDateDesc); els.trashBody.innerHTML = arr.map((r) => { const f = r.fields || {}; return `<tr class="clickable-row" data-open-row="${e(r.id)}"><td>${e(f["Дата записи"] || "")}</td><td><b>${e(f["Имя клиента"] || "—")}</b></td><td>${e(f["Компания"] || "—")}</td><td>${phoneLink(f["Телефон"])}</td><td>${e(f["Услуга"] || "")}</td><td>${e(f["Адрес"] || "")}</td><td>${nl2br(f["Причина отмены"] || lastCancelReason(f) || f["Комментарий администратора"] || "")}</td><td class="status-cell"><span class="status" data-status="${e(f["Статус"] || "")}">${e(f["Статус"] || "—")}</span></td><td><button class="open-btn" data-open="${e(r.id)}">Открыть</button> <button class="restore-btn" data-restore="${e(r.id)}">Восстановить</button></td></tr>`; }).join("") || '<tr><td colspan="8">Корзина пустая</td></tr>'; bindActionButtons(); }
+function renderTrash() { const arr = records.filter(isTrashRecord).sort(sortByDateDesc); els.trashBody.innerHTML = arr.map((r) => { const f = r.fields || {}; return `<tr class="clickable-row" data-open-row="${e(r.id)}"><td>${e(f["Дата записи"] || "")}<br><small>${e(requestDisplayNumber(r))}</small></td><td><b>${e(f["Имя клиента"] || "—")}</b></td><td>${e(f["Компания"] || "—")}</td><td>${phoneLink(f["Телефон"])}</td><td>${e(f["Услуга"] || "")}</td><td>${e(f["Адрес"] || "")}</td><td>${nl2br(f["Причина отмены"] || lastCancelReason(f) || f["Комментарий администратора"] || "")}</td><td class="status-cell"><span class="status" data-status="${e(f["Статус"] || "")}">${e(f["Статус"] || "—")}</span></td><td><button class="open-btn" data-open="${e(r.id)}">Открыть</button> <button class="restore-btn" data-restore="${e(r.id)}">Восстановить</button></td></tr>`; }).join("") || '<tr><td colspan="8">Корзина пустая</td></tr>'; bindActionButtons(); }
 function renderFiles() {
   renderFilesRequestSelect();
   const q = norm(els.filesSearchInput?.value || ""), type = norm(els.filesTypeFilter?.value || "");
@@ -1857,7 +1913,7 @@ function renderFiles() {
       if (!files.length) return false;
       const f = record?.fields || {};
       const filesText = files.map((file) => [file.originalName, file.fileType, file.contentType, file.client, file.phone, file.address, file.service].join(" ")).join(" ");
-      const hay = norm(["#" + id, f["Имя клиента"], f["Компания"], f["Телефон"], f["Адрес"], f["Услуга"], f["Статус"], f["Комментарий клиента"], f["Комментарий администратора"], f["Файлы"], filesText].join(" "));
+      const hay = norm([requestDisplayNumber(record || id), "#" + id, f["Имя клиента"], f["Компания"], f["Телефон"], f["Адрес"], f["Услуга"], f["Статус"], f["Комментарий клиента"], f["Комментарий администратора"], f["Файлы"], filesText].join(" "));
       if (q && !hay.includes(q)) return false;
       if (type && !files.some((file) => fileMatchesType(file, type))) return false;
       return true;
@@ -1875,7 +1931,7 @@ function renderFiles() {
     const fileHtml = files.length ? files.map(fileMiniHtml).join("") : `<p class="muted-text">Пока нет файлов</p>`;
     return `<article class="files-request-card" data-open-row="${e(id)}">
       <div class="files-request-head">
-        <div class="files-request-id"><span>Заявка</span><b>#${e(id)}</b></div>
+        <div class="files-request-id"><span>Заявка</span><b>${e(record ? requestDisplayNumber(record) : id)}</b></div>
         <div class="files-request-info"><span>Клиент</span><b>${e(client)}</b></div>
         <div class="files-request-info"><span>Телефон</span><b>${phoneLink(phone) || "—"}</b></div>
         <div class="files-request-info"><span>Адрес / объект</span><b>${e(address)}</b></div>
@@ -1897,12 +1953,12 @@ function getHistoryForRecord(record) {
   merged.forEach((item) => byKey.set([item.at, item.action, item.details].join("|"), item));
   return [...byKey.values()].sort((a, b) => String(b.at).localeCompare(String(a.at)));
 }
-function addHistory(record, action, details, currentHistory = null) { const history = currentHistory || getHistoryForRecord(record); const entry = { at: dateTimeY(), id: String(record.id), user: currentUserName(), client: (record.fields || {})["Имя клиента"] || "", phone: (record.fields || {})["Телефон"] || "", action, details }; saveLocalHistory(record.id, entry); saveActivity({ at: entry.at, user: entry.user, action, details: `${entry.client || "Заявка #" + entry.id}: ${details || ""}`, id: entry.id }); return [entry, ...history].slice(0, 200); }
+function addHistory(record, action, details, currentHistory = null) { const history = currentHistory || getHistoryForRecord(record); const entry = { at: dateTimeY(), id: String(record.id), user: currentUserName(), client: (record.fields || {})["Имя клиента"] || "", phone: (record.fields || {})["Телефон"] || "", action, details }; saveLocalHistory(record.id, entry); saveActivity({ at: entry.at, user: entry.user, action, details: `${entry.client || "Заявка " + requestDisplayNumber(record)}: ${details || ""}`, id: entry.id }); return [entry, ...history].slice(0, 200); }
 function saveLocalHistory(id, entry) { const all = getLocalHistory(); all[String(id)] ||= []; all[String(id)].unshift(entry); all[String(id)] = all[String(id)].slice(0, 200); localStorage.setItem(storage.history, JSON.stringify(all)); }
 function getLocalHistory() { try { return JSON.parse(localStorage.getItem(storage.history) || "{}"); } catch (_) { return {}; } }
 function parseHistoryField(value) { if (!value) return []; if (Array.isArray(value)) return value; try { const parsed = JSON.parse(value); return Array.isArray(parsed) ? parsed : []; } catch (_) { return String(value).split("\n").filter(Boolean).map((line) => ({ at: "", action: "Запись", details: line })); } }
 function renderRequestHistory(record) { const history = getHistoryForRecord(record); els.requestHistoryBox.innerHTML = history.length ? history.map((h) => `<div class="history-item"><b>${e(h.at || "—")}</b><span>${e(h.action || "")} · ${e(h.user || "")}</span><p>${e(h.details || "")}</p></div>`).join("") : '<p class="muted-text">Истории изменений пока нет.</p>'; }
-function renderHistorySection() { const q = norm(els.historySearchInput?.value || ""); const rows = []; records.forEach((r) => getHistoryForRecord(r).forEach((h) => rows.push({ record: r, h }))); rows.sort((a, b) => String(b.h.at).localeCompare(String(a.h.at))); const filteredRows = rows.filter(({ record, h }) => { const f = record.fields || {}; const hay = norm([h.at, h.action, h.details, record.id, f["Имя клиента"], f["Телефон"]].join(" ")); return !q || hay.includes(q); }); els.historyBody.innerHTML = filteredRows.map(({ record, h }) => `<tr class="clickable-row" data-open-row="${e(record.id)}"><td>${e(h.at || "—")}</td><td>#${e(record.id)}</td><td>${e((record.fields || {})["Имя клиента"] || h.client || "—")}</td><td><b>${e(h.action || "")}</b></td><td>${e(h.details || "")}</td><td><button class="open-btn" data-open="${e(record.id)}">Открыть</button></td></tr>`).join("") || '<tr><td colspan="6">Истории пока нет</td></tr>'; bindActionButtons(); }
+function renderHistorySection() { const q = norm(els.historySearchInput?.value || ""); const rows = []; records.forEach((r) => getHistoryForRecord(r).forEach((h) => rows.push({ record: r, h }))); rows.sort((a, b) => String(b.h.at).localeCompare(String(a.h.at))); const filteredRows = rows.filter(({ record, h }) => { const f = record.fields || {}; const hay = norm([h.at, h.action, h.details, record.id, f["Имя клиента"], f["Телефон"]].join(" ")); return !q || hay.includes(q); }); els.historyBody.innerHTML = filteredRows.map(({ record, h }) => `<tr class="clickable-row" data-open-row="${e(record.id)}"><td>${e(h.at || "—")}</td><td>${e(requestDisplayNumber(record))}</td><td>${e((record.fields || {})["Имя клиента"] || h.client || "—")}</td><td><b>${e(h.action || "")}</b></td><td>${e(h.details || "")}</td><td><button class="open-btn" data-open="${e(record.id)}">Открыть</button></td></tr>`).join("") || '<tr><td colspan="6">Истории пока нет</td></tr>'; bindActionButtons(); }
 function clearLocalHistory() { if (!confirm("Очистить локальную историю изменений в этом браузере? Данные в Supabase не удаляются.")) return; localStorage.removeItem(storage.history); renderHistorySection(); msg("Локальная история очищена"); }
 
 
@@ -2192,7 +2248,7 @@ function renderPayrollPreview() {
   const summaryRows = WORKERS.map((w) => payroll.summary[w]).filter((x) => x.jobs || x.bonus || x.advance);
   const total = summaryRows.reduce((s, x) => s + x.total, 0);
   const summaryHtml = summaryRows.length ? `<h3>Итого к выплате: ${money(total)}</h3><div class="table-mini-wrap"><table class="table-mini"><thead><tr><th>Монтажник</th><th>Объектов</th><th>м² к оплате</th><th>Начислено</th><th>Доплата</th><th>Аванс/удерж.</th><th>Итого</th></tr></thead><tbody>${summaryRows.map((x) => `<tr><td><b>${e(workerLabel(x.worker))}</b></td><td>${x.jobs}</td><td>${moneyNumber(x.m2)}</td><td>${money(x.amount)}</td><td>${money(x.bonus)}</td><td>${money(x.advance)}</td><td><b>${money(x.total)}</b></td></tr>`).join("")}</tbody></table></div>` : '<p class="modal-note">По выбранным условиям нет работ для расчёта зарплаты.</p>';
-  const detailsHtml = payroll.details.length ? `<h3>Детализация</h3><div class="table-mini-wrap"><table class="table-mini"><thead><tr><th>Дата</th><th>Заявка</th><th>Клиент</th><th>Компания</th><th>Объект</th><th>Бригада</th><th>Монтажник</th><th>м² к оплате</th><th>Ставка</th><th>Сумма</th></tr></thead><tbody>${payroll.details.slice(0, 120).map((d) => `<tr><td>${e(d.date)}</td><td>#${e(d.id)}</td><td>${e(d.client)}</td><td>${e(d.company || "—")}</td><td>${e(d.address)}</td><td>${d.crewSize}</td><td>${e(d.workerFull)}</td><td>${moneyNumber(d.shareM2)}</td><td>${moneyNumber(d.rate)}</td><td>${money(d.amount)}</td></tr>`).join("")}</tbody></table></div>` : "";
+  const detailsHtml = payroll.details.length ? `<h3>Детализация</h3><div class="table-mini-wrap"><table class="table-mini"><thead><tr><th>Дата</th><th>Заявка</th><th>Клиент</th><th>Компания</th><th>Объект</th><th>Бригада</th><th>Монтажник</th><th>м² к оплате</th><th>Ставка</th><th>Сумма</th></tr></thead><tbody>${payroll.details.slice(0, 120).map((d) => `<tr><td>${e(d.date)}</td><td>${e(requestDisplayNumber(d.id))}</td><td>${e(d.client)}</td><td>${e(d.company || "—")}</td><td>${e(d.address)}</td><td>${d.crewSize}</td><td>${e(d.workerFull)}</td><td>${moneyNumber(d.shareM2)}</td><td>${moneyNumber(d.rate)}</td><td>${money(d.amount)}</td></tr>`).join("")}</tbody></table></div>` : "";
   els.reportPreview.innerHTML = summaryHtml + detailsHtml;
 }
 function downloadPayrollReport() {
@@ -2206,7 +2262,7 @@ function downloadPayrollCsvReport() {
   const { summary, details, settings, mode } = buildPayroll();
   const summaryRows = WORKERS.map((w) => summary[w]).filter((x) => x.jobs || x.bonus || x.advance);
   const summaryTable = { title: "Сводка к выплате", headers: ["Сотрудник", "Кратко", "Объектов", "м² к оплате", "Начислено", "Доплата", "Аванс/удержание", "Итого к выплате", "Комментарий"], rows: summaryRows.map((x) => [workerLabel(x.worker), x.worker, x.jobs, moneyNumber(x.m2), moneyNumber(x.amount), moneyNumber(x.bonus), moneyNumber(x.advance), moneyNumber(x.total), x.comment]) };
-  const detailsTable = { title: "Детализация по объектам", headers: ["Дата", "Время", "Заявка", "Клиент", "Компания", "Телефон", "Адрес", "Услуга", "Статус", "Бригада, чел", "Монтажник", "Все монтажники", "Общий м² объекта", "м² к оплате", "Ставка по бригаде", "Сумма"], rows: details.map((d) => [d.date, d.time, "#" + d.id, d.client, d.company || "", d.phone, d.address, d.service, d.status, d.crewSize, d.workerFull, d.installers, moneyNumber(d.totalM2), moneyNumber(d.shareM2), moneyNumber(d.rate), moneyNumber(d.amount)]) };
+  const detailsTable = { title: "Детализация по объектам", headers: ["Дата", "Время", "Заявка", "Клиент", "Компания", "Телефон", "Адрес", "Услуга", "Статус", "Бригада, чел", "Монтажник", "Все монтажники", "Общий м² объекта", "м² к оплате", "Ставка по бригаде", "Сумма"], rows: details.map((d) => [d.date, d.time, requestDisplayNumber(d.id), d.client, d.company || "", d.phone, d.address, d.service, d.status, d.crewSize, d.workerFull, d.installers, moneyNumber(d.totalM2), moneyNumber(d.shareM2), moneyNumber(d.rate), moneyNumber(d.amount)]) };
   const ratesTable = { title: "Ставки за м²", headers: ["Сотрудник", "1 чел", "2 чел", "3 чел", "4 чел", "5 чел", "Доплата", "Аванс/удержание", "Комментарий"], rows: WORKER_PROFILES.map((w) => { const r = settings.rates[w.key] || {}; return [w.full, r[1], r[2], r[3], r[4], r[5], r.bonus, r.advance, r.comment || ""]; }) };
   const metaTable = { title: "Параметры отчёта", headers: ["Параметр", "Значение"], rows: [["Период", `${els.reportDateFrom.value} — ${els.reportDateTo.value}`], ["Метод расчёта", payrollModeText(mode)], ["Статусы", payrollStatusText(els.payrollStatusMode?.value || settings.statusMode)], ["Создан", dateTimeY()]] };
   const lines = [];
@@ -2509,7 +2565,7 @@ function renderFilesRequestSelect() {
   const currentValue = select.value;
   select.innerHTML = records.slice().sort(sortByDateDesc).map((r) => {
     const f = r.fields || {};
-    const label = `#${r.id} — ${f["Имя клиента"] || "без имени"} — ${f["Адрес"] || f["Услуга"] || "без адреса"}`;
+    const label = `${requestDisplayNumber(r)} — ${f["Имя клиента"] || "без имени"} — ${f["Адрес"] || f["Авто"] || f["Услуга"] || "без адреса"}`;
     return `<option value="${e(r.id)}">${e(label)}</option>`;
   }).join("") || '<option value="">Нет заявок</option>';
   if (currentValue && [...select.options].some((o) => o.value === currentValue)) select.value = currentValue;
@@ -2769,7 +2825,7 @@ function openFilePreview(key) {
   if (!dialog || !title || !content) return openFileInDrive(key);
 
   title.textContent = file.originalName || file.name || "Просмотр файла";
-  meta.innerHTML = `Заявка: <b>#${e(file.requestId || "—")}</b> · Клиент: <b>${e(file.client || "—")}</b> · Тип: <b>${e(file.fileType || "файл")}</b> · Размер: <b>${formatFileSize(file.size)}</b><br>Адрес: ${e(file.address || "—")}`;
+  meta.innerHTML = `Заявка: <b>${e(requestDisplayNumber(file.requestId) || file.requestId || "—")}</b> · Клиент: <b>${e(file.client || "—")}</b> · Тип: <b>${e(file.fileType || "файл")}</b> · Размер: <b>${formatFileSize(file.size)}</b><br>Адрес: ${e(file.address || "—")}`;
 
   const previewUrl = fileDrivePreviewUrl(file);
   const downloadUrl = fileDownloadUrl(file);
@@ -3716,7 +3772,7 @@ function openClientCard(key) {
   els.clientCardAddresses.innerHTML = addresses.length ? addresses.map((a) => `<span>${e(a)}</span>`).join("") : '<p class="muted-text">Адресов пока нет.</p>';
   els.clientCardRequestsBody.innerHTML = rows.map((r) => {
     const f = r.fields || {};
-    return `<tr class="clickable-row" data-open-row="${e(r.id)}"><td>${e(f["Дата записи"] || "")}</td><td>${e(f["Услуга"] || "—")}</td><td>${e(f["Адрес"] || "—")}</td><td>${moneyNumber(getM2(f))}</td><td><span class="status" data-status="${e(f["Статус"] || "")}">${e(f["Статус"] || "—")}</span></td><td><button class="open-btn" data-open="${e(r.id)}">Открыть</button></td></tr>`;
+    return `<tr class="clickable-row" data-open-row="${e(r.id)}"><td>${e(f["Дата записи"] || "")}<br><small>${e(requestDisplayNumber(r))}</small></td><td>${e(f["Услуга"] || "—")}</td><td>${e(f["Адрес"] || "—")}</td><td>${moneyNumber(getM2(f))}</td><td><span class="status" data-status="${e(f["Статус"] || "")}">${e(f["Статус"] || "—")}</span></td><td><button class="open-btn" data-open="${e(r.id)}">Открыть</button></td></tr>`;
   }).join("") || '<tr><td colspan="6">Заявок пока нет</td></tr>';
 
   const requestIds = new Set(rows.map((r) => String(r.id)));
@@ -3727,7 +3783,7 @@ function openClientCard(key) {
     const f = r.fields || {};
     const text = [f["Комментарий клиента"], f["Комментарий"], f["Комментарий администратора"]].filter(Boolean).join("\n");
     if (!text) return "";
-    return `<div class="history-item"><b>#${e(r.id)} · ${e(f["Дата записи"] || "")}</b><p>${nl2br(text)}</p></div>`;
+    return `<div class="history-item"><b>${e(requestDisplayNumber(r))} · ${e(f["Дата записи"] || "")}</b><p>${nl2br(text)}</p></div>`;
   }).filter(Boolean);
   els.clientCardComments.innerHTML = comments.join("") || '<p class="muted-text">Комментариев пока нет.</p>';
   bindActionButtons();
@@ -3763,7 +3819,7 @@ function renderGlobalSearch(allowOpen = true) {
     const f = r.fields || {};
     const hay = norm([r.id, f["Имя клиента"], f["Компания"], f["Телефон"], f["Услуга"], f["Адрес"], f["Статус"], f["Монтажники"], f["Комментарий клиента"], f["Комментарий администратора"]].join(" "));
     if (hay.includes(q)) {
-      items.push({ type: "Заявка", title: `#${r.id} — ${f["Имя клиента"] || "Без имени"}`, sub: [f["Компания"], f["Телефон"], f["Услуга"], f["Адрес"], f["Статус"]].filter(Boolean).join(" · "), action: "open", id: r.id });
+      items.push({ type: "Заявка", title: `${requestDisplayNumber(r)} — ${f["Имя клиента"] || "Без имени"}`, sub: [f["Компания"], f["Телефон"], f["Услуга"], f["Адрес"], f["Статус"]].filter(Boolean).join(" · "), action: "open", id: r.id });
       const ck = clientKeyFromFields(f);
       if (ck && !seenClients.has(ck)) {
         seenClients.add(ck);
@@ -3773,7 +3829,7 @@ function renderGlobalSearch(allowOpen = true) {
   });
   filesCache.forEach((file) => {
     const hay = norm([file.originalName, file.name, file.client, file.phone, file.address, file.service, file.fileType, file.requestId].join(" "));
-    if (hay.includes(q)) items.push({ type: "Файл", title: file.originalName || file.name || "Файл", sub: [`#${file.requestId || "—"}`, file.client, file.address, file.fileType].filter(Boolean).join(" · "), action: "file", id: file.key });
+    if (hay.includes(q)) items.push({ type: "Файл", title: file.originalName || file.name || "Файл", sub: [requestDisplayNumber(file.requestId) || file.requestId || "—", file.client, file.address, file.fileType].filter(Boolean).join(" · "), action: "file", id: file.key });
   });
   const limited = items.slice(0, 18);
   els.globalSearchResults.innerHTML = limited.length ? limited.map((item) => `<button type="button" class="global-search-item" data-global-action="${e(item.action)}" data-global-id="${e(item.id)}"><span>${e(item.type)}</span><b>${e(item.title)}</b><small>${e(item.sub)}</small></button>`).join("") : '<div class="global-search-empty">Ничего не найдено</div>';
