@@ -1,4 +1,4 @@
-const CACHE_NAME = 'solncanet-v61-supabase-architecture-services-only';
+const CACHE_NAME = 'solncanet-v61-supabase-quick-client-under-phone-v1';
 const APP_SHELL = [
   '/',
   '/index.html',
