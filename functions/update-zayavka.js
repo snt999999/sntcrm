@@ -7,7 +7,15 @@ function toNumber(value) { if (value === "" || value === null || value === undef
 function dateOnly(value) { return String(value || "").slice(0, 10) || null; }
 function timeOnly(value) { return String(value || "").slice(0, 5) || null; }
 function allowedPasswords(env) { const builtin = ["Bebelya9", "Bebelya91", "BebelyaA", "BebelyaNP", "BebelyaNK", "BebelyaD"]; const extra = String(env.USER_PASSWORDS || "").split(/[;,\n]/).map((x) => x.trim()).filter(Boolean); if (env.ADMIN_PASSWORD) builtin.push(String(env.ADMIN_PASSWORD)); return new Set([...builtin, ...extra]); }
-function checkAdmin(request, env) { const provided = (request.headers.get("x-admin-password") || "").trim(); if (!provided) return { ok: false, status: 401, body: { ok: false, error: "Не передан пароль" } }; if (!allowedPasswords(env).has(provided)) return { ok: false, status: 401, body: { ok: false, error: "Неверный пароль" } }; return { ok: true }; }
+function checkAdmin(request, env) { const provided = (request.headers.get("x-admin-password") || "").trim(); if (!provided) return { ok: false, status: 401, body: { ok: false, error: "Не передан пароль" } }; if (!allowedPasswords(env).has(provided)) return { ok: false, status: 401, body: { ok: false, error: "Неверный пароль" } }; return { ok: true, password: provided }; }
+function isStaffPassword(password) { return new Set(["BebelyaA", "BebelyaNP", "BebelyaNK", "BebelyaD"]).has(String(password || "").trim()); }
+function isDeleteLikeUpdate(fields = {}) {
+  const status = String(fields["Статус"] || fields.status || "").toLowerCase();
+  if (fields.__moveToTrash === true) return true;
+  if (fields["Удалено"] === true || String(fields["Удалено"]).toLowerCase() === "true") return true;
+  if (fields["Дата удаления"] || fields["Дата отмены"] || fields["Кто удалил"] || fields["Причина отмены"] || fields.deleted_at || fields.deletedAt) return true;
+  return /(удал|корзин|отмен|отказ|delete|trash|cancel)/i.test(status);
+}
 function sbUrl(env) {
   // Cloudflare variable SUPABASE_URL may be pasted either as:
   // https://xxxx.supabase.co OR https://xxxx.supabase.co/rest/v1
@@ -184,6 +192,9 @@ export async function onRequestPost(context) {
   if (!body.id) return json({ ok: false, error: "Record id is required" }, 400);
   const requested = body.fields || {};
   if (!Object.keys(requested).length) return json({ ok: false, error: "Нет данных для сохранения" }, 400);
+  if (isStaffPassword(auth.password) && isDeleteLikeUpdate(requested)) {
+    return json({ ok: false, error: "У этого аккаунта нет прав на удаление. Можно создавать и редактировать, но нельзя удалять." }, 403);
+  }
   try {
     const existing = await getZayavka(env, body.id);
     if (!existing) return json({ ok: false, error: "Заявка не найдена в Supabase" }, 404);

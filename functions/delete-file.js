@@ -14,7 +14,10 @@ function checkAdmin(request, env) {
   const provided = (request.headers.get("x-admin-password") || "").trim();
   if (!provided) return { ok: false, status: 401, body: { ok: false, error: "Не передан пароль" } };
   if (!allowedPasswords(env).has(provided)) return { ok: false, status: 401, body: { ok: false, error: "Неверный пароль" } };
-  return { ok: true };
+  return { ok: true, password: provided };
+}
+function isStaffPassword(password) {
+  return new Set(["BebelyaA", "BebelyaNP", "BebelyaNK", "BebelyaD"]).has(String(password || "").trim());
 }
 function stripHtml(text) {
   return String(text || "").replace(/<script[\s\S]*?<\/script>/gi, " ").replace(/<style[\s\S]*?<\/style>/gi, " ").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim().slice(0, 900);
@@ -40,6 +43,7 @@ export async function onRequestPost(context) {
   const { request, env } = context;
   const auth = checkAdmin(request, env);
   if (!auth.ok) return json(auth.body, auth.status);
+  if (isStaffPassword(auth.password)) return json({ ok: false, error: "У этого аккаунта нет прав на удаление файлов." }, 403);
   if (!env.GOOGLE_DRIVE_UPLOAD_URL) return json({ ok: false, error: "GOOGLE_DRIVE_UPLOAD_URL is not set" }, 500);
   let body;
   try { body = await request.json(); } catch (_) { return json({ ok: false, error: "Invalid JSON" }, 400); }

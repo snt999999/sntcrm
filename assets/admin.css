@@ -460,3 +460,12 @@ body.access-staff #bulkExportBtn{display:none!important;visibility:hidden!import
 .auto-service-row.service-row-architecture{grid-template-columns:minmax(220px,2fr) minmax(110px,.8fr) 36px}
 .auto-service-row.service-row-architecture .auto-service-material{display:none!important}
 @media(max-width:720px){.auto-service-row.service-row-architecture{grid-template-columns:1fr}}
+
+/* Staff accounts: no delete actions */
+body.access-staff [data-delete-only],
+body.access-staff [data-file-delete],
+body.access-staff [data-trash-client],
+body.access-staff .danger-context,
+body.access-staff .danger-mini{display:none!important;pointer-events:none!important}
+body.access-staff #bulkDeleteBtn,
+body.access-staff #cancelRequestBtn{display:none!important;pointer-events:none!important}

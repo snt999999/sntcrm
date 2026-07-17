@@ -1,4 +1,4 @@
-const CACHE_NAME = 'solncanet-v61-supabase-staff-split-v1';
+const CACHE_NAME = 'solncanet-v61-supabase-staff-no-delete';
 const APP_SHELL = [
   '/',
   '/index.html',

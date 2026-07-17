@@ -465,6 +465,9 @@ function accountFromPassword(password) {
 function hasFullAccess() {
   return currentUser?.access === "full" || currentUser?.role === "owner" || currentUser?.role === "admin";
 }
+function canDeleteRecords() {
+  return hasFullAccess();
+}
 const STAFF_ALLOWED_SECTIONS = new Set(["requests", "calendar", "clients", "objects", "files"]);
 function canAccessSection(section) {
   return hasFullAccess() || STAFF_ALLOWED_SECTIONS.has(section);
@@ -503,6 +506,15 @@ function applyAccessPolicy() {
     }
   });
   [els.topReportsBtn, els.exportBtn, els.bulkExportBtn].forEach((button) => {
+    if (!button) return;
+    if (full) button.style.removeProperty("display");
+    else button.style.setProperty("display", "none", "important");
+  });
+  document.querySelectorAll("[data-delete-only], [data-file-delete], [data-trash-client], .danger-context, .danger-mini").forEach((el) => {
+    if (full) el.style.removeProperty("display");
+    else el.style.setProperty("display", "none", "important");
+  });
+  [els.bulkDeleteBtn, els.cancelRequestBtn].forEach((button) => {
     if (!button) return;
     if (full) button.style.removeProperty("display");
     else button.style.setProperty("display", "none", "important");
@@ -997,7 +1009,7 @@ function showRowContextMenu(event, id) {
   if (!record) return;
   const f = record.fields || {};
   const menu = ensureContextMenu();
-  menu.innerHTML = `<button data-ctx="open">Открыть</button><button data-ctx="copy-phone">Копировать телефон</button><button data-ctx="copy-address">Копировать адрес</button><button data-ctx="client">История клиента</button><button data-ctx="delete" class="danger-context">Удалить</button>`;
+  menu.innerHTML = `<button data-ctx="open">Открыть</button><button data-ctx="copy-phone">Копировать телефон</button><button data-ctx="copy-address">Копировать адрес</button><button data-ctx="client">История клиента</button>${canDeleteRecords() ? `<button data-ctx="delete" class="danger-context" data-delete-only="1">Удалить</button>` : ""}`;
   menu.style.left = Math.min(event.clientX, window.innerWidth - 240) + "px";
   menu.style.top = Math.min(event.clientY, window.innerHeight - 230) + "px";
   menu.hidden = false;
@@ -1009,7 +1021,7 @@ function showRowContextMenu(event, id) {
     if (action === "copy-phone") { await navigator.clipboard?.writeText(String(f["Телефон"] || "")); return msg("Телефон скопирован"); }
     if (action === "copy-address") { await navigator.clipboard?.writeText(String(f["Адрес"] || "")); return msg("Адрес скопирован"); }
     if (action === "client") return openClientCard(clientKeyFromFields(f));
-    if (action === "delete") return trashRecordById(id);
+    if (action === "delete") return canDeleteRecords() ? trashRecordById(id) : msg("У вас нет прав на удаление.");
   });
 }
 function initContextMenu() {
@@ -1340,6 +1352,7 @@ async function saveRequest() {
   renderAll();
 }
 async function cancelCurrentRequest() {
+  if (!canDeleteRecords()) return msg("У вас нет прав на удаление. Можно создавать и редактировать, но нельзя удалять.");
   if (!current) return;
   const reason = els.cancelReason.value.trim() || "Причина не указана";
   if (!confirm("Удалить заявку? Она сразу попадёт в корзину.")) return;
@@ -1353,6 +1366,7 @@ async function cancelCurrentRequest() {
   renderAll();
 }
 async function moveRecordToTrash(record, reason = "Удалено вручную") {
+  if (!canDeleteRecords()) return msg("У вас нет прав на удаление. Можно создавать и редактировать, но нельзя удалять.");
   if (!record) return;
   const oldFields = record.fields || {};
   const adminComment = [oldFields["Комментарий администратора"] || "", `КОРЗИНА: ${dateTimeY()} — ${reason}`].filter(Boolean).join("\n");
@@ -1371,6 +1385,7 @@ async function moveRecordToTrash(record, reason = "Удалено вручную
   await updateRecord(record.id, fields, "Запись удалена и перенесена в корзину");
 }
 async function trashRecordById(id, reason = "Удалено вручную") {
+  if (!canDeleteRecords()) return msg("У вас нет прав на удаление. Можно создавать и редактировать, но нельзя удалять.");
   const record = records.find((r) => String(r.id) === String(id));
   if (!record) return msg("Запись не найдена. Обновите страницу.");
   if (!confirm("Удалить запись? Она сразу попадёт в корзину.")) return;
@@ -1378,6 +1393,7 @@ async function trashRecordById(id, reason = "Удалено вручную") {
   renderAll();
 }
 async function trashClient(clientKey) {
+  if (!canDeleteRecords()) return msg("У вас нет прав на удаление клиентов/заявок.");
   const list = records.filter((r) => !isTrashRecord(r) && clientKeyFromFields(r.fields || {}) === clientKey);
   if (!list.length) return msg("Активные заявки клиента не найдены");
   if (!confirm(`Перенести в корзину все активные заявки клиента (${list.length})?`)) return;
@@ -2704,7 +2720,8 @@ function fileMiniHtml(file) {
   const thumb = isImage
     ? `<button type="button" class="file-thumb file-thumb-btn" data-file-preview="${e(file.key)}" title="Посмотреть файл"><img src="${e(file.downloadUrl || file.url)}" alt="${e(file.originalName || "Файл")}" loading="lazy"></button>`
     : `<button type="button" class="file-thumb file-thumb-btn file-thumb-icon" data-file-preview="${e(file.key)}" title="Посмотреть файл">${fileIcon(file)}</button>`;
-  return `<div class="file-chip file-chip-v53"><div class="file-chip__main">${thumb}<span><button type="button" class="file-title-button" data-file-preview="${e(file.key)}">${e(file.originalName || file.name || "Файл")}</button><small>${e(file.fileType || "файл")} · ${formatFileSize(file.size)} · ${e(formatDateTime(file.uploadedAt))}</small></span></div><div class="file-chip__actions"><button type="button" data-file-preview="${e(file.key)}">Посмотреть</button><button type="button" data-file-open="${e(file.key)}">Открыть</button><button type="button" data-file-download="${e(file.key)}">Скачать</button><button type="button" class="danger-mini" data-file-delete="${e(file.key)}">Удалить</button></div></div>`;
+  const deleteButton = canDeleteRecords() ? `<button type="button" class="danger-mini" data-file-delete="${e(file.key)}" data-delete-only="1">Удалить</button>` : "";
+  return `<div class="file-chip file-chip-v53"><div class="file-chip__main">${thumb}<span><button type="button" class="file-title-button" data-file-preview="${e(file.key)}">${e(file.originalName || file.name || "Файл")}</button><small>${e(file.fileType || "файл")} · ${formatFileSize(file.size)} · ${e(formatDateTime(file.uploadedAt))}</small></span></div><div class="file-chip__actions"><button type="button" data-file-preview="${e(file.key)}">Посмотреть</button><button type="button" data-file-open="${e(file.key)}">Открыть</button><button type="button" data-file-download="${e(file.key)}">Скачать</button>${deleteButton}</div></div>`;
 }
 function renderRequestFiles(requestId) {
   const box = $("requestFilesBox");
