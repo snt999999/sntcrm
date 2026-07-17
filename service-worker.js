@@ -1,4 +1,4 @@
-const CACHE_NAME = 'solncanet-v61-auto-service-single-suggest-v2';
+const CACHE_NAME = 'solncanet-v61-architecture-multi-services-v1';
 const APP_SHELL = [
   '/',
   '/index.html',

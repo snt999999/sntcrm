@@ -1044,6 +1044,14 @@ function autoServicesTotal(list) {
   return (list || []).reduce((sum, item) => sum + autoServicePriceValue(normalizeAutoServiceItem(item)), 0);
 }
 function autoServiceContainer(prefix) { return prefix === "quick" ? els.quickAutoServices : els.editAutoServices; }
+function serviceModeForPrefix(prefix) {
+  const value = prefix === "quick" ? (els.quickDirection?.value || currentWorkspace || "architecture") : (els.editDirection?.value || recordDirection(current) || "architecture");
+  return value === "auto" ? "auto" : "architecture";
+}
+function serviceSuggestionsForMode(mode) {
+  if (mode === "auto") return AUTO_PAY_RATES.map((r) => ({ name: r.service, price: r.price, percent: r.percent, rate: r }));
+  return ARCHITECTURE_SERVICES.map((name) => ({ name, price: "", percent: "", rate: null }));
+}
 function initAutoServiceDatalist() {
   // Встроенный браузерный datalist отключён, чтобы не было двух списков подсказок.
   // Оставляем только наш красивый список .auto-suggest-box.
@@ -1079,10 +1087,12 @@ function showAutoServiceSuggestions(input, prefix) {
   if (!row) return;
   const q = input.value || "";
   if (norm(q).length < 1) { hideAutoServiceSuggestions(row); return; }
-  const matches = AUTO_PAY_RATES
-    .map((r) => ({ rate: r, score: scoreAutoSuggestion(q, r.service) }))
+  const mode = serviceModeForPrefix(prefix);
+  const source = serviceSuggestionsForMode(mode);
+  const matches = source
+    .map((item) => ({ item, score: scoreAutoSuggestion(q, item.name) }))
     .filter((x) => x.score > 0)
-    .sort((a, b) => b.score - a.score || String(a.rate.service).localeCompare(String(b.rate.service)))
+    .sort((a, b) => b.score - a.score || String(a.item.name).localeCompare(String(b.item.name)))
     .slice(0, 7);
   if (!matches.length) { hideAutoServiceSuggestions(row); return; }
   let box = row.querySelector(".auto-suggest-box");
@@ -1091,16 +1101,16 @@ function showAutoServiceSuggestions(input, prefix) {
     box.className = "auto-suggest-box";
     row.appendChild(box);
   }
-  box.innerHTML = matches.map(({ rate }) => {
-    const price = rate.price !== undefined && rate.price !== null && rate.price !== "" ? `${moneyNumber(rate.price)} ₽` : (rate.percent ? `${Math.round(rate.percent * 100)}%` : "");
-    return `<button type="button" data-service="${e(rate.service)}"><span>${e(rate.service)}</span>${price ? `<small>${e(price)}</small>` : ""}</button>`;
+  box.innerHTML = matches.map(({ item }) => {
+    const price = item.price !== undefined && item.price !== null && item.price !== "" ? `${moneyNumber(item.price)} ₽` : (item.percent ? `${Math.round(item.percent * 100)}%` : "");
+    return `<button type="button" data-service="${e(item.name)}"><span>${e(item.name)}</span>${price ? `<small>${e(price)}</small>` : ""}</button>`;
   }).join("");
   box.querySelectorAll("button[data-service]").forEach((btn) => {
     btn.addEventListener("pointerdown", (ev) => {
       ev.preventDefault();
       const service = btn.dataset.service || "";
       input.value = service;
-      applyAutoServiceDefault(row);
+      if (mode === "auto") applyAutoServiceDefault(row);
       hideAutoServiceSuggestions(row);
       updateAutoTotal(prefix);
     });
@@ -1138,8 +1148,8 @@ function applyAutoServiceDefault(row) {
   const nameInput = row.querySelector(".auto-service-name");
   const priceInput = row.querySelector(".auto-service-price");
   if (!nameInput || !priceInput) return;
-  const rate = autoRateForService(nameInput.value || "");
-  if (rate && norm(nameInput.value) !== norm(rate.service)) nameInput.value = rate.service;
+  const exactName = norm(nameInput.value || "");
+  const rate = AUTO_PAY_RATES.find((r) => norm(r.service) === exactName);
   if (rate && !String(priceInput.value || "").trim()) {
     const p = defaultAutoServicePrice(rate.service);
     if (p) priceInput.value = p;
@@ -1148,13 +1158,17 @@ function applyAutoServiceDefault(row) {
 function renderAutoServiceRows(prefix, list = null) {
   const box = autoServiceContainer(prefix);
   if (!box) return;
+  const mode = serviceModeForPrefix(prefix);
+  const isAuto = mode === "auto";
   const arr = list && list.length ? list : [{ name: "", material: "", price: "" }];
-  box.innerHTML = arr.map((item, i) => `<div class="auto-service-row" data-auto-service-row><input class="auto-service-name" autocomplete="off" placeholder="Полное название услуги" value="${e(item.name || "")}" /><input class="auto-service-material" placeholder="Материал" value="${e(item.material || item["Материал"] || "")}" /><input class="auto-service-price" type="number" step="1" placeholder="Сумма" value="${e(item.price || "")}" /><button type="button" class="ghost-small" data-auto-service-remove>×</button></div>`).join("");
+  box.classList.toggle("services-mode-auto", isAuto);
+  box.classList.toggle("services-mode-architecture", !isAuto);
+  box.innerHTML = arr.map((item) => `<div class="auto-service-row ${isAuto ? "service-row-auto" : "service-row-architecture"}" data-auto-service-row><input class="auto-service-name" autocomplete="off" placeholder="${isAuto ? "Полное название услуги" : "Название услуги"}" value="${e(item.name || "")}" /><input class="auto-service-material" placeholder="Материал" value="${e(item.material || item["Материал"] || "")}" ${isAuto ? "" : "hidden"} /><input class="auto-service-price" type="number" step="1" placeholder="Сумма" value="${e(item.price || "")}" /><button type="button" class="ghost-small" data-auto-service-remove>×</button></div>`).join("");
   box.querySelectorAll(".auto-service-name").forEach((input) => {
     input.addEventListener("input", () => { showAutoServiceSuggestions(input, prefix); updateAutoTotal(prefix); });
     input.addEventListener("focus", () => { showAutoServiceSuggestions(input, prefix); });
-    input.addEventListener("change", () => { applyAutoServiceDefault(input.closest("[data-auto-service-row]")); updateAutoTotal(prefix); });
-    input.addEventListener("blur", () => { const row = input.closest("[data-auto-service-row]"); setTimeout(() => hideAutoServiceSuggestions(row), 160); applyAutoServiceDefault(row); updateAutoTotal(prefix); });
+    input.addEventListener("change", () => { if (serviceModeForPrefix(prefix) === "auto") applyAutoServiceDefault(input.closest("[data-auto-service-row]")); updateAutoTotal(prefix); });
+    input.addEventListener("blur", () => { const row = input.closest("[data-auto-service-row]"); setTimeout(() => hideAutoServiceSuggestions(row), 160); if (serviceModeForPrefix(prefix) === "auto") applyAutoServiceDefault(row); updateAutoTotal(prefix); });
   });
   box.querySelectorAll("input").forEach((input) => input.addEventListener("input", () => updateAutoTotal(prefix)));
   box.querySelectorAll("[data-auto-service-remove]").forEach((btn) => btn.addEventListener("click", () => { btn.closest("[data-auto-service-row]")?.remove(); updateAutoTotal(prefix); }));
@@ -1185,15 +1199,38 @@ function fillArchitectureServiceSelect() {
 function updateQuickDirectionUI() {
   const isAuto = (els.quickDirection?.value || currentWorkspace) === "auto";
   if (!isAuto) fillArchitectureServiceSelect();
-  if (els.quickAutoFields) els.quickAutoFields.style.display = isAuto ? "block" : "none";
-  [els.quickServiceLabel, els.quickM2Label, els.quickAddressLabel].forEach((node) => { if (node) node.style.display = isAuto ? "none" : ""; });
-  if (isAuto && els.quickAutoServices && !els.quickAutoServices.children.length) renderAutoServiceRows("quick");
+  const existing = collectAutoServices("quick");
+  if (els.quickAutoFields) {
+    els.quickAutoFields.style.display = "block";
+    els.quickAutoFields.classList.toggle("is-auto", isAuto);
+    els.quickAutoFields.classList.toggle("is-architecture", !isAuto);
+    els.quickAutoFields.querySelectorAll(".auto-only-fields").forEach((node) => { node.style.display = isAuto ? "" : "none"; });
+    const title = els.quickAutoFields.querySelector("#quickServicesTitle");
+    if (title) title.textContent = isAuto ? "Авто" : "Архитектура";
+    const head = els.quickAutoFields.querySelector("#quickServicesHeadText");
+    if (head) head.textContent = isAuto ? "Услуги и стоимость" : "Архитектурные услуги и стоимость";
+  }
+  if (els.quickServiceLabel) els.quickServiceLabel.style.display = "none";
+  [els.quickM2Label, els.quickAddressLabel].forEach((node) => { if (node) node.style.display = isAuto ? "none" : ""; });
+  renderAutoServiceRows("quick", existing.length ? existing : [{ name: "", material: "", price: "" }]);
 }
 function updateEditDirectionUI() {
   const isAuto = (els.editDirection?.value || "architecture") === "auto";
-  if (els.editAutoFields) els.editAutoFields.style.display = isAuto ? "block" : "none";
-  if (els.editServiceLabel) els.editServiceLabel.style.display = isAuto ? "none" : "";
-  if (isAuto && els.editAutoServices && !els.editAutoServices.children.length) renderAutoServiceRows("edit");
+  const existing = collectAutoServices("edit");
+  if (els.editAutoFields) {
+    els.editAutoFields.style.display = "block";
+    els.editAutoFields.classList.toggle("is-auto", isAuto);
+    els.editAutoFields.classList.toggle("is-architecture", !isAuto);
+    els.editAutoFields.querySelectorAll(".auto-only-fields").forEach((node) => { node.style.display = isAuto ? "" : "none"; });
+    const title = els.editAutoFields.querySelector("#editServicesTitle");
+    if (title) title.textContent = isAuto ? "Авто" : "Архитектура";
+    const head = els.editAutoFields.querySelector("#editServicesHeadText");
+    if (head) head.textContent = isAuto ? "Услуги и стоимость" : "Архитектурные услуги и стоимость";
+  }
+  if (els.editServiceLabel) els.editServiceLabel.style.display = "none";
+  if (els.editM2?.parentElement) els.editM2.parentElement.style.display = isAuto ? "none" : "";
+  if (els.editAddress?.parentElement) els.editAddress.parentElement.style.display = isAuto ? "none" : "";
+  renderAutoServiceRows("edit", existing.length ? existing : [{ name: "", material: "", price: "" }]);
   ensureRomanInstallerForAuto("edit");
 }
 
@@ -1230,7 +1267,7 @@ function openRequest(id) {
   if (!current) return;
   const f = current.fields || {};
   els.dialogTitle.textContent = "Заявка " + requestDisplayNumber(current);
-  els.requestInfo.innerHTML = requestClientCardHtml(current) + `<div class="request-current-summary"><b>Текущая заявка ${e(requestDisplayNumber(current))}</b><br>${e(f["Дата записи"] || "")} ${e(f["Время записи"] || "")}<br>${e(f["Услуга"] || "")}<br>${recordDirection(current)==="auto" ? `<b>Авто:</b> ${e(f["Авто"]||"—")}<br><b>Плёнка:</b> ${e(f["Пленка"]||"—")}<br><b>Стоимость:</b> ${e(f["Общая стоимость"]||"0")} ₽<br>` : ""}${e(f["Адрес"] || "")}<br><br>${nl2br(f["Комментарий клиента"] || f["Комментарий"] || "")}</div>`;
+  els.requestInfo.innerHTML = requestClientCardHtml(current) + `<div class="request-current-summary"><b>Текущая заявка ${e(requestDisplayNumber(current))}</b><br>${e(f["Дата записи"] || "")} ${e(f["Время записи"] || "")}<br>${e(f["Услуга"] || "")}<br>${recordDirection(current)==="auto" ? `<b>Авто:</b> ${e(f["Авто"]||"—")}<br><b>Плёнка:</b> ${e(f["Пленка"]||"—")}<br>` : ""}<b>Стоимость:</b> ${e(f["Общая стоимость"]||"0")} ₽<br>${e(f["Адрес"] || "")}<br><br>${nl2br(f["Комментарий клиента"] || f["Комментарий"] || "")}</div>`;
   els.editDate.value = f["Дата записи"] || "";
   els.editTime.value = f["Время записи"] || "";
   els.editStatus.value = f["Статус"] || "Новая заявка";
@@ -1265,24 +1302,25 @@ function currentEditFields() {
   const autoServices = collectAutoServices("edit");
   const selectedInstallers = [...document.querySelectorAll('[name="installer"]:checked')].map((x) => x.value);
   if (direction === "auto" && !selectedInstallers.length) selectedInstallers.push(AUTO_DEFAULT_INSTALLER);
+  const serviceTitle = autoServices.map((s) => s.name).filter(Boolean).join("; ");
   const fields = {
     "Направление": direction === "auto" ? "Авто" : "Архитектура",
     "Дата записи": els.editDate.value,
     "Время записи": els.editTime.value,
     "Статус": els.editStatus.value,
-    "Итоговый м2": els.editM2.value,
+    "Итоговый м2": direction === "auto" ? "" : els.editM2.value,
     "Ответственный": direction === "auto" ? (els.editResponsible.value.trim() || AUTO_DEFAULT_RESPONSIBLE) : els.editResponsible.value.trim(),
     "Компания": els.editCompany?.value.trim() || "",
-    "Услуга": direction === "auto" ? (autoServices.map((s) => s.name).filter(Boolean).join("; ") || "Авто") : els.editService.value.trim(),
-    "Адрес": els.editAddress.value.trim(),
+    "Услуга": serviceTitle || (direction === "auto" ? "Авто" : (els.editService?.value.trim() || "Архитектура")),
+    "Адрес": direction === "auto" ? "" : els.editAddress.value.trim(),
     "Комментарий администратора": els.editAdminComment.value.trim(),
-    "Монтажники": selectedInstallers.join(", ")
+    "Монтажники": selectedInstallers.join(", "),
+    "Авто услуги": JSON.stringify(autoServices),
+    "Общая стоимость": String(autoServicesTotal(autoServices))
   };
   if (direction === "auto") {
     fields["Авто"] = els.editAuto?.value.trim() || "";
     fields["Пленка"] = els.editFilm?.value.trim() || "";
-    fields["Авто услуги"] = JSON.stringify(autoServices);
-    fields["Общая стоимость"] = String(autoServicesTotal(autoServices));
   }
   return fields;
 }
@@ -1620,23 +1658,25 @@ async function saveQuickAdd() {
   const direction = els.quickDirection?.value || currentWorkspace || "architecture";
   const isAuto = direction === "auto";
   const autoServices = collectAutoServices("quick");
-  if (isAuto && !autoServices.length) { msg("Добавьте хотя бы одну услугу по авто"); return; }
-  const autoServiceTitle = autoServices.map((s) => s.name).filter(Boolean).join("; ") || "Авто";
+  if (!autoServices.length) { msg("Добавьте хотя бы одну услугу"); return; }
+  const autoServiceTitle = autoServices.map((s) => s.name).filter(Boolean).join("; ") || (isAuto ? "Авто" : "Архитектура");
   const record = {
     "Направление": isAuto ? "Авто" : "Архитектура",
     "Имя клиента": els.quickName.value.trim(),
     "Компания": els.quickCompany?.value.trim() || "",
     "Телефон": formatRussianPhone(els.quickPhone.value),
-    "Услуга": isAuto ? autoServiceTitle : els.quickService.value,
+    "Услуга": autoServiceTitle,
     "Дата записи": els.quickDate.value,
     "Время записи": els.quickTime.value,
     "Адрес": isAuto ? "" : els.quickAddress.value.trim(),
     "м2": isAuto ? "" : (els.quickM2.value ? String(els.quickM2.value) : ""),
     "Комментарий клиента": els.quickComment.value.trim(),
     "Статус": "Новая заявка",
-    "Cal Booking ID": calendarId
+    "Cal Booking ID": calendarId,
+    "Авто услуги": JSON.stringify(autoServices),
+    "Общая стоимость": String(autoServicesTotal(autoServices))
   };
-  if (isAuto) { record["Авто"] = els.quickAuto?.value.trim() || ""; record["Пленка"] = els.quickFilm?.value.trim() || ""; record["Авто услуги"] = JSON.stringify(autoServices); record["Общая стоимость"] = String(autoServicesTotal(autoServices)); record["Монтажники"] = AUTO_DEFAULT_INSTALLER; record["Ответственный"] = AUTO_DEFAULT_RESPONSIBLE; }
+  if (isAuto) { record["Авто"] = els.quickAuto?.value.trim() || ""; record["Пленка"] = els.quickFilm?.value.trim() || ""; record["Монтажники"] = AUTO_DEFAULT_INSTALLER; record["Ответственный"] = AUTO_DEFAULT_RESPONSIBLE; }
   if (!record["Имя клиента"] || !record["Телефон"] || !record["Дата записи"] || !record["Время записи"]) { msg("Заполните ФИО, телефон, дату и время"); return; }
   try {
     const response = await fetch("/create-zayavka", { method: "POST", headers: { "Content-Type": "application/json", "x-admin-password": pwd() }, body: JSON.stringify({ fields: record }) });

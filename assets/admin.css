@@ -452,3 +452,11 @@ body.access-staff #bulkExportBtn{display:none!important;visibility:hidden!import
   #filesBody.files-cards{padding:10px!important}
   .files-request-card{padding:12px!important}
 }
+
+
+/* multi service rows for architecture and auto */
+.service-fields.is-architecture .auto-only-fields{display:none!important}
+.service-fields.is-architecture .auto-services-head b::after{content:""}
+.auto-service-row.service-row-architecture{grid-template-columns:minmax(220px,2fr) minmax(110px,.8fr) 36px}
+.auto-service-row.service-row-architecture .auto-service-material{display:none!important}
+@media(max-width:720px){.auto-service-row.service-row-architecture{grid-template-columns:1fr}}
