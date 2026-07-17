@@ -222,7 +222,10 @@ const WORKSPACES = {
 const APP_ACCOUNTS = [
   { name: "Сергей Н", role: "owner", access: "full", password: "Bebelya9" },
   { name: "Роман", role: "admin", access: "full", password: "Bebelya91" },
-  { name: "Сотрудник", role: "staff", access: "requests", password: "Bebelya" }
+  { name: "Андрей", role: "staff", access: "requests", password: "BebelyaA" },
+  { name: "Никита П", role: "staff", access: "requests", password: "BebelyaNP" },
+  { name: "Никита К", role: "staff", access: "requests", password: "BebelyaNK" },
+  { name: "Дима", role: "staff", access: "requests", password: "BebelyaD" }
 ];
 let currentWorkspace = localStorage.getItem(storage.workspace) || "all";
 let autoRefreshTimer = null;
