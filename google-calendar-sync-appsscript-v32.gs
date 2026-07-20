@@ -4,6 +4,7 @@
  *  - health: проверка связи
  *  - list: загрузка событий для импорта в заявки
  *  - create/upsert: создание или обновление события из заявки/быстрой записи
+ *  - поддерживает пересоздание удалённого события и защиту от дублей по ID заявки
  *
  * В Apps Script установите:
  * Execute as: Me
@@ -59,6 +60,16 @@ function listEvents_(calendar, input) {
 }
 
 function createOrUpdateEvent_(calendar, input) {
+  const lock = LockService.getScriptLock();
+  try {
+    lock.waitLock(15000);
+    return createOrUpdateEventLocked_(calendar, input);
+  } finally {
+    try { lock.releaseLock(); } catch (err) {}
+  }
+}
+
+function createOrUpdateEventLocked_(calendar, input) {
   const fields = input.fields || {};
   const date = validDate_(fields['Дата записи']);
   const time = validTime_(fields['Время записи']);
@@ -67,14 +78,21 @@ function createOrUpdateEvent_(calendar, input) {
   const start = new Date(date + 'T' + time + ':00+05:00');
   const minutes = Number(input.durationMinutes || fields['Длительность'] || DEFAULT_DURATION_MINUTES) || DEFAULT_DURATION_MINUTES;
   const end = new Date(start.getTime() + minutes * 60000);
+  const recordId = String(input.recordId || fields['ID заявки'] || fields['Заявка ID'] || '').trim();
   const title = buildTitle_(fields);
-  const description = buildDescription_(fields, input.recordId || '');
+  const description = buildDescription_(fields, recordId);
   const location = String(fields['Адрес'] || '').trim();
   const eventId = String(input.eventId || fields['Google Calendar Event ID'] || '').trim();
 
   let ev = null;
+  let matchedBy = '';
   if (eventId) {
     try { ev = calendar.getEventById(eventId); } catch (err) { ev = null; }
+    if (ev) matchedBy = 'eventId';
+  }
+  if (!ev && recordId) {
+    ev = findEventByRecordId_(calendar, recordId, start);
+    if (ev) matchedBy = 'recordId';
   }
 
   const updatedExisting = Boolean(ev);
@@ -94,6 +112,8 @@ function createOrUpdateEvent_(calendar, input) {
     success: true,
     created: !updatedExisting,
     updated: updatedExisting,
+    matchedBy: matchedBy || 'created',
+    oldEventId: eventId,
     eventId: ev.getId(),
     htmlLink: buildEventLink_(CALENDAR_ID, ev.getId()),
     title: ev.getTitle(),
@@ -101,6 +121,24 @@ function createOrUpdateEvent_(calendar, input) {
     end: formatDateTime_(ev.getEndTime()),
     attachmentResult: attachmentResult
   };
+}
+
+function findEventByRecordId_(calendar, recordId, startDate) {
+  if (!recordId) return null;
+  const from = new Date(startDate.getTime() - 30 * 24 * 60 * 60 * 1000);
+  const to = new Date(startDate.getTime() + 30 * 24 * 60 * 60 * 1000);
+  let events = [];
+  try {
+    events = calendar.getEvents(from, to, { search: recordId });
+  } catch (err) {
+    events = calendar.getEvents(from, to);
+  }
+  for (let i = 0; i < events.length; i++) {
+    const ev = events[i];
+    const hay = [ev.getDescription(), ev.getTitle(), ev.getLocation()].join('\\n');
+    if (hay.indexOf(recordId) !== -1) return ev;
+  }
+  return null;
 }
 
 
@@ -184,7 +222,7 @@ function buildDescription_(fields, recordId) {
   if (fields['Комментарий клиента']) rows.push('\nКомментарий клиента:\n' + fields['Комментарий клиента']);
   if (fields['Комментарий администратора']) rows.push('\nКомментарий администратора:\n' + fields['Комментарий администратора']);
   rows.push('\nИсточник: сайт/админка СОЛНЦАНЕТ');
-  return rows.filter(Boolean).join('\n');
+  return rows.filter(Boolean).join('\\n');
 }
 
 function extractFiles_(fields) {

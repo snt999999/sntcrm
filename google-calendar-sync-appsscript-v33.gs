@@ -1,5 +1,5 @@
 /**
- * СОЛНЦАНЕТ — Google Calendar sync Web App
+ * СОЛНЦАНЕТ — Google Calendar sync Web App v33
  * Поддерживает:
  *  - health: проверка связи
  *  - list: загрузка событий для импорта в заявки

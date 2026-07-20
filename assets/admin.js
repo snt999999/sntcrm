@@ -193,6 +193,8 @@ let selectedInstaller = null;
 let filesCache = [];
 let calendarImportEvents = [];
 let quickCalendarEvent = null;
+let quickAddSaving = false;
+let requestGoogleSyncInFlight = false;
 let currentClientKey = null;
 let smsQueueCache = [];
 let currentSmsId = null;
@@ -1672,32 +1674,43 @@ function openQuickAdd(prefill = null) {
   els.quickAddDialog.showModal();
 }
 async function saveQuickAdd() {
+  if (quickAddSaving) {
+    msg("Заявка уже создаётся. Дождитесь завершения, чтобы не было дублей.");
+    return;
+  }
+  quickAddSaving = true;
+  const oldButtonText = els.quickSaveBtn ? els.quickSaveBtn.textContent : "";
+  if (els.quickSaveBtn) {
+    els.quickSaveBtn.disabled = true;
+    els.quickSaveBtn.textContent = "Создаю...";
+  }
   const syncGoogle = Boolean(els.quickGoogleSync?.checked);
-  const calendarId = quickCalendarEvent?.id ? "gcal-" + quickCalendarEvent.id : "manual-" + Date.now();
-  const direction = els.quickDirection?.value || currentWorkspace || "architecture";
-  const isAuto = direction === "auto";
-  const autoServices = collectAutoServices("quick");
-  if (!autoServices.length) { msg("Добавьте хотя бы одну услугу"); return; }
-  const autoServiceTitle = autoServices.map((s) => s.name).filter(Boolean).join("; ") || (isAuto ? "Авто" : "Архитектура");
-  const record = {
-    "Направление": isAuto ? "Авто" : "Архитектура",
-    "Имя клиента": els.quickName.value.trim(),
-    "Компания": els.quickCompany?.value.trim() || "",
-    "Телефон": formatRussianPhone(els.quickPhone.value),
-    "Услуга": autoServiceTitle,
-    "Дата записи": els.quickDate.value,
-    "Время записи": els.quickTime.value,
-    "Адрес": isAuto ? "" : els.quickAddress.value.trim(),
-    "м2": isAuto ? "" : (els.quickM2.value ? String(els.quickM2.value) : ""),
-    "Комментарий клиента": els.quickComment.value.trim(),
-    "Статус": "Новая заявка",
-    "Cal Booking ID": calendarId,
-    "Авто услуги": JSON.stringify(autoServices),
-    "Общая стоимость": String(autoServicesTotal(autoServices))
-  };
-  if (isAuto) { record["Авто"] = els.quickAuto?.value.trim() || ""; record["Пленка"] = els.quickFilm?.value.trim() || ""; record["Монтажники"] = AUTO_DEFAULT_INSTALLER; record["Ответственный"] = AUTO_DEFAULT_RESPONSIBLE; }
-  if (!record["Имя клиента"] || !record["Телефон"] || !record["Дата записи"] || !record["Время записи"]) { msg("Заполните ФИО, телефон, дату и время"); return; }
   try {
+    const calendarId = quickCalendarEvent?.id ? "gcal-" + quickCalendarEvent.id : "manual-" + Date.now();
+    const direction = els.quickDirection?.value || currentWorkspace || "architecture";
+    const isAuto = direction === "auto";
+    const autoServices = collectAutoServices("quick");
+    if (!autoServices.length) { msg("Добавьте хотя бы одну услугу"); return; }
+    const autoServiceTitle = autoServices.map((s) => s.name).filter(Boolean).join("; ") || (isAuto ? "Авто" : "Архитектура");
+    const record = {
+      "Направление": isAuto ? "Авто" : "Архитектура",
+      "Имя клиента": els.quickName.value.trim(),
+      "Компания": els.quickCompany?.value.trim() || "",
+      "Телефон": formatRussianPhone(els.quickPhone.value),
+      "Услуга": autoServiceTitle,
+      "Дата записи": els.quickDate.value,
+      "Время записи": els.quickTime.value,
+      "Адрес": isAuto ? "" : els.quickAddress.value.trim(),
+      "м2": isAuto ? "" : (els.quickM2.value ? String(els.quickM2.value) : ""),
+      "Комментарий клиента": els.quickComment.value.trim(),
+      "Статус": "Новая заявка",
+      "Cal Booking ID": calendarId,
+      "Авто услуги": JSON.stringify(autoServices),
+      "Общая стоимость": String(autoServicesTotal(autoServices))
+    };
+    if (isAuto) { record["Авто"] = els.quickAuto?.value.trim() || ""; record["Пленка"] = els.quickFilm?.value.trim() || ""; record["Монтажники"] = AUTO_DEFAULT_INSTALLER; record["Ответственный"] = AUTO_DEFAULT_RESPONSIBLE; }
+    if (!record["Имя клиента"] || !record["Телефон"] || !record["Дата записи"] || !record["Время записи"]) { msg("Заполните ФИО, телефон, дату и время"); return; }
+
     const response = await fetch("/create-zayavka", { method: "POST", headers: { "Content-Type": "application/json", "x-admin-password": pwd() }, body: JSON.stringify({ fields: record }) });
     const data = await response.json();
     if (!response.ok || !data.ok) throw new Error(data.error || "Ошибка создания заявки");
@@ -1706,17 +1719,25 @@ async function saveQuickAdd() {
     if (syncGoogle && !quickCalendarEvent?.id) {
       googleResult = await createGoogleCalendarEventForQuick(record, createdId);
       if (googleResult?.ok && createdId && (googleResult.eventId || googleResult.htmlLink)) {
-        await saveGoogleCalendarInfoToRecord(createdId, googleResult);
+        await saveGoogleCalendarInfoToRecord(createdId, googleResult, googleResult.created === false ? "Быстрая запись → Google Календарь обновлён" : "Быстрая запись → Google Календарь");
       }
     }
     els.quickAddDialog.close();
     if (quickCalendarEvent?.id) markCalendarEventImported(quickCalendarEvent.id);
     quickCalendarEvent = null;
     await load();
-    if (syncGoogle && googleResult?.ok) msg("Быстрая заявка создана и продублирована в Google Календарь");
+    if (syncGoogle && googleResult?.ok) msg(googleResult.created === false ? "Быстрая заявка создана, событие Google Календаря обновлено" : "Быстрая заявка создана и продублирована в Google Календарь");
     else if (syncGoogle && googleResult && !googleResult.ok) msg("Заявка создана, но Google Календарь не создал событие: " + (googleResult.error || "ошибка"));
     else msg("Быстрая заявка создана");
-  } catch (error) { msg(error.message); }
+  } catch (error) {
+    msg(error.message);
+  } finally {
+    quickAddSaving = false;
+    if (els.quickSaveBtn) {
+      els.quickSaveBtn.disabled = false;
+      els.quickSaveBtn.textContent = oldButtonText || "Создать заявку";
+    }
+  }
 }
 
 function extractCreatedRecordId(data) {
@@ -1788,27 +1809,42 @@ function fieldsForGoogleFromCurrent() {
 
 async function createOrUpdateGoogleCalendarForCurrent() {
   if (!current) return;
+  if (requestGoogleSyncInFlight) {
+    if (els.requestGoogleStatus) els.requestGoogleStatus.textContent = "Событие уже отправляется в Google Календарь. Дождитесь завершения.";
+    return;
+  }
   const fields = fieldsForGoogleFromCurrent();
   if (!fields["Дата записи"] || !fields["Время записи"]) { if (els.requestGoogleStatus) els.requestGoogleStatus.textContent = "Для выгрузки нужны дата и время записи."; return; }
+  requestGoogleSyncInFlight = true;
+  const oldButtonText = els.requestGoogleCreateBtn ? els.requestGoogleCreateBtn.textContent : "";
+  if (els.requestGoogleCreateBtn) {
+    els.requestGoogleCreateBtn.disabled = true;
+    els.requestGoogleCreateBtn.textContent = "Отправляю...";
+  }
   if (els.requestGoogleStatus) els.requestGoogleStatus.textContent = "Отправляю событие в Google Календарь...";
   try {
-    const eventId = (current.fields || {})["Google Calendar Event ID"] || "";
+    const oldEventId = (current.fields || {})["Google Calendar Event ID"] || "";
     const res = await fetch("/calendar-create", {
       method: "POST",
       headers: { "Content-Type": "application/json", "x-admin-password": pwd() },
-      body: JSON.stringify({ action: eventId ? "upsert" : "create", eventId, fields, recordId: current.id, source: "requestCard" })
+      body: JSON.stringify({ action: "upsert", eventId: oldEventId, fields, recordId: current.id, source: "requestCard" })
     });
     const data = await res.json().catch(() => ({ ok: false, error: "Функция календаря вернула не JSON" }));
     if (!res.ok || !data.ok) throw new Error(data.error || data.appsScript?.error || "Ошибка Google Календаря");
+    const resultEventId = data.eventId || oldEventId || "";
+    const wasRecreated = Boolean(oldEventId && resultEventId && resultEventId !== oldEventId && data.created !== false);
+    const wasCreated = Boolean(data.created) || !oldEventId || wasRecreated;
     const updateFields = {
-      "Google Calendar Event ID": data.eventId || eventId || "",
+      "Google Calendar Event ID": resultEventId,
       "Ссылка на событие": data.htmlLink || "",
-      "Источник": eventId ? "Заявка → обновлено в Google Календаре" : "Заявка → Google Календарь"
+      "Источник": wasRecreated ? "Заявка → событие пересоздано в Google Календаре" : (wasCreated ? "Заявка → Google Календарь" : "Заявка → обновлено в Google Календаре")
     };
     let history = getHistoryForRecord(current);
-    history = addHistory(current, eventId ? "Google Календарь" : "Выгрузка в Google Календарь", eventId ? "Событие обновлено" : "Событие создано", history);
+    const historyAction = wasRecreated ? "Google Календарь" : (wasCreated ? "Выгрузка в Google Календарь" : "Google Календарь");
+    const historyText = wasRecreated ? "Событие было удалено в Google и создано заново" : (wasCreated ? "Событие создано" : "Событие обновлено");
+    history = addHistory(current, historyAction, historyText, history);
     updateFields["История изменений"] = JSON.stringify(history);
-    await updateRecord(current.id, updateFields, eventId ? "Событие Google Календаря обновлено" : "Событие Google Календаря создано");
+    await updateRecord(current.id, updateFields, wasRecreated ? "Событие Google Календаря создано заново" : (wasCreated ? "Событие Google Календаря создано" : "Событие Google Календаря обновлено"));
     current.fields = { ...(current.fields || {}), ...updateFields };
     renderRequestGoogleCalendar(current);
     renderRequestHistory(current);
@@ -1816,6 +1852,12 @@ async function createOrUpdateGoogleCalendarForCurrent() {
   } catch (error) {
     if (els.requestGoogleStatus) els.requestGoogleStatus.textContent = error.message;
     msg(error.message);
+  } finally {
+    requestGoogleSyncInFlight = false;
+    if (els.requestGoogleCreateBtn) {
+      els.requestGoogleCreateBtn.disabled = false;
+      els.requestGoogleCreateBtn.textContent = oldButtonText || "Создать / обновить событие";
+    }
   }
 }
 

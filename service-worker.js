@@ -1,4 +1,4 @@
-const CACHE_NAME = 'solncanet-v61-supabase-staff-no-delete';
+const CACHE_NAME = 'solncanet-v61-supabase-calendar-recreate-nodup';
 const APP_SHELL = [
   '/',
   '/index.html',
