@@ -1,4 +1,4 @@
-const CACHE_NAME = 'solncanet-v61-edit-card-request-buttons';
+const CACHE_NAME = 'solncanet-v61-copy-request-card';
 const APP_SHELL = [
   '/',
   '/index.html',

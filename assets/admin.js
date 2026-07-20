@@ -239,7 +239,7 @@ let contextMenuEl = null;
 const els = {
   sidebar: $("sidebar"), mobileMenuBtn: $("mobileMenuBtn"), sidebarCloseBtn: $("sidebarCloseBtn"), sidebarOverlay: $("sidebarOverlay"),
   loginPanel: $("loginPanel"), appPanel: $("appPanel"), loginForm: $("loginForm"), passwordInput: $("passwordInput"), loginMessage: $("loginMessage"), logoutBtn: $("logoutBtn"), refreshBtn: $("refreshBtn"), listBtn: $("listBtn"), calendarBtn: $("calendarBtn"), listView: $("listView"), calendarView: $("calendarView"), requestsBody: $("requestsBody"), calendarGrid: $("calendarGrid"), monthTitle: $("monthTitle"), calendarMonthSummary: $("calendarMonthSummary"), calendarTodayBtn: $("calendarTodayBtn"), calendarDayAgenda: $("calendarDayAgenda"), calendarSelectedDateTitle: $("calendarSelectedDateTitle"), calendarSelectedDateSummary: $("calendarSelectedDateSummary"), calendarSelectedEvents: $("calendarSelectedEvents"), prevMonth: $("prevMonth"), nextMonth: $("nextMonth"), searchInput: $("searchInput"), statusFilter: $("statusFilter"), installerFilter: $("installerFilter"), dateFrom: $("dateFrom"), dateTo: $("dateTo"), clearFiltersBtn: $("clearFiltersBtn"), message: $("message"), statTotal: $("statTotal"), statNew: $("statNew"), statToday: $("statToday"), statWork: $("statWork"), statVolume: $("statVolume"), statFiltered: $("statFiltered"), bulkToolbar: $("bulkToolbar"), bulkSelectedCount: $("bulkSelectedCount"), bulkSelectAll: $("bulkSelectAll"), bulkDeleteBtn: $("bulkDeleteBtn"), bulkStatusSelect: $("bulkStatusSelect"), bulkApplyStatusBtn: $("bulkApplyStatusBtn"), bulkInstallerSelect: $("bulkInstallerSelect"), bulkApplyInstallerBtn: $("bulkApplyInstallerBtn"), bulkExportBtn: $("bulkExportBtn"),
-  dialog: $("requestDialog"), dialogTitle: $("dialogTitle"), requestInfo: $("requestInfo"), editRequestTopBtn: $("editRequestTopBtn"), editClientTopBtn: $("editClientTopBtn"), editClientBox: $("editClientBox"), editRequestBox: $("editRequestBox"), editName: $("editName"), editPhone: $("editPhone"), editDate: $("editDate"), editTime: $("editTime"), editStatus: $("editStatus"), editM2: $("editM2"), editResponsible: $("editResponsible"), editCompany: $("editCompany"), editDirection: $("editDirection"), editAutoFields: $("editAutoFields"), editAuto: $("editAuto"), editFilm: $("editFilm"), editAutoServices: $("editAutoServices"), editAddServiceBtn: $("editAddServiceBtn"), editAutoTotal: $("editAutoTotal"), editService: $("editService"), editAddress: $("editAddress"), editAdminComment: $("editAdminComment"), saveRequestBtn: $("saveRequestBtn"), cancelRequestBtn: $("cancelRequestBtn"), cancelReason: $("cancelReason"), requestHistoryBox: $("requestHistoryBox"), requestAutosaveStatus: $("requestAutosaveStatus"), requestCommentsBox: $("requestCommentsBox"), requestCommentText: $("requestCommentText"), addRequestCommentBtn: $("addRequestCommentBtn"), activityBody: $("activityBody"), requestGoogleCalendarBox: $("requestGoogleCalendarBox"), requestGoogleCreateBtn: $("requestGoogleCreateBtn"), requestGoogleOpenLink: $("requestGoogleOpenLink"), requestGoogleStatus: $("requestGoogleStatus"), exportBtn: $("exportBtn"),
+  dialog: $("requestDialog"), dialogTitle: $("dialogTitle"), requestInfo: $("requestInfo"), copyRequestTopBtn: $("copyRequestTopBtn"), editRequestTopBtn: $("editRequestTopBtn"), editClientTopBtn: $("editClientTopBtn"), editClientBox: $("editClientBox"), editRequestBox: $("editRequestBox"), editName: $("editName"), editPhone: $("editPhone"), editDate: $("editDate"), editTime: $("editTime"), editStatus: $("editStatus"), editM2: $("editM2"), editResponsible: $("editResponsible"), editCompany: $("editCompany"), editDirection: $("editDirection"), editAutoFields: $("editAutoFields"), editAuto: $("editAuto"), editFilm: $("editFilm"), editAutoServices: $("editAutoServices"), editAddServiceBtn: $("editAddServiceBtn"), editAutoTotal: $("editAutoTotal"), editService: $("editService"), editAddress: $("editAddress"), editAdminComment: $("editAdminComment"), saveRequestBtn: $("saveRequestBtn"), cancelRequestBtn: $("cancelRequestBtn"), cancelReason: $("cancelReason"), requestHistoryBox: $("requestHistoryBox"), requestAutosaveStatus: $("requestAutosaveStatus"), requestCommentsBox: $("requestCommentsBox"), requestCommentText: $("requestCommentText"), addRequestCommentBtn: $("addRequestCommentBtn"), activityBody: $("activityBody"), requestGoogleCalendarBox: $("requestGoogleCalendarBox"), requestGoogleCreateBtn: $("requestGoogleCreateBtn"), requestGoogleOpenLink: $("requestGoogleOpenLink"), requestGoogleStatus: $("requestGoogleStatus"), exportBtn: $("exportBtn"),
   clientsBody: $("clientsBody"), objectsBody: $("objectsBody"), installersBody: $("installersBody"), trashBody: $("trashBody"), historyBody: $("historyBody"), historySearchInput: $("historySearchInput"), clearHistoryLocalBtn: $("clearHistoryLocalBtn"), filesBody: $("filesBody"), filesSearchInput: $("filesSearchInput"), filesTypeFilter: $("filesTypeFilter"),
   quickAddBtn: $("quickAddBtn"), quickAddDialog: $("quickAddDialog"), quickSaveBtn: $("quickSaveBtn"), quickName: $("quickName"), quickCompany: $("quickCompany"), quickPhone: $("quickPhone"), quickClientHint: $("quickClientHint"), quickClientSuggestions: $("quickClientSuggestions"), quickGoogleSync: $("quickGoogleSync"), quickDirection: $("quickDirection"), quickAutoFields: $("quickAutoFields"), quickAuto: $("quickAuto"), quickFilm: $("quickFilm"), quickAutoServices: $("quickAutoServices"), quickAddServiceBtn: $("quickAddServiceBtn"), quickAutoTotal: $("quickAutoTotal"), quickService: $("quickService"), quickServiceLabel: $("quickServiceLabel"), quickM2Label: $("quickM2Label"), quickAddressLabel: $("quickAddressLabel"), editServiceLabel: $("editServiceLabel"), quickDate: $("quickDate"), quickTime: $("quickTime"), quickM2: $("quickM2"), quickAddress: $("quickAddress"), quickComment: $("quickComment"),
   reportDialog: $("reportDialog"), reportTitle: $("reportTitle"), reportDateFrom: $("reportDateFrom"), reportDateTo: $("reportDateTo"), reportStatus: $("reportStatus"), reportFormat: $("reportFormat"), reportAllInstallers: $("reportAllInstallers"), downloadReportBtn: $("downloadReportBtn"), payrollOptions: $("payrollOptions"), payrollSplitMode: $("payrollSplitMode"), payrollStatusMode: $("payrollStatusMode"), payrollSettingsBody: $("payrollSettingsBody"), savePayrollSettingsBtn: $("savePayrollSettingsBtn"), previewPayrollBtn: $("previewPayrollBtn"), reportPreview: $("reportPreview"),
@@ -294,6 +294,7 @@ function init() {
   if (els.bulkApplyInstallerBtn) els.bulkApplyInstallerBtn.addEventListener("click", bulkApplyInstaller);
   if (els.bulkExportBtn) els.bulkExportBtn.addEventListener("click", bulkExportSelected);
   els.saveRequestBtn.addEventListener("click", saveRequest);
+  if (els.copyRequestTopBtn) els.copyRequestTopBtn.addEventListener("click", copyCurrentRequest);
   if (els.editRequestTopBtn) els.editRequestTopBtn.addEventListener("click", focusRequestEditBlock);
   if (els.editClientTopBtn) els.editClientTopBtn.addEventListener("click", focusClientEditBlock);
   initRequestAutosave();
@@ -919,6 +920,7 @@ function bindActionButtons() {
   document.querySelectorAll("[data-open]").forEach((button) => button.onclick = () => openRequest(button.dataset.open));
   document.querySelectorAll("[data-open-client]").forEach((button) => button.onclick = () => openClientCard(button.dataset.openClient));
   document.querySelectorAll("[data-edit-client-request]").forEach((button) => button.onclick = (event) => { event.stopPropagation(); openRequest(button.dataset.editClientRequest); setTimeout(focusClientEditBlock, 80); });
+  document.querySelectorAll("[data-copy-request]").forEach((button) => button.onclick = (event) => { event.stopPropagation(); copyRequestById(button.dataset.copyRequest); });
   document.querySelectorAll("[data-edit-request]").forEach((button) => button.onclick = (event) => { event.stopPropagation(); openRequest(button.dataset.editRequest); setTimeout(focusRequestEditBlock, 80); });
   document.querySelectorAll("[data-restore]").forEach((button) => button.onclick = () => restoreRequest(button.dataset.restore));
   document.querySelectorAll("[data-file-preview]").forEach((button) => button.onclick = () => openFilePreview(button.dataset.filePreview));
@@ -1016,7 +1018,7 @@ function showRowContextMenu(event, id) {
   if (!record) return;
   const f = record.fields || {};
   const menu = ensureContextMenu();
-  menu.innerHTML = `<button data-ctx="open">Открыть</button><button data-ctx="copy-phone">Копировать телефон</button><button data-ctx="copy-address">Копировать адрес</button><button data-ctx="client">История клиента</button>${canDeleteRecords() ? `<button data-ctx="delete" class="danger-context" data-delete-only="1">Удалить</button>` : ""}`;
+  menu.innerHTML = `<button data-ctx="open">Открыть</button><button data-ctx="copy-request">Скопировать заявку</button><button data-ctx="copy-phone">Копировать телефон</button><button data-ctx="copy-address">Копировать адрес</button><button data-ctx="client">История клиента</button>${canDeleteRecords() ? `<button data-ctx="delete" class="danger-context" data-delete-only="1">Удалить</button>` : ""}`;
   menu.style.left = Math.min(event.clientX, window.innerWidth - 240) + "px";
   menu.style.top = Math.min(event.clientY, window.innerHeight - 230) + "px";
   menu.hidden = false;
@@ -1025,6 +1027,7 @@ function showRowContextMenu(event, id) {
     const action = btn.dataset.ctx;
     hideContextMenu();
     if (action === "open") return openRequest(id);
+    if (action === "copy-request") return copyRequestById(id);
     if (action === "copy-phone") { await navigator.clipboard?.writeText(String(f["Телефон"] || "")); return msg("Телефон скопирован"); }
     if (action === "copy-address") { await navigator.clipboard?.writeText(String(f["Адрес"] || "")); return msg("Адрес скопирован"); }
     if (action === "client") return openClientCard(clientKeyFromFields(f));
@@ -1276,6 +1279,7 @@ function requestClientCardHtml(record) {
       </div>
       <div class="request-client-actions">
         <button class="open-btn" type="button" data-open-client="${e(key)}">Открыть полную карточку</button>
+        <button class="open-btn ghost-small" type="button" data-copy-request="${e(record.id)}">Скопировать заявку</button>
         <button class="open-btn ghost-small" type="button" data-edit-client-request="${e(record.id)}">Редактировать карточку</button>
       </div>
     </div>
@@ -1293,6 +1297,7 @@ function openRequest(id) {
   const f = current.fields || {};
   els.dialogTitle.textContent = "Заявка " + requestDisplayNumber(current);
   els.requestInfo.innerHTML = requestClientCardHtml(current) + `<div class="request-current-summary"><b>Текущая заявка ${e(requestDisplayNumber(current))}</b><br>${e(f["Дата записи"] || "")} ${e(f["Время записи"] || "")}<br>${e(f["Услуга"] || "")}<br>${recordDirection(current)==="auto" ? `<b>Авто:</b> ${e(f["Авто"]||"—")}<br><b>Плёнка:</b> ${e(f["Пленка"]||"—")}<br>` : ""}<b>Стоимость:</b> ${e(f["Общая стоимость"]||"0")} ₽<br>${e(f["Адрес"] || "")}<br><br>${nl2br(f["Комментарий клиента"] || f["Комментарий"] || "")}</div>`;
+  bindActionButtons();
   els.editDate.value = f["Дата записи"] || "";
   els.editTime.value = f["Время записи"] || "";
   els.editStatus.value = f["Статус"] || "Новая заявка";
@@ -1322,6 +1327,43 @@ function openRequest(id) {
   updateScheduleSmsEditor();
   renderRequestGoogleCalendar(current);
   els.dialog.showModal();
+}
+
+function requestCopyPrefill(record) {
+  const f = record?.fields || {};
+  const direction = recordDirection(record);
+  const services = parseAutoServices(f["Авто услуги"], f["Общая стоимость"], f["Услуга"]);
+  const commentParts = [f["Комментарий клиента"], f["Комментарий"], f["Комментарий администратора"]].filter(Boolean);
+  return {
+    copyFromNumber: requestDisplayNumber(record),
+    name: f["Имя клиента"] || "",
+    company: f["Компания"] || "",
+    phone: f["Телефон"] || "",
+    direction,
+    date: f["Дата записи"] || "",
+    time: f["Время записи"] || "",
+    address: direction === "auto" ? "" : (f["Адрес"] || ""),
+    m2: direction === "auto" ? "" : (f["Итоговый m2"] || f["Итоговый м2"] || f["м2"] || ""),
+    service: f["Услуга"] || "",
+    autoServices: services.length ? services : [{ name: f["Услуга"] || "", price: f["Общая стоимость"] || "" }],
+    auto: f["Авто"] || "",
+    film: f["Пленка"] || "",
+    comment: commentParts.join("\n"),
+    googleSync: Boolean(f["Дата записи"] && f["Время записи"])
+  };
+}
+
+function copyRequestById(id) {
+  const record = records.find((r) => String(r.id) === String(id));
+  if (!record) return msg("Заявка для копирования не найдена");
+  if (els.dialog?.open) els.dialog.close();
+  if (els.clientCardDialog?.open) els.clientCardDialog.close();
+  openQuickAdd(requestCopyPrefill(record));
+}
+
+function copyCurrentRequest() {
+  if (!current) return msg("Откройте заявку, которую нужно скопировать");
+  copyRequestById(current.id);
 }
 
 function currentEditFields() {
@@ -1700,9 +1742,14 @@ function openQuickAdd(prefill = null) {
   els.quickPhone.value = prefill?.phone ? formatQuickPhoneForTyping(prefill.phone) : "";
   if (els.quickClientHint) {
     els.quickClientHint.classList.remove("is-found", "is-empty");
-    els.quickClientHint.textContent = quickCalendarEvent ? "Данные предварительно заполнены из Google Календаря. Проверьте и сохраните заявку." : "Начните вводить номер — подходящие клиенты появятся списком ниже.";
+    if (prefill?.copyFromNumber) {
+      els.quickClientHint.classList.add("is-found");
+      els.quickClientHint.textContent = `Создаётся копия заявки ${prefill.copyFromNumber}. Проверьте дату, время, услуги, суммы и сохраните как новую заявку.`;
+    } else {
+      els.quickClientHint.textContent = quickCalendarEvent ? "Данные предварительно заполнены из Google Календаря. Проверьте и сохраните заявку." : "Начните вводить номер — подходящие клиенты появятся списком ниже.";
+    }
   }
-  if (els.quickGoogleSync) els.quickGoogleSync.checked = true;
+  if (els.quickGoogleSync) els.quickGoogleSync.checked = prefill?.googleSync === false ? false : true;
   hideQuickClientSuggestions();
   if (els.quickService && prefill?.service && ARCHITECTURE_SERVICES.includes(prefill.service)) els.quickService.value = prefill.service;
   if (els.quickDate && prefill?.date) els.quickDate.value = prefill.date;
@@ -1711,7 +1758,10 @@ function openQuickAdd(prefill = null) {
   els.quickComment.value = prefill?.comment || "";
   els.quickM2.value = prefill?.m2 || "";
   if (els.quickDirection) els.quickDirection.value = prefill?.direction || (currentWorkspace === "auto" ? "auto" : "architecture");
-  renderAutoServiceRows("quick", prefill?.service ? [{ name: prefill.service, price: "" }] : [{ name: "", price: "" }]);
+  if (els.quickAuto) els.quickAuto.value = prefill?.auto || "";
+  if (els.quickFilm) els.quickFilm.value = prefill?.film || "";
+  const copiedServices = Array.isArray(prefill?.autoServices) && prefill.autoServices.length ? prefill.autoServices : null;
+  renderAutoServiceRows("quick", copiedServices || (prefill?.service ? [{ name: prefill.service, price: prefill?.price || "" }] : [{ name: "", price: "" }]));
   updateQuickDirectionUI();
   els.quickAddDialog.showModal();
 }
@@ -3917,7 +3967,7 @@ function openClientCard(key) {
   els.clientCardAddresses.innerHTML = addresses.length ? addresses.map((a) => `<span>${e(a)}</span>`).join("") : '<p class="muted-text">Адресов пока нет.</p>';
   els.clientCardRequestsBody.innerHTML = rows.map((r) => {
     const f = r.fields || {};
-    return `<tr class="clickable-row" data-open-row="${e(r.id)}"><td>${e(f["Дата записи"] || "")}<br><small>${e(requestDisplayNumber(r))}</small></td><td>${e(f["Услуга"] || "—")}</td><td>${e(f["Адрес"] || "—")}</td><td>${moneyNumber(getM2(f))}</td><td><span class="status" data-status="${e(f["Статус"] || "")}">${e(f["Статус"] || "—")}</span></td><td><button class="open-btn" data-edit-request="${e(r.id)}">Редактировать заявку</button></td></tr>`;
+    return `<tr class="clickable-row" data-open-row="${e(r.id)}"><td>${e(f["Дата записи"] || "")}<br><small>${e(requestDisplayNumber(r))}</small></td><td>${e(f["Услуга"] || "—")}</td><td>${e(f["Адрес"] || "—")}</td><td>${moneyNumber(getM2(f))}</td><td><span class="status" data-status="${e(f["Статус"] || "")}">${e(f["Статус"] || "—")}</span></td><td><button class="open-btn" data-copy-request="${e(r.id)}">Скопировать</button><button class="open-btn" data-edit-request="${e(r.id)}">Редактировать заявку</button></td></tr>`;
   }).join("") || '<tr><td colspan="6">Заявок пока нет</td></tr>';
 
   const requestIds = new Set(rows.map((r) => String(r.id)));
