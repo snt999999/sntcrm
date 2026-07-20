@@ -239,7 +239,7 @@ let contextMenuEl = null;
 const els = {
   sidebar: $("sidebar"), mobileMenuBtn: $("mobileMenuBtn"), sidebarCloseBtn: $("sidebarCloseBtn"), sidebarOverlay: $("sidebarOverlay"),
   loginPanel: $("loginPanel"), appPanel: $("appPanel"), loginForm: $("loginForm"), passwordInput: $("passwordInput"), loginMessage: $("loginMessage"), logoutBtn: $("logoutBtn"), refreshBtn: $("refreshBtn"), listBtn: $("listBtn"), calendarBtn: $("calendarBtn"), listView: $("listView"), calendarView: $("calendarView"), requestsBody: $("requestsBody"), calendarGrid: $("calendarGrid"), monthTitle: $("monthTitle"), calendarMonthSummary: $("calendarMonthSummary"), calendarTodayBtn: $("calendarTodayBtn"), calendarDayAgenda: $("calendarDayAgenda"), calendarSelectedDateTitle: $("calendarSelectedDateTitle"), calendarSelectedDateSummary: $("calendarSelectedDateSummary"), calendarSelectedEvents: $("calendarSelectedEvents"), prevMonth: $("prevMonth"), nextMonth: $("nextMonth"), searchInput: $("searchInput"), statusFilter: $("statusFilter"), installerFilter: $("installerFilter"), dateFrom: $("dateFrom"), dateTo: $("dateTo"), clearFiltersBtn: $("clearFiltersBtn"), message: $("message"), statTotal: $("statTotal"), statNew: $("statNew"), statToday: $("statToday"), statWork: $("statWork"), statVolume: $("statVolume"), statFiltered: $("statFiltered"), bulkToolbar: $("bulkToolbar"), bulkSelectedCount: $("bulkSelectedCount"), bulkSelectAll: $("bulkSelectAll"), bulkDeleteBtn: $("bulkDeleteBtn"), bulkStatusSelect: $("bulkStatusSelect"), bulkApplyStatusBtn: $("bulkApplyStatusBtn"), bulkInstallerSelect: $("bulkInstallerSelect"), bulkApplyInstallerBtn: $("bulkApplyInstallerBtn"), bulkExportBtn: $("bulkExportBtn"),
-  dialog: $("requestDialog"), dialogTitle: $("dialogTitle"), requestInfo: $("requestInfo"), editDate: $("editDate"), editTime: $("editTime"), editStatus: $("editStatus"), editM2: $("editM2"), editResponsible: $("editResponsible"), editCompany: $("editCompany"), editDirection: $("editDirection"), editAutoFields: $("editAutoFields"), editAuto: $("editAuto"), editFilm: $("editFilm"), editAutoServices: $("editAutoServices"), editAddServiceBtn: $("editAddServiceBtn"), editAutoTotal: $("editAutoTotal"), editService: $("editService"), editAddress: $("editAddress"), editAdminComment: $("editAdminComment"), saveRequestBtn: $("saveRequestBtn"), cancelRequestBtn: $("cancelRequestBtn"), cancelReason: $("cancelReason"), requestHistoryBox: $("requestHistoryBox"), requestAutosaveStatus: $("requestAutosaveStatus"), requestCommentsBox: $("requestCommentsBox"), requestCommentText: $("requestCommentText"), addRequestCommentBtn: $("addRequestCommentBtn"), activityBody: $("activityBody"), requestGoogleCalendarBox: $("requestGoogleCalendarBox"), requestGoogleCreateBtn: $("requestGoogleCreateBtn"), requestGoogleOpenLink: $("requestGoogleOpenLink"), requestGoogleStatus: $("requestGoogleStatus"), exportBtn: $("exportBtn"),
+  dialog: $("requestDialog"), dialogTitle: $("dialogTitle"), requestInfo: $("requestInfo"), editRequestTopBtn: $("editRequestTopBtn"), editClientTopBtn: $("editClientTopBtn"), editClientBox: $("editClientBox"), editRequestBox: $("editRequestBox"), editName: $("editName"), editPhone: $("editPhone"), editDate: $("editDate"), editTime: $("editTime"), editStatus: $("editStatus"), editM2: $("editM2"), editResponsible: $("editResponsible"), editCompany: $("editCompany"), editDirection: $("editDirection"), editAutoFields: $("editAutoFields"), editAuto: $("editAuto"), editFilm: $("editFilm"), editAutoServices: $("editAutoServices"), editAddServiceBtn: $("editAddServiceBtn"), editAutoTotal: $("editAutoTotal"), editService: $("editService"), editAddress: $("editAddress"), editAdminComment: $("editAdminComment"), saveRequestBtn: $("saveRequestBtn"), cancelRequestBtn: $("cancelRequestBtn"), cancelReason: $("cancelReason"), requestHistoryBox: $("requestHistoryBox"), requestAutosaveStatus: $("requestAutosaveStatus"), requestCommentsBox: $("requestCommentsBox"), requestCommentText: $("requestCommentText"), addRequestCommentBtn: $("addRequestCommentBtn"), activityBody: $("activityBody"), requestGoogleCalendarBox: $("requestGoogleCalendarBox"), requestGoogleCreateBtn: $("requestGoogleCreateBtn"), requestGoogleOpenLink: $("requestGoogleOpenLink"), requestGoogleStatus: $("requestGoogleStatus"), exportBtn: $("exportBtn"),
   clientsBody: $("clientsBody"), objectsBody: $("objectsBody"), installersBody: $("installersBody"), trashBody: $("trashBody"), historyBody: $("historyBody"), historySearchInput: $("historySearchInput"), clearHistoryLocalBtn: $("clearHistoryLocalBtn"), filesBody: $("filesBody"), filesSearchInput: $("filesSearchInput"), filesTypeFilter: $("filesTypeFilter"),
   quickAddBtn: $("quickAddBtn"), quickAddDialog: $("quickAddDialog"), quickSaveBtn: $("quickSaveBtn"), quickName: $("quickName"), quickCompany: $("quickCompany"), quickPhone: $("quickPhone"), quickClientHint: $("quickClientHint"), quickClientSuggestions: $("quickClientSuggestions"), quickGoogleSync: $("quickGoogleSync"), quickDirection: $("quickDirection"), quickAutoFields: $("quickAutoFields"), quickAuto: $("quickAuto"), quickFilm: $("quickFilm"), quickAutoServices: $("quickAutoServices"), quickAddServiceBtn: $("quickAddServiceBtn"), quickAutoTotal: $("quickAutoTotal"), quickService: $("quickService"), quickServiceLabel: $("quickServiceLabel"), quickM2Label: $("quickM2Label"), quickAddressLabel: $("quickAddressLabel"), editServiceLabel: $("editServiceLabel"), quickDate: $("quickDate"), quickTime: $("quickTime"), quickM2: $("quickM2"), quickAddress: $("quickAddress"), quickComment: $("quickComment"),
   reportDialog: $("reportDialog"), reportTitle: $("reportTitle"), reportDateFrom: $("reportDateFrom"), reportDateTo: $("reportDateTo"), reportStatus: $("reportStatus"), reportFormat: $("reportFormat"), reportAllInstallers: $("reportAllInstallers"), downloadReportBtn: $("downloadReportBtn"), payrollOptions: $("payrollOptions"), payrollSplitMode: $("payrollSplitMode"), payrollStatusMode: $("payrollStatusMode"), payrollSettingsBody: $("payrollSettingsBody"), savePayrollSettingsBtn: $("savePayrollSettingsBtn"), previewPayrollBtn: $("previewPayrollBtn"), reportPreview: $("reportPreview"),
@@ -251,7 +251,7 @@ const els = {
   notificationCheckBtn: $("notificationCheckBtn"), smsBalanceBtn: $("smsBalanceBtn"), smsBalanceText: $("smsBalanceText"), notificationSmsStatus: $("notificationSmsStatus"), notificationTelegramStatus: $("notificationTelegramStatus"), testNotifyChannel: $("testNotifyChannel"), testNotifyTo: $("testNotifyTo"), testNotifyMessage: $("testNotifyMessage"), sendTestNotifyBtn: $("sendTestNotifyBtn"), copyTestNotifyBtn: $("copyTestNotifyBtn"), notificationStatus: $("notificationStatus"), notificationTemplatesList: $("notificationTemplatesList"), notificationLogBody: $("notificationLogBody"), sigmaStatusId: $("sigmaStatusId"), checkSigmaStatusBtn: $("checkSigmaStatusBtn"), sigmaStatusText: $("sigmaStatusText"), smsQueueRefreshBtn: $("smsQueueRefreshBtn"), smsQueueSearch: $("smsQueueSearch"), smsQueueStatus: $("smsQueueStatus"), smsQueueFrom: $("smsQueueFrom"), smsQueueTo: $("smsQueueTo"), smsQueueBody: $("smsQueueBody"), smsQueueStatusText: $("smsQueueStatusText"), smsStatTotal: $("smsStatTotal"), smsStatPlanned: $("smsStatPlanned"), smsStatSent: $("smsStatSent"), smsStatErrors: $("smsStatErrors"), smsDetailDialog: $("smsDetailDialog"), smsDetailTitle: $("smsDetailTitle"), smsDetailSubtitle: $("smsDetailSubtitle"), smsDetailStatusPill: $("smsDetailStatusPill"), smsDetailClient: $("smsDetailClient"), smsDetailPhone: $("smsDetailPhone"), smsDetailRequestId: $("smsDetailRequestId"), smsDetailSigmaId: $("smsDetailSigmaId"), smsDetailClientId: $("smsDetailClientId"), smsDetailDelivery: $("smsDetailDelivery"), smsDetailMessage: $("smsDetailMessage"), smsDetailService: $("smsDetailService"), smsDetailCheckBtn: $("smsDetailCheckBtn"), smsDetailCopyIdBtn: $("smsDetailCopyIdBtn"), smsDetailSendNowBtn: $("smsDetailSendNowBtn"), smsDetailOpenRequestBtn: $("smsDetailOpenRequestBtn"), smsDetailCancelBtn: $("smsDetailCancelBtn"), smsDetailStatusText: $("smsDetailStatusText"), scheduleSmsTemplate: $("scheduleSmsTemplate"), scheduleSmsDate: $("scheduleSmsDate"), scheduleSmsTime: $("scheduleSmsTime"), scheduleSmsMessage: $("scheduleSmsMessage"), scheduleSmsBtn: $("scheduleSmsBtn"), scheduleDefaultSmsBtn: $("scheduleDefaultSmsBtn"), scheduleSmsStatus: $("scheduleSmsStatus"),
   calendarImportCheckBtn: $("calendarImportCheckBtn"), calendarImportLoadBtn: $("calendarImportLoadBtn"), calendarImportSearch: $("calendarImportSearch"), calendarImportFrom: $("calendarImportFrom"), calendarImportTo: $("calendarImportTo"), calendarImportMode: $("calendarImportMode"), calendarImportTodayBtn: $("calendarImportTodayBtn"), calendarImportWeekBtn: $("calendarImportWeekBtn"), calendarImportStatus: $("calendarImportStatus"), calendarImportList: $("calendarImportList"), calendarImportStatTotal: $("calendarImportStatTotal"), calendarImportStatWork: $("calendarImportStatWork"), calendarImportStatImported: $("calendarImportStatImported"), calendarImportStatHidden: $("calendarImportStatHidden"),
   topQuickAddBtn: $("topQuickAddBtn"), topRefreshBtn: $("topRefreshBtn"), topReportsBtn: $("topReportsBtn"), globalSearchInput: $("globalSearchInput"), globalSearchResults: $("globalSearchResults"),
-  clientCardDialog: $("clientCardDialog"), clientCardTitle: $("clientCardTitle"), clientCardSubtitle: $("clientCardSubtitle"), clientCardQuickBtn: $("clientCardQuickBtn"), clientCardStatRequests: $("clientCardStatRequests"), clientCardStatM2: $("clientCardStatM2"), clientCardStatDone: $("clientCardStatDone"), clientCardStatLast: $("clientCardStatLast"), clientCardInfo: $("clientCardInfo"), clientCardAddresses: $("clientCardAddresses"), clientCardRequestsBody: $("clientCardRequestsBody"), clientCardFiles: $("clientCardFiles"), clientCardComments: $("clientCardComments")
+  clientCardDialog: $("clientCardDialog"), clientCardTitle: $("clientCardTitle"), clientCardSubtitle: $("clientCardSubtitle"), clientCardEditBtn: $("clientCardEditBtn"), clientCardQuickBtn: $("clientCardQuickBtn"), clientCardStatRequests: $("clientCardStatRequests"), clientCardStatM2: $("clientCardStatM2"), clientCardStatDone: $("clientCardStatDone"), clientCardStatLast: $("clientCardStatLast"), clientCardInfo: $("clientCardInfo"), clientCardAddresses: $("clientCardAddresses"), clientCardRequestsBody: $("clientCardRequestsBody"), clientCardFiles: $("clientCardFiles"), clientCardComments: $("clientCardComments")
 };
 
 const NOTIFICATION_TEMPLATES = {
@@ -294,6 +294,8 @@ function init() {
   if (els.bulkApplyInstallerBtn) els.bulkApplyInstallerBtn.addEventListener("click", bulkApplyInstaller);
   if (els.bulkExportBtn) els.bulkExportBtn.addEventListener("click", bulkExportSelected);
   els.saveRequestBtn.addEventListener("click", saveRequest);
+  if (els.editRequestTopBtn) els.editRequestTopBtn.addEventListener("click", focusRequestEditBlock);
+  if (els.editClientTopBtn) els.editClientTopBtn.addEventListener("click", focusClientEditBlock);
   initRequestAutosave();
   if (els.addRequestCommentBtn) els.addRequestCommentBtn.addEventListener("click", addRequestComment);
   if (els.requestGoogleCreateBtn) els.requestGoogleCreateBtn.addEventListener("click", createOrUpdateGoogleCalendarForCurrent);
@@ -312,6 +314,7 @@ function init() {
   if (els.globalSearchInput) els.globalSearchInput.addEventListener("input", renderGlobalSearch);
   if (els.globalSearchInput) els.globalSearchInput.addEventListener("focus", renderGlobalSearch);
   if (els.globalSearchResults) els.globalSearchResults.addEventListener("click", handleGlobalSearchClick);
+  if (els.clientCardEditBtn) els.clientCardEditBtn.addEventListener("click", editClientCardFromClientDialog);
   if (els.clientCardQuickBtn) els.clientCardQuickBtn.addEventListener("click", quickAddFromClientCard);
   els.quickSaveBtn.addEventListener("click", saveQuickAdd);
   if (els.quickPhone) {
@@ -704,7 +707,7 @@ function render() {
 }
 function requestRow(r) {
   const f = r.fields || {}, status = e(f["Статус"] || ""), dir = recordDirection(r), checked = selectedRequestIds.has(String(r.id)) ? "checked" : "";
-  return `<tr class="clickable-row direction-${dir}" data-open-row="${e(r.id)}" data-context-row="${e(r.id)}"><td class="bulk-check-cell"><input type="checkbox" class="bulk-row-check" data-bulk-id="${e(r.id)}" ${checked} /></td><td>${e(f["Дата записи"])}<br><small>${e(requestDisplayNumber(r))}</small></td><td>${e(f["Время записи"])}</td><td><span class="direction-dot direction-${dir}"></span><b>${e(f["Имя клиента"])}</b></td><td>${e(f["Компания"] || "—")}</td><td>${phoneLink(f["Телефон"])}</td><td>${e(f["Услуга"])}</td><td>${e(f["Адрес"])}</td><td>${e(f["Итоговый м2"] || f["м2"])}</td><td>${e(f["Монтажники"])}</td><td class="status-cell"><span class="status" data-status="${status}">${status || "—"}</span></td><td><button class="open-btn" data-open="${e(r.id)}">Открыть</button></td></tr>`;
+  return `<tr class="clickable-row direction-${dir}" data-open-row="${e(r.id)}" data-context-row="${e(r.id)}"><td class="bulk-check-cell"><input type="checkbox" class="bulk-row-check" data-bulk-id="${e(r.id)}" ${checked} /></td><td>${e(f["Дата записи"])}<br><small>${e(requestDisplayNumber(r))}</small></td><td>${e(f["Время записи"])}</td><td><span class="direction-dot direction-${dir}"></span><b>${e(f["Имя клиента"])}</b></td><td>${e(f["Компания"] || "—")}</td><td>${phoneLink(f["Телефон"])}</td><td>${e(f["Услуга"])}</td><td>${e(f["Адрес"])}</td><td>${e(f["Итоговый м2"] || f["м2"])}</td><td>${e(f["Монтажники"])}</td><td class="status-cell"><span class="status" data-status="${status}">${status || "—"}</span></td><td><button class="open-btn" data-edit-request="${e(r.id)}">Редактировать заявку</button></td></tr>`;
 }
 
 function renderCalendar(arr) {
@@ -915,6 +918,8 @@ function renderStats(all, arr) { const t = today(); const active = workspaceReco
 function bindActionButtons() {
   document.querySelectorAll("[data-open]").forEach((button) => button.onclick = () => openRequest(button.dataset.open));
   document.querySelectorAll("[data-open-client]").forEach((button) => button.onclick = () => openClientCard(button.dataset.openClient));
+  document.querySelectorAll("[data-edit-client-request]").forEach((button) => button.onclick = (event) => { event.stopPropagation(); openRequest(button.dataset.editClientRequest); setTimeout(focusClientEditBlock, 80); });
+  document.querySelectorAll("[data-edit-request]").forEach((button) => button.onclick = (event) => { event.stopPropagation(); openRequest(button.dataset.editRequest); setTimeout(focusRequestEditBlock, 80); });
   document.querySelectorAll("[data-restore]").forEach((button) => button.onclick = () => restoreRequest(button.dataset.restore));
   document.querySelectorAll("[data-file-preview]").forEach((button) => button.onclick = () => openFilePreview(button.dataset.filePreview));
   document.querySelectorAll("[data-file-open]").forEach((button) => button.onclick = () => openFileInDrive(button.dataset.fileOpen));
@@ -1269,7 +1274,10 @@ function requestClientCardHtml(record) {
         <h3>${e(s.name || "Без имени")}</h3>
         <p>${phones.length ? phones.map(phoneLink).join(", ") : "Телефон не указан"}</p>
       </div>
-      <button class="open-btn" type="button" data-open-client="${e(key)}">Открыть полную карточку</button>
+      <div class="request-client-actions">
+        <button class="open-btn" type="button" data-open-client="${e(key)}">Открыть полную карточку</button>
+        <button class="open-btn ghost-small" type="button" data-edit-client-request="${e(record.id)}">Редактировать карточку</button>
+      </div>
     </div>
     <div class="request-client-grid request-client-grid-brief">
       <p><b>ФИО:</b> ${e(s.name || "—")}</p>
@@ -1290,6 +1298,8 @@ function openRequest(id) {
   els.editStatus.value = f["Статус"] || "Новая заявка";
   els.editM2.value = f["Итоговый м2"] || f["м2"] || "";
   els.editResponsible.value = f["Ответственный"] || "";
+  if (els.editName) els.editName.value = f["Имя клиента"] || "";
+  if (els.editPhone) els.editPhone.value = f["Телефон"] || "";
   if (els.editCompany) els.editCompany.value = f["Компания"] || "";
   if (els.editDirection) els.editDirection.value = recordDirection(current);
   if (els.editAuto) els.editAuto.value = f["Авто"] || "";
@@ -1325,6 +1335,8 @@ function currentEditFields() {
     "Дата записи": els.editDate.value,
     "Время записи": els.editTime.value,
     "Статус": els.editStatus.value,
+    "Имя клиента": els.editName?.value.trim() || "",
+    "Телефон": els.editPhone?.value.trim() || "",
     "Итоговый м2": direction === "auto" ? "" : els.editM2.value,
     "Ответственный": direction === "auto" ? (els.editResponsible.value.trim() || AUTO_DEFAULT_RESPONSIBLE) : els.editResponsible.value.trim(),
     "Компания": els.editCompany?.value.trim() || "",
@@ -1449,6 +1461,36 @@ async function updateRecord(id, fields, successText, options = {}) {
 
 
 
+function pulseEditBlock(node) {
+  if (!node) return;
+  node.classList.remove("edit-pulse");
+  void node.offsetWidth;
+  node.classList.add("edit-pulse");
+  window.setTimeout(() => node.classList.remove("edit-pulse"), 1600);
+}
+function focusClientEditBlock() {
+  if (!els.dialog?.open) return;
+  if (els.editClientBox) els.editClientBox.scrollIntoView({ behavior: "smooth", block: "start" });
+  pulseEditBlock(els.editClientBox);
+  window.setTimeout(() => (els.editName || els.editPhone || els.editCompany)?.focus(), 180);
+  setAutosaveStatus("Редактируйте карточку клиента и нажмите «Сохранить»");
+}
+function focusRequestEditBlock() {
+  if (!els.dialog?.open) return;
+  if (els.editRequestBox) els.editRequestBox.scrollIntoView({ behavior: "smooth", block: "start" });
+  pulseEditBlock(els.editRequestBox);
+  window.setTimeout(() => (els.editDate || els.editStatus || els.editAddress)?.focus(), 180);
+  setAutosaveStatus("Редактируйте заявку и нажмите «Сохранить»");
+}
+function editClientCardFromClientDialog() {
+  const rows = clientRecordsByKey(currentClientKey).slice().sort((a, b) => String((b.fields || {})["Дата записи"] || "").localeCompare(String((a.fields || {})["Дата записи"] || "")));
+  const target = rows[0];
+  if (!target) return msg("Заявки клиента не найдены");
+  if (els.clientCardDialog?.open) els.clientCardDialog.close();
+  openRequest(target.id);
+  window.setTimeout(focusClientEditBlock, 120);
+}
+
 function currentUserName() {
   return currentUser?.name || localStorage.getItem(storage.userName) || "Сотрудник";
 }
@@ -1456,7 +1498,7 @@ function setAutosaveStatus(text) {
   if (els.requestAutosaveStatus) els.requestAutosaveStatus.textContent = text || "";
 }
 function initRequestAutosave() {
-  const targets = [els.editDate, els.editTime, els.editStatus, els.editM2, els.editResponsible, els.editCompany, els.editDirection, els.editAuto, els.editFilm, els.editService, els.editAddress, els.editAdminComment, els.editAutoServices];
+  const targets = [els.editName, els.editPhone, els.editDate, els.editTime, els.editStatus, els.editM2, els.editResponsible, els.editCompany, els.editDirection, els.editAuto, els.editFilm, els.editService, els.editAddress, els.editAdminComment, els.editAutoServices];
   targets.forEach((el) => {
     if (!el) return;
     el.addEventListener("input", scheduleRequestAutosave);
@@ -1913,7 +1955,7 @@ function renderObjects() {
   if (els.objectsStatM2) els.objectsStatM2.textContent = moneyNumber(rows.reduce((s, r) => s + getM2(r.fields || {}), 0));
   if (els.objectsStatDone) els.objectsStatDone.textContent = rows.filter((r) => PAYROLL_STATUSES.has((r.fields || {})["Статус"] || "")).length;
   if (els.objectsStatWork) els.objectsStatWork.textContent = rows.filter((r) => (r.fields || {})["Статус"] === "В работе").length;
-  els.objectsBody.innerHTML = rows.map((r) => { const f = r.fields || {}; return `<tr class="clickable-row" data-open-row="${e(r.id)}"><td>${e(f["Дата записи"] || "")}<br><small>${e(requestDisplayNumber(r))}</small></td><td><b>${e(f["Имя клиента"] || "—")}</b><br>${phoneLink(f["Телефон"])}</td><td>${e(f["Компания"] || "—")}</td><td>${e(f["Адрес"] || "—")}</td><td>${e(f["Услуга"] || "—")}</td><td>${moneyNumber(getM2(f))}</td><td>${e(displayInstallers(f["Монтажники"]) || "—")}</td><td class="status-cell"><span class="status" data-status="${e(f["Статус"] || "")}">${e(f["Статус"] || "—")}</span></td><td><button class="open-btn" data-open="${e(r.id)}">Открыть</button></td></tr>`; }).join("") || '<tr><td colspan="9">Объекты не найдены</td></tr>';
+  els.objectsBody.innerHTML = rows.map((r) => { const f = r.fields || {}; return `<tr class="clickable-row" data-open-row="${e(r.id)}"><td>${e(f["Дата записи"] || "")}<br><small>${e(requestDisplayNumber(r))}</small></td><td><b>${e(f["Имя клиента"] || "—")}</b><br>${phoneLink(f["Телефон"])}</td><td>${e(f["Компания"] || "—")}</td><td>${e(f["Адрес"] || "—")}</td><td>${e(f["Услуга"] || "—")}</td><td>${moneyNumber(getM2(f))}</td><td>${e(displayInstallers(f["Монтажники"]) || "—")}</td><td class="status-cell"><span class="status" data-status="${e(f["Статус"] || "")}">${e(f["Статус"] || "—")}</span></td><td><button class="open-btn" data-edit-request="${e(r.id)}">Редактировать заявку</button></td></tr>`; }).join("") || '<tr><td colspan="9">Объекты не найдены</td></tr>';
   bindActionButtons();
 }
 function installerRowsForSection() {
@@ -3875,7 +3917,7 @@ function openClientCard(key) {
   els.clientCardAddresses.innerHTML = addresses.length ? addresses.map((a) => `<span>${e(a)}</span>`).join("") : '<p class="muted-text">Адресов пока нет.</p>';
   els.clientCardRequestsBody.innerHTML = rows.map((r) => {
     const f = r.fields || {};
-    return `<tr class="clickable-row" data-open-row="${e(r.id)}"><td>${e(f["Дата записи"] || "")}<br><small>${e(requestDisplayNumber(r))}</small></td><td>${e(f["Услуга"] || "—")}</td><td>${e(f["Адрес"] || "—")}</td><td>${moneyNumber(getM2(f))}</td><td><span class="status" data-status="${e(f["Статус"] || "")}">${e(f["Статус"] || "—")}</span></td><td><button class="open-btn" data-open="${e(r.id)}">Открыть</button></td></tr>`;
+    return `<tr class="clickable-row" data-open-row="${e(r.id)}"><td>${e(f["Дата записи"] || "")}<br><small>${e(requestDisplayNumber(r))}</small></td><td>${e(f["Услуга"] || "—")}</td><td>${e(f["Адрес"] || "—")}</td><td>${moneyNumber(getM2(f))}</td><td><span class="status" data-status="${e(f["Статус"] || "")}">${e(f["Статус"] || "—")}</span></td><td><button class="open-btn" data-edit-request="${e(r.id)}">Редактировать заявку</button></td></tr>`;
   }).join("") || '<tr><td colspan="6">Заявок пока нет</td></tr>';
 
   const requestIds = new Set(rows.map((r) => String(r.id)));

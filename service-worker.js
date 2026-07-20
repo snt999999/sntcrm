@@ -1,4 +1,4 @@
-const CACHE_NAME = 'solncanet-v61-supabase-calendar-recreate-nodup';
+const CACHE_NAME = 'solncanet-v61-edit-card-request-buttons';
 const APP_SHELL = [
   '/',
   '/index.html',

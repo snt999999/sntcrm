@@ -469,3 +469,64 @@ body.access-staff .danger-context,
 body.access-staff .danger-mini{display:none!important;pointer-events:none!important}
 body.access-staff #bulkDeleteBtn,
 body.access-staff #cancelRequestBtn{display:none!important;pointer-events:none!important}
+
+/* v61 patch: явные кнопки редактирования карточки клиента и заявки */
+.request-dialog-title-row {
+  align-items: flex-start;
+  gap: 16px;
+}
+.dialog-title-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+.client-edit-box {
+  margin: 14px 0 18px;
+  padding: 16px;
+  border: 1px solid rgba(37, 99, 235, 0.18);
+  border-radius: 18px;
+  background: linear-gradient(180deg, rgba(239, 246, 255, 0.9), rgba(255, 255, 255, 0.95));
+}
+.compact-section-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.compact-section-head h3 {
+  margin: 0;
+}
+.client-edit-grid {
+  margin: 0;
+}
+.request-edit-box {
+  margin-top: 8px;
+}
+.request-client-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}
+.request-edit-anchor.edit-pulse {
+  animation: editPulse 1.45s ease;
+}
+@keyframes editPulse {
+  0% { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.32); }
+  55% { box-shadow: 0 0 0 8px rgba(37, 99, 235, 0.10); }
+  100% { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0); }
+}
+@media (max-width: 720px) {
+  .request-dialog-title-row,
+  .compact-section-head,
+  .request-client-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .dialog-title-actions button,
+  .request-client-actions button {
+    width: 100%;
+  }
+}
