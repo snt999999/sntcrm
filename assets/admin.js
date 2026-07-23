@@ -238,7 +238,7 @@ let contextMenuEl = null;
 
 const els = {
   sidebar: $("sidebar"), mobileMenuBtn: $("mobileMenuBtn"), sidebarCloseBtn: $("sidebarCloseBtn"), sidebarOverlay: $("sidebarOverlay"),
-  loginPanel: $("loginPanel"), appPanel: $("appPanel"), loginForm: $("loginForm"), passwordInput: $("passwordInput"), loginMessage: $("loginMessage"), logoutBtn: $("logoutBtn"), refreshBtn: $("refreshBtn"), listBtn: $("listBtn"), calendarBtn: $("calendarBtn"), listView: $("listView"), calendarView: $("calendarView"), requestsBody: $("requestsBody"), calendarGrid: $("calendarGrid"), monthTitle: $("monthTitle"), calendarMonthSummary: $("calendarMonthSummary"), calendarTodayBtn: $("calendarTodayBtn"), calendarDayAgenda: $("calendarDayAgenda"), calendarSelectedDateTitle: $("calendarSelectedDateTitle"), calendarSelectedDateSummary: $("calendarSelectedDateSummary"), calendarSelectedEvents: $("calendarSelectedEvents"), prevMonth: $("prevMonth"), nextMonth: $("nextMonth"), searchInput: $("searchInput"), statusFilter: $("statusFilter"), installerFilter: $("installerFilter"), dateFrom: $("dateFrom"), dateTo: $("dateTo"), clearFiltersBtn: $("clearFiltersBtn"), message: $("message"), statTotal: $("statTotal"), statNew: $("statNew"), statToday: $("statToday"), statWork: $("statWork"), statVolume: $("statVolume"), statFiltered: $("statFiltered"), bulkToolbar: $("bulkToolbar"), bulkSelectedCount: $("bulkSelectedCount"), bulkSelectAll: $("bulkSelectAll"), bulkDeleteBtn: $("bulkDeleteBtn"), bulkStatusSelect: $("bulkStatusSelect"), bulkApplyStatusBtn: $("bulkApplyStatusBtn"), bulkInstallerSelect: $("bulkInstallerSelect"), bulkApplyInstallerBtn: $("bulkApplyInstallerBtn"), bulkExportBtn: $("bulkExportBtn"),
+  loginPanel: $("loginPanel"), appPanel: $("appPanel"), loginForm: $("loginForm"), passwordInput: $("passwordInput"), loginMessage: $("loginMessage"), logoutBtn: $("logoutBtn"), refreshBtn: $("refreshBtn"), listBtn: $("listBtn"), calendarBtn: $("calendarBtn"), listView: $("listView"), calendarView: $("calendarView"), requestsBody: $("requestsBody"), calendarGrid: $("calendarGrid"), monthTitle: $("monthTitle"), calendarMonthSummary: $("calendarMonthSummary"), calendarTodayBtn: $("calendarTodayBtn"), calendarCreateDayBtn: $("calendarCreateDayBtn"), calendarDayAgenda: $("calendarDayAgenda"), calendarSelectedDateTitle: $("calendarSelectedDateTitle"), calendarSelectedDateSummary: $("calendarSelectedDateSummary"), calendarSelectedEvents: $("calendarSelectedEvents"), prevMonth: $("prevMonth"), nextMonth: $("nextMonth"), searchInput: $("searchInput"), statusFilter: $("statusFilter"), installerFilter: $("installerFilter"), dateFrom: $("dateFrom"), dateTo: $("dateTo"), clearFiltersBtn: $("clearFiltersBtn"), message: $("message"), statTotal: $("statTotal"), statNew: $("statNew"), statToday: $("statToday"), statWork: $("statWork"), statVolume: $("statVolume"), statFiltered: $("statFiltered"), bulkToolbar: $("bulkToolbar"), bulkSelectedCount: $("bulkSelectedCount"), bulkSelectAll: $("bulkSelectAll"), bulkDeleteBtn: $("bulkDeleteBtn"), bulkStatusSelect: $("bulkStatusSelect"), bulkApplyStatusBtn: $("bulkApplyStatusBtn"), bulkInstallerSelect: $("bulkInstallerSelect"), bulkApplyInstallerBtn: $("bulkApplyInstallerBtn"), bulkExportBtn: $("bulkExportBtn"),
   dialog: $("requestDialog"), dialogTitle: $("dialogTitle"), requestInfo: $("requestInfo"), copyRequestTopBtn: $("copyRequestTopBtn"), editRequestTopBtn: $("editRequestTopBtn"), editClientTopBtn: $("editClientTopBtn"), editClientBox: $("editClientBox"), editRequestBox: $("editRequestBox"), editName: $("editName"), editPhone: $("editPhone"), editDate: $("editDate"), editTime: $("editTime"), editStatus: $("editStatus"), editM2: $("editM2"), editResponsible: $("editResponsible"), editCompany: $("editCompany"), editDirection: $("editDirection"), editAutoFields: $("editAutoFields"), editAuto: $("editAuto"), editFilm: $("editFilm"), editAutoServices: $("editAutoServices"), editAddServiceBtn: $("editAddServiceBtn"), editAutoTotal: $("editAutoTotal"), editService: $("editService"), editAddress: $("editAddress"), editAdminComment: $("editAdminComment"), saveRequestBtn: $("saveRequestBtn"), cancelRequestBtn: $("cancelRequestBtn"), cancelReason: $("cancelReason"), requestHistoryBox: $("requestHistoryBox"), requestAutosaveStatus: $("requestAutosaveStatus"), requestCommentsBox: $("requestCommentsBox"), requestCommentText: $("requestCommentText"), addRequestCommentBtn: $("addRequestCommentBtn"), activityBody: $("activityBody"), requestGoogleCalendarBox: $("requestGoogleCalendarBox"), requestGoogleCreateBtn: $("requestGoogleCreateBtn"), requestGoogleOpenLink: $("requestGoogleOpenLink"), requestGoogleStatus: $("requestGoogleStatus"), exportBtn: $("exportBtn"),
   clientsBody: $("clientsBody"), objectsBody: $("objectsBody"), installersBody: $("installersBody"), trashBody: $("trashBody"), historyBody: $("historyBody"), historySearchInput: $("historySearchInput"), clearHistoryLocalBtn: $("clearHistoryLocalBtn"), filesBody: $("filesBody"), filesSearchInput: $("filesSearchInput"), filesTypeFilter: $("filesTypeFilter"),
   quickAddBtn: $("quickAddBtn"), quickAddDialog: $("quickAddDialog"), quickSaveBtn: $("quickSaveBtn"), quickName: $("quickName"), quickCompany: $("quickCompany"), quickPhone: $("quickPhone"), quickClientHint: $("quickClientHint"), quickClientSuggestions: $("quickClientSuggestions"), quickGoogleSync: $("quickGoogleSync"), quickDirection: $("quickDirection"), quickAutoFields: $("quickAutoFields"), quickAuto: $("quickAuto"), quickFilm: $("quickFilm"), quickAutoServices: $("quickAutoServices"), quickAddServiceBtn: $("quickAddServiceBtn"), quickAutoTotal: $("quickAutoTotal"), quickService: $("quickService"), quickServiceLabel: $("quickServiceLabel"), quickM2Label: $("quickM2Label"), quickAddressLabel: $("quickAddressLabel"), editServiceLabel: $("editServiceLabel"), quickDate: $("quickDate"), quickTime: $("quickTime"), quickM2: $("quickM2"), quickAddress: $("quickAddress"), quickComment: $("quickComment"),
@@ -276,6 +276,7 @@ function init() {
   els.prevMonth.addEventListener("click", () => { cal.setMonth(cal.getMonth() - 1); render(); });
   els.nextMonth.addEventListener("click", () => { cal.setMonth(cal.getMonth() + 1); render(); });
   if (els.calendarTodayBtn) els.calendarTodayBtn.addEventListener("click", () => { const now = new Date(); cal = new Date(now.getFullYear(), now.getMonth(), 1); selectedCalendarDate = today(); render(); });
+  if (els.calendarCreateDayBtn) els.calendarCreateDayBtn.addEventListener("click", () => openQuickAddFromCalendarSlot(selectedCalendarDate || today(), "10:00"));
   initMobileSidebar();
   initClickableRows();
   initContextMenu();
@@ -788,13 +789,10 @@ function renderCalendarSelectedDay(items) {
   if (!els.calendarSelectedDateTitle || !els.calendarSelectedEvents) return;
   const title = selectedCalendarDate ? formatDateRu(selectedCalendarDate, true) : "Выберите день";
   els.calendarSelectedDateTitle.textContent = title;
-  els.calendarSelectedDateSummary.textContent = `${items.length} ${plural(items.length, "событие", "события", "событий")} на выбранный день`;
-  if (!items.length) {
-    els.calendarSelectedEvents.innerHTML = `<div class="calendar-agenda-empty">На этот день заявок нет.</div>`;
-    return;
-  }
+  els.calendarSelectedDateSummary.textContent = `${items.length} ${plural(items.length, "событие", "события", "событий")} на выбранный день. Нажмите на нужное время, чтобы сразу создать новую запись.`;
   const sorted = [...items].sort((a, b) => timeToMinutes((a.fields || {})["Время записи"]) - timeToMinutes((b.fields || {})["Время записи"]));
-  els.calendarSelectedEvents.innerHTML = calendarDayTimelineHtml(sorted);
+  els.calendarSelectedEvents.innerHTML = calendarDayTimelineHtml(sorted, selectedCalendarDate);
+  bindCalendarCreateSlots();
 }
 
 function openCalendarDayAgenda(scroll = false) {
@@ -824,7 +822,10 @@ function timelineHourLabel(minutes) {
   return `${hh}:00`;
 }
 
-function calendarDayTimelineHtml(items) {
+const CALENDAR_CREATE_START_HOUR = 8;
+const CALENDAR_CREATE_END_HOUR = 21;
+
+function calendarDayTimelineHtml(items, date = selectedCalendarDate) {
   const groups = new Map();
   items.forEach((record) => {
     const mins = timeToMinutes((record.fields || {})["Время записи"]);
@@ -833,16 +834,57 @@ function calendarDayTimelineHtml(items) {
     if (!groups.has(key)) groups.set(key, []);
     groups.get(key).push(record);
   });
-  const ordered = [...groups.keys()].sort((a, b) => {
-    if (a === "unknown") return 1;
-    if (b === "unknown") return -1;
-    return Number(a) - Number(b);
-  });
-  return `<div class="calendar-timeline">${ordered.map((key) => {
+
+  const hourKeys = new Set();
+  for (let hour = CALENDAR_CREATE_START_HOUR; hour <= CALENDAR_CREATE_END_HOUR; hour++) hourKeys.add(String(hour));
+  groups.forEach((_, key) => { if (key !== "unknown") hourKeys.add(key); });
+  const ordered = [...hourKeys].sort((a, b) => Number(a) - Number(b));
+  if (groups.has("unknown")) ordered.push("unknown");
+
+  const emptyNote = !items.length ? `<div class="calendar-agenda-empty">На этот день заявок нет. Выберите время ниже и создайте новую запись.</div>` : "";
+  return `${emptyNote}<div class="calendar-timeline calendar-timeline-create">${ordered.map((key) => {
     const groupItems = groups.get(key) || [];
-    const label = key === "unknown" ? "Без времени" : timelineHourLabel(Number(key) * 60);
-    return `<section class="calendar-time-slot"><div class="calendar-time-slot-label">${e(label)}</div><div class="calendar-time-slot-items">${groupItems.map(calendarAgendaItemHtml).join("")}</div></section>`;
+    const isUnknown = key === "unknown";
+    const label = isUnknown ? "Без времени" : timelineHourLabel(Number(key) * 60);
+    const createButton = isUnknown ? "" : calendarCreateSlotButton(date, label);
+    return `<section class="calendar-time-slot calendar-time-slot-clickable" ${!isUnknown ? `data-calendar-create-slot-date="${e(date || today())}" data-calendar-create-slot-time="${e(label)}"` : ""}>
+      <div class="calendar-time-slot-label">${e(label)}</div>
+      <div class="calendar-time-slot-items">
+        ${groupItems.map(calendarAgendaItemHtml).join("")}
+        ${createButton}
+      </div>
+    </section>`;
   }).join("")}</div>`;
+}
+
+function calendarCreateSlotButton(date, time) {
+  return `<button class="calendar-create-slot" type="button" data-calendar-create-slot-date="${e(date || today())}" data-calendar-create-slot-time="${e(time || "10:00")}"><span>+</span><b>Добавить на ${e(time || "10:00")}</b><small>Откроется новая заявка с этой датой и временем</small></button>`;
+}
+
+function bindCalendarCreateSlots() {
+  document.querySelectorAll("[data-calendar-create-slot-date]").forEach((button) => {
+    button.onclick = (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      openQuickAddFromCalendarSlot(button.dataset.calendarCreateSlotDate, button.dataset.calendarCreateSlotTime);
+    };
+  });
+}
+
+function openQuickAddFromCalendarSlot(date, time = "10:00") {
+  const safeDate = date || selectedCalendarDate || today();
+  const safeTime = /^\d{2}:\d{2}$/.test(String(time || "")) ? time : "10:00";
+  selectedCalendarDate = safeDate;
+  openQuickAdd({
+    date: safeDate,
+    time: safeTime,
+    direction: currentWorkspace === "auto" ? "auto" : "architecture",
+    googleSync: true,
+    calendarSlot: true
+  });
+  setTimeout(() => {
+    if (els.quickName) els.quickName.focus();
+  }, 80);
 }
 
 function calendarAgendaItemHtml(record) {
@@ -1745,6 +1787,9 @@ function openQuickAdd(prefill = null) {
     if (prefill?.copyFromNumber) {
       els.quickClientHint.classList.add("is-found");
       els.quickClientHint.textContent = `Создаётся копия заявки ${prefill.copyFromNumber}. Проверьте дату, время, услуги, суммы и сохраните как новую заявку.`;
+    } else if (prefill?.calendarSlot) {
+      els.quickClientHint.classList.add("is-found");
+      els.quickClientHint.textContent = `Новая запись из календаря на ${formatDateRu(prefill.date || today())} в ${prefill.time || "10:00"}. Заполните клиента, услугу и сохраните.`;
     } else {
       els.quickClientHint.textContent = quickCalendarEvent ? "Данные предварительно заполнены из Google Календаря. Проверьте и сохраните заявку." : "Начните вводить номер — подходящие клиенты появятся списком ниже.";
     }

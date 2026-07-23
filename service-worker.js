@@ -1,4 +1,4 @@
-const CACHE_NAME = 'solncanet-v61-copy-request-card';
+const CACHE_NAME = 'solncanet-v61-supabase-calendar-click-create';
 const APP_SHELL = [
   '/',
   '/index.html',
