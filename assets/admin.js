@@ -248,7 +248,7 @@ const els = {
   installersSearchInput: $("installersSearchInput"), installersDateFrom: $("installersDateFrom"), installersDateTo: $("installersDateTo"), installersStatusFilter: $("installersStatusFilter"), installersServiceFilter: $("installersServiceFilter"), installersClearFiltersBtn: $("installersClearFiltersBtn"), installersStatJobs: $("installersStatJobs"), installersStatM2: $("installersStatM2"), installersStatAmount: $("installersStatAmount"), installersStatTotal: $("installersStatTotal"), payrollGuide: $("payrollGuide"),
   installerDetailsPanel: $("installerDetailsPanel"), installerDetailsTitle: $("installerDetailsTitle"), installerDetailsInfo: $("installerDetailsInfo"), installerDetailsCloseBtn: $("installerDetailsCloseBtn"), installerDetailsSearchInput: $("installerDetailsSearchInput"), installerDetailsDateFrom: $("installerDetailsDateFrom"), installerDetailsDateTo: $("installerDetailsDateTo"), installerDetailsStatusFilter: $("installerDetailsStatusFilter"), installerDetailsServiceFilter: $("installerDetailsServiceFilter"), installerDetailsM2Min: $("installerDetailsM2Min"), installerDetailsM2Max: $("installerDetailsM2Max"), installerDetailsClearBtn: $("installerDetailsClearBtn"), installerDetailsStatJobs: $("installerDetailsStatJobs"), installerDetailsStatM2: $("installerDetailsStatM2"), installerDetailsStatAmount: $("installerDetailsStatAmount"), installerDetailsStatRate: $("installerDetailsStatRate"), installerDetailsBody: $("installerDetailsBody"),
   notifyTemplate: $("notifyTemplate"), notifyChannel: $("notifyChannel"), notifyMessage: $("notifyMessage"), sendNotifyBtn: $("sendNotifyBtn"), copyNotifyBtn: $("copyNotifyBtn"), requestNotifyStatus: $("requestNotifyStatus"),
-  notificationCheckBtn: $("notificationCheckBtn"), smsBalanceBtn: $("smsBalanceBtn"), smsBalanceText: $("smsBalanceText"), notificationSmsStatus: $("notificationSmsStatus"), notificationTelegramStatus: $("notificationTelegramStatus"), testNotifyChannel: $("testNotifyChannel"), testNotifyTo: $("testNotifyTo"), testNotifyMessage: $("testNotifyMessage"), sendTestNotifyBtn: $("sendTestNotifyBtn"), copyTestNotifyBtn: $("copyTestNotifyBtn"), notificationStatus: $("notificationStatus"), notificationTemplatesList: $("notificationTemplatesList"), notificationLogBody: $("notificationLogBody"), sigmaStatusId: $("sigmaStatusId"), checkSigmaStatusBtn: $("checkSigmaStatusBtn"), sigmaStatusText: $("sigmaStatusText"), smsQueueRefreshBtn: $("smsQueueRefreshBtn"), smsQueueSearch: $("smsQueueSearch"), smsQueueStatus: $("smsQueueStatus"), smsQueueFrom: $("smsQueueFrom"), smsQueueTo: $("smsQueueTo"), smsQueueBody: $("smsQueueBody"), smsQueueStatusText: $("smsQueueStatusText"), smsStatTotal: $("smsStatTotal"), smsStatPlanned: $("smsStatPlanned"), smsStatSent: $("smsStatSent"), smsStatErrors: $("smsStatErrors"), smsDetailDialog: $("smsDetailDialog"), smsDetailTitle: $("smsDetailTitle"), smsDetailSubtitle: $("smsDetailSubtitle"), smsDetailStatusPill: $("smsDetailStatusPill"), smsDetailClient: $("smsDetailClient"), smsDetailPhone: $("smsDetailPhone"), smsDetailRequestId: $("smsDetailRequestId"), smsDetailSigmaId: $("smsDetailSigmaId"), smsDetailClientId: $("smsDetailClientId"), smsDetailDelivery: $("smsDetailDelivery"), smsDetailMessage: $("smsDetailMessage"), smsDetailService: $("smsDetailService"), smsDetailCheckBtn: $("smsDetailCheckBtn"), smsDetailCopyIdBtn: $("smsDetailCopyIdBtn"), smsDetailSendNowBtn: $("smsDetailSendNowBtn"), smsDetailOpenRequestBtn: $("smsDetailOpenRequestBtn"), smsDetailCancelBtn: $("smsDetailCancelBtn"), smsDetailStatusText: $("smsDetailStatusText"), scheduleSmsTemplate: $("scheduleSmsTemplate"), scheduleSmsDate: $("scheduleSmsDate"), scheduleSmsTime: $("scheduleSmsTime"), scheduleSmsMessage: $("scheduleSmsMessage"), scheduleSmsBtn: $("scheduleSmsBtn"), scheduleDefaultSmsBtn: $("scheduleDefaultSmsBtn"), scheduleSmsStatus: $("scheduleSmsStatus"),
+  notificationCheckBtn: $("notificationCheckBtn"), smsBalanceBtn: $("smsBalanceBtn"), smsBalanceText: $("smsBalanceText"), notificationSmsStatus: $("notificationSmsStatus"), notificationTelegramStatus: $("notificationTelegramStatus"), testNotifyChannel: $("testNotifyChannel"), testNotifyTo: $("testNotifyTo"), testNotifyMessage: $("testNotifyMessage"), sendTestNotifyBtn: $("sendTestNotifyBtn"), copyTestNotifyBtn: $("copyTestNotifyBtn"), notificationStatus: $("notificationStatus"), notificationTemplatesList: $("notificationTemplatesList"), notificationLogBody: $("notificationLogBody"), sigmaStatusId: $("sigmaStatusId"), checkSigmaStatusBtn: $("checkSigmaStatusBtn"), sigmaStatusText: $("sigmaStatusText"), smsQueueRefreshBtn: $("smsQueueRefreshBtn"), smsQueueRunBtn: $("smsQueueRunBtn"), smsQueueSearch: $("smsQueueSearch"), smsQueueStatus: $("smsQueueStatus"), smsQueueFrom: $("smsQueueFrom"), smsQueueTo: $("smsQueueTo"), smsQueueBody: $("smsQueueBody"), smsQueueStatusText: $("smsQueueStatusText"), smsStatTotal: $("smsStatTotal"), smsStatPlanned: $("smsStatPlanned"), smsStatSent: $("smsStatSent"), smsStatErrors: $("smsStatErrors"), smsDetailDialog: $("smsDetailDialog"), smsDetailTitle: $("smsDetailTitle"), smsDetailSubtitle: $("smsDetailSubtitle"), smsDetailStatusPill: $("smsDetailStatusPill"), smsDetailClient: $("smsDetailClient"), smsDetailPhone: $("smsDetailPhone"), smsDetailRequestId: $("smsDetailRequestId"), smsDetailSigmaId: $("smsDetailSigmaId"), smsDetailClientId: $("smsDetailClientId"), smsDetailDelivery: $("smsDetailDelivery"), smsDetailMessage: $("smsDetailMessage"), smsDetailService: $("smsDetailService"), smsDetailCheckBtn: $("smsDetailCheckBtn"), smsDetailCopyIdBtn: $("smsDetailCopyIdBtn"), smsDetailSendNowBtn: $("smsDetailSendNowBtn"), smsDetailOpenRequestBtn: $("smsDetailOpenRequestBtn"), smsDetailCancelBtn: $("smsDetailCancelBtn"), smsDetailStatusText: $("smsDetailStatusText"), scheduleSmsTemplate: $("scheduleSmsTemplate"), scheduleSmsDate: $("scheduleSmsDate"), scheduleSmsTime: $("scheduleSmsTime"), scheduleSmsMessage: $("scheduleSmsMessage"), scheduleSmsBtn: $("scheduleSmsBtn"), scheduleDefaultSmsBtn: $("scheduleDefaultSmsBtn"), scheduleSmsStatus: $("scheduleSmsStatus"),
   calendarImportCheckBtn: $("calendarImportCheckBtn"), calendarImportLoadBtn: $("calendarImportLoadBtn"), calendarImportSearch: $("calendarImportSearch"), calendarImportFrom: $("calendarImportFrom"), calendarImportTo: $("calendarImportTo"), calendarImportMode: $("calendarImportMode"), calendarImportTodayBtn: $("calendarImportTodayBtn"), calendarImportWeekBtn: $("calendarImportWeekBtn"), calendarImportStatus: $("calendarImportStatus"), calendarImportList: $("calendarImportList"), calendarImportStatTotal: $("calendarImportStatTotal"), calendarImportStatWork: $("calendarImportStatWork"), calendarImportStatImported: $("calendarImportStatImported"), calendarImportStatHidden: $("calendarImportStatHidden"),
   topQuickAddBtn: $("topQuickAddBtn"), topRefreshBtn: $("topRefreshBtn"), topReportsBtn: $("topReportsBtn"), globalSearchInput: $("globalSearchInput"), globalSearchResults: $("globalSearchResults"),
   clientCardDialog: $("clientCardDialog"), clientCardTitle: $("clientCardTitle"), clientCardSubtitle: $("clientCardSubtitle"), clientCardEditBtn: $("clientCardEditBtn"), clientCardQuickBtn: $("clientCardQuickBtn"), clientCardStatRequests: $("clientCardStatRequests"), clientCardStatM2: $("clientCardStatM2"), clientCardStatDone: $("clientCardStatDone"), clientCardStatLast: $("clientCardStatLast"), clientCardInfo: $("clientCardInfo"), clientCardAddresses: $("clientCardAddresses"), clientCardRequestsBody: $("clientCardRequestsBody"), clientCardFiles: $("clientCardFiles"), clientCardComments: $("clientCardComments")
@@ -3332,6 +3332,7 @@ function initSmsQueue() {
     el.addEventListener("change", renderSmsQueue);
   });
   if (els.smsQueueBody) els.smsQueueBody.addEventListener("click", handleSmsQueueClick);
+  if (els.smsQueueRunBtn) els.smsQueueRunBtn.addEventListener("click", runSmsCronNow);
   if (els.checkSigmaStatusBtn) els.checkSigmaStatusBtn.addEventListener("click", checkManualSigmaStatus);
   if (els.scheduleSmsBtn) els.scheduleSmsBtn.addEventListener("click", scheduleSmsForCurrentRequest);
   if (els.scheduleDefaultSmsBtn) els.scheduleDefaultSmsBtn.addEventListener("click", scheduleDefaultSmsForCurrentRequest);
@@ -3364,6 +3365,32 @@ function initRuPhoneInput(input) {
     else if (digits.startsWith("9")) input.value = "+7" + digits;
     else input.value = "+7" + digits;
   });
+}
+
+async function runSmsCronNow() {
+  if (!els.smsQueueRunBtn) return;
+  els.smsQueueRunBtn.disabled = true;
+  setNotificationStatus(els.smsQueueStatusText, "Проверяю и отправляю запланированные SMS...", true);
+  try {
+    const response = await fetch("/sms-cron", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-admin-password": pwd(), "Cache-Control": "no-cache" },
+      body: JSON.stringify({ source: "admin-button" })
+    });
+    const data = await response.json().catch(() => ({ ok: false, error: "Функция sms-cron вернула не JSON" }));
+    if (!response.ok || !data.ok) throw new Error(data.error || "Ошибка запуска SMS-cron");
+    await loadSmsQueue(true);
+    const sent = Number(data.sent || 0);
+    const errors = Number(data.errors || 0);
+    const processed = Number(data.processed || 0);
+    const skipped = Number(data.skipped || 0);
+    const extra = [processed ? `обработано ${processed}` : "обработано 0", sent ? `отправлено ${sent}` : "", errors ? `ошибок ${errors}` : "", skipped ? `пропущено ${skipped}` : ""].filter(Boolean).join(" · ");
+    setNotificationStatus(els.smsQueueStatusText, `Проверка очереди завершена: ${extra}`, errors === 0);
+  } catch (error) {
+    setNotificationStatus(els.smsQueueStatusText, error.message || "Ошибка запуска SMS-cron", false);
+  } finally {
+    els.smsQueueRunBtn.disabled = false;
+  }
 }
 
 async function loadSmsQueue(silent = false) {

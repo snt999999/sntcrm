@@ -1,0 +1,13 @@
+name = "solncanet-sms-cron"
+main = "workers/sms-cron-worker.js"
+compatibility_date = "2026-07-27"
+
+# Проверка очереди каждые 5 минут.
+# Если нужно реже — замените на "*/10 * * * *" или "*/15 * * * *".
+[triggers]
+crons = ["*/5 * * * *"]
+
+# PAGES_SMS_CRON_URL можно задать здесь или в Cloudflare Worker → Settings → Variables.
+# SMS_CRON_SECRET лучше задавать как Secret/переменную в интерфейсе Cloudflare.
+# [vars]
+# PAGES_SMS_CRON_URL = "https://ВАШ_ДОМЕН/sms-cron"

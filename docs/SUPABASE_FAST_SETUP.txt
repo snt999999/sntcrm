@@ -15,7 +15,17 @@ SIGMA_API_TOKEN=токен_sigma
 SIGMA_SENDER=Solncanet
 SMS_CRON_SECRET=длинный_секрет
 
-4. В GitHub Actions Secrets добавьте:
+4. Для автоматических SMS включите один из вариантов:
+
+Вариант А — Cloudflare Worker Cron:
+- Worker code: workers/sms-cron-worker.js
+- Trigger: */5 * * * *
+- Variables:
+  PAGES_SMS_CRON_URL=https://ваш-сайт.pages.dev/sms-cron
+  SMS_CRON_SECRET=тот_же_секрет
+
+Вариант Б — GitHub Actions:
+В GitHub Actions Secrets добавьте:
 SOLNCANET_SITE_URL=https://ваш-сайт.pages.dev
 SMS_CRON_SECRET=тот_же_секрет
 

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'solncanet-v61-supabase-calendar-click-create';
+const CACHE_NAME = 'solncanet-v61-supabase-sms-auto-cron-worker';
 const APP_SHELL = [
   '/',
   '/index.html',
