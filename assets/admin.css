@@ -542,3 +542,5 @@ body.access-staff #cancelRequestBtn{display:none!important;pointer-events:none!i
 .calendar-create-slot b{font-size:14px;line-height:1.15}
 .calendar-create-slot small{font-size:11px;color:#64748b;font-weight:800;line-height:1.2}
 @media(max-width:620px){.calendar-day-agenda-head{display:grid}.calendar-create-day-btn{width:100%}.calendar-create-slot{padding:9px}.calendar-create-slot small{display:none}}
+
+.form-error-banner{margin:14px 0 16px;padding:14px 16px;border:2px solid #fecaca;background:#fef2f2;color:#991b1b;border-radius:16px;font-weight:900;box-shadow:0 14px 36px rgba(185,28,28,.14);line-height:1.45}.form-error-banner[hidden]{display:none}.form-error-banner b{display:block;font-size:16px;margin-bottom:6px}.form-error-banner ul{margin:8px 0 0 20px;padding:0}.form-error-banner li{margin:4px 0}.field-error{border-color:#ef4444!important;box-shadow:0 0 0 4px rgba(239,68,68,.16)!important;background:#fff7f7!important}.form-error-banner .error-help{display:block;color:#7f1d1d;font-weight:800;margin-top:8px}.modal-error-sticky{position:sticky;top:8px;z-index:20}

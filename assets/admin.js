@@ -239,9 +239,9 @@ let contextMenuEl = null;
 const els = {
   sidebar: $("sidebar"), mobileMenuBtn: $("mobileMenuBtn"), sidebarCloseBtn: $("sidebarCloseBtn"), sidebarOverlay: $("sidebarOverlay"),
   loginPanel: $("loginPanel"), appPanel: $("appPanel"), loginForm: $("loginForm"), passwordInput: $("passwordInput"), loginMessage: $("loginMessage"), logoutBtn: $("logoutBtn"), refreshBtn: $("refreshBtn"), listBtn: $("listBtn"), calendarBtn: $("calendarBtn"), listView: $("listView"), calendarView: $("calendarView"), requestsBody: $("requestsBody"), calendarGrid: $("calendarGrid"), monthTitle: $("monthTitle"), calendarMonthSummary: $("calendarMonthSummary"), calendarTodayBtn: $("calendarTodayBtn"), calendarCreateDayBtn: $("calendarCreateDayBtn"), calendarDayAgenda: $("calendarDayAgenda"), calendarSelectedDateTitle: $("calendarSelectedDateTitle"), calendarSelectedDateSummary: $("calendarSelectedDateSummary"), calendarSelectedEvents: $("calendarSelectedEvents"), prevMonth: $("prevMonth"), nextMonth: $("nextMonth"), searchInput: $("searchInput"), statusFilter: $("statusFilter"), installerFilter: $("installerFilter"), dateFrom: $("dateFrom"), dateTo: $("dateTo"), clearFiltersBtn: $("clearFiltersBtn"), message: $("message"), statTotal: $("statTotal"), statNew: $("statNew"), statToday: $("statToday"), statWork: $("statWork"), statVolume: $("statVolume"), statFiltered: $("statFiltered"), bulkToolbar: $("bulkToolbar"), bulkSelectedCount: $("bulkSelectedCount"), bulkSelectAll: $("bulkSelectAll"), bulkDeleteBtn: $("bulkDeleteBtn"), bulkStatusSelect: $("bulkStatusSelect"), bulkApplyStatusBtn: $("bulkApplyStatusBtn"), bulkInstallerSelect: $("bulkInstallerSelect"), bulkApplyInstallerBtn: $("bulkApplyInstallerBtn"), bulkExportBtn: $("bulkExportBtn"),
-  dialog: $("requestDialog"), dialogTitle: $("dialogTitle"), requestInfo: $("requestInfo"), copyRequestTopBtn: $("copyRequestTopBtn"), editRequestTopBtn: $("editRequestTopBtn"), editClientTopBtn: $("editClientTopBtn"), editClientBox: $("editClientBox"), editRequestBox: $("editRequestBox"), editName: $("editName"), editPhone: $("editPhone"), editDate: $("editDate"), editTime: $("editTime"), editStatus: $("editStatus"), editM2: $("editM2"), editResponsible: $("editResponsible"), editCompany: $("editCompany"), editDirection: $("editDirection"), editAutoFields: $("editAutoFields"), editAuto: $("editAuto"), editFilm: $("editFilm"), editAutoServices: $("editAutoServices"), editAddServiceBtn: $("editAddServiceBtn"), editAutoTotal: $("editAutoTotal"), editService: $("editService"), editAddress: $("editAddress"), editAdminComment: $("editAdminComment"), saveRequestBtn: $("saveRequestBtn"), cancelRequestBtn: $("cancelRequestBtn"), cancelReason: $("cancelReason"), requestHistoryBox: $("requestHistoryBox"), requestAutosaveStatus: $("requestAutosaveStatus"), requestCommentsBox: $("requestCommentsBox"), requestCommentText: $("requestCommentText"), addRequestCommentBtn: $("addRequestCommentBtn"), activityBody: $("activityBody"), requestGoogleCalendarBox: $("requestGoogleCalendarBox"), requestGoogleCreateBtn: $("requestGoogleCreateBtn"), requestGoogleOpenLink: $("requestGoogleOpenLink"), requestGoogleStatus: $("requestGoogleStatus"), exportBtn: $("exportBtn"),
+  dialog: $("requestDialog"), dialogTitle: $("dialogTitle"), requestInfo: $("requestInfo"), requestFormError: $("requestFormError"), copyRequestTopBtn: $("copyRequestTopBtn"), editRequestTopBtn: $("editRequestTopBtn"), editClientTopBtn: $("editClientTopBtn"), editClientBox: $("editClientBox"), editRequestBox: $("editRequestBox"), editName: $("editName"), editPhone: $("editPhone"), editDate: $("editDate"), editTime: $("editTime"), editStatus: $("editStatus"), editM2: $("editM2"), editResponsible: $("editResponsible"), editCompany: $("editCompany"), editDirection: $("editDirection"), editAutoFields: $("editAutoFields"), editAuto: $("editAuto"), editFilm: $("editFilm"), editAutoServices: $("editAutoServices"), editAddServiceBtn: $("editAddServiceBtn"), editAutoTotal: $("editAutoTotal"), editService: $("editService"), editAddress: $("editAddress"), editAdminComment: $("editAdminComment"), saveRequestBtn: $("saveRequestBtn"), cancelRequestBtn: $("cancelRequestBtn"), cancelReason: $("cancelReason"), requestHistoryBox: $("requestHistoryBox"), requestAutosaveStatus: $("requestAutosaveStatus"), requestCommentsBox: $("requestCommentsBox"), requestCommentText: $("requestCommentText"), addRequestCommentBtn: $("addRequestCommentBtn"), activityBody: $("activityBody"), requestGoogleCalendarBox: $("requestGoogleCalendarBox"), requestGoogleCreateBtn: $("requestGoogleCreateBtn"), requestGoogleOpenLink: $("requestGoogleOpenLink"), requestGoogleStatus: $("requestGoogleStatus"), exportBtn: $("exportBtn"),
   clientsBody: $("clientsBody"), objectsBody: $("objectsBody"), installersBody: $("installersBody"), trashBody: $("trashBody"), historyBody: $("historyBody"), historySearchInput: $("historySearchInput"), clearHistoryLocalBtn: $("clearHistoryLocalBtn"), filesBody: $("filesBody"), filesSearchInput: $("filesSearchInput"), filesTypeFilter: $("filesTypeFilter"),
-  quickAddBtn: $("quickAddBtn"), quickAddDialog: $("quickAddDialog"), quickSaveBtn: $("quickSaveBtn"), quickName: $("quickName"), quickCompany: $("quickCompany"), quickPhone: $("quickPhone"), quickClientHint: $("quickClientHint"), quickClientSuggestions: $("quickClientSuggestions"), quickGoogleSync: $("quickGoogleSync"), quickDirection: $("quickDirection"), quickAutoFields: $("quickAutoFields"), quickAuto: $("quickAuto"), quickFilm: $("quickFilm"), quickAutoServices: $("quickAutoServices"), quickAddServiceBtn: $("quickAddServiceBtn"), quickAutoTotal: $("quickAutoTotal"), quickService: $("quickService"), quickServiceLabel: $("quickServiceLabel"), quickM2Label: $("quickM2Label"), quickAddressLabel: $("quickAddressLabel"), editServiceLabel: $("editServiceLabel"), quickDate: $("quickDate"), quickTime: $("quickTime"), quickM2: $("quickM2"), quickAddress: $("quickAddress"), quickComment: $("quickComment"),
+  quickAddBtn: $("quickAddBtn"), quickAddDialog: $("quickAddDialog"), quickSaveBtn: $("quickSaveBtn"), quickFormError: $("quickFormError"), quickName: $("quickName"), quickCompany: $("quickCompany"), quickPhone: $("quickPhone"), quickClientHint: $("quickClientHint"), quickClientSuggestions: $("quickClientSuggestions"), quickGoogleSync: $("quickGoogleSync"), quickDirection: $("quickDirection"), quickAutoFields: $("quickAutoFields"), quickAuto: $("quickAuto"), quickFilm: $("quickFilm"), quickAutoServices: $("quickAutoServices"), quickAddServiceBtn: $("quickAddServiceBtn"), quickAutoTotal: $("quickAutoTotal"), quickService: $("quickService"), quickServiceLabel: $("quickServiceLabel"), quickM2Label: $("quickM2Label"), quickAddressLabel: $("quickAddressLabel"), editServiceLabel: $("editServiceLabel"), quickDate: $("quickDate"), quickTime: $("quickTime"), quickM2: $("quickM2"), quickAddress: $("quickAddress"), quickComment: $("quickComment"),
   reportDialog: $("reportDialog"), reportTitle: $("reportTitle"), reportDateFrom: $("reportDateFrom"), reportDateTo: $("reportDateTo"), reportStatus: $("reportStatus"), reportFormat: $("reportFormat"), reportAllInstallers: $("reportAllInstallers"), downloadReportBtn: $("downloadReportBtn"), payrollOptions: $("payrollOptions"), payrollSplitMode: $("payrollSplitMode"), payrollStatusMode: $("payrollStatusMode"), payrollSettingsBody: $("payrollSettingsBody"), savePayrollSettingsBtn: $("savePayrollSettingsBtn"), previewPayrollBtn: $("previewPayrollBtn"), reportPreview: $("reportPreview"),
   clientsSearchInput: $("clientsSearchInput"), clientsDateFrom: $("clientsDateFrom"), clientsDateTo: $("clientsDateTo"), clientsServiceFilter: $("clientsServiceFilter"), clientsFilmFilter: $("clientsFilmFilter"), clientsStatusFilter: $("clientsStatusFilter"), clientsClearFiltersBtn: $("clientsClearFiltersBtn"), clientsStatCount: $("clientsStatCount"), clientsStatRequests: $("clientsStatRequests"), clientsStatM2: $("clientsStatM2"), clientsStatRepeat: $("clientsStatRepeat"),
   objectsSearchInput: $("objectsSearchInput"), objectsDateFrom: $("objectsDateFrom"), objectsDateTo: $("objectsDateTo"), objectsServiceFilter: $("objectsServiceFilter"), objectsStatusFilter: $("objectsStatusFilter"), objectsInstallerFilter: $("objectsInstallerFilter"), objectsM2Min: $("objectsM2Min"), objectsM2Max: $("objectsM2Max"), objectsClearFiltersBtn: $("objectsClearFiltersBtn"), objectsStatCount: $("objectsStatCount"), objectsStatM2: $("objectsStatM2"), objectsStatDone: $("objectsStatDone"), objectsStatWork: $("objectsStatWork"),
@@ -1336,6 +1336,7 @@ function requestClientCardHtml(record) {
 function openRequest(id) {
   current = records.find((r) => String(r.id) === String(id));
   if (!current) return;
+  clearFormError("request");
   const f = current.fields || {};
   els.dialogTitle.textContent = "Заявка " + requestDisplayNumber(current);
   els.requestInfo.innerHTML = requestClientCardHtml(current) + `<div class="request-current-summary"><b>Текущая заявка ${e(requestDisplayNumber(current))}</b><br>${e(f["Дата записи"] || "")} ${e(f["Время записи"] || "")}<br>${e(f["Услуга"] || "")}<br>${recordDirection(current)==="auto" ? `<b>Авто:</b> ${e(f["Авто"]||"—")}<br><b>Плёнка:</b> ${e(f["Пленка"]||"—")}<br>` : ""}<b>Стоимость:</b> ${e(f["Общая стоимость"]||"0")} ₽<br>${e(f["Адрес"] || "")}<br><br>${nl2br(f["Комментарий клиента"] || f["Комментарий"] || "")}</div>`;
@@ -1408,6 +1409,97 @@ function copyCurrentRequest() {
   copyRequestById(current.id);
 }
 
+
+function clearFormError(scope) {
+  const box = scope === "request" ? els.requestFormError : els.quickFormError;
+  if (box) { box.hidden = true; box.innerHTML = ""; }
+  const container = scope === "request" ? els.dialog : els.quickAddDialog;
+  container?.querySelectorAll(".field-error").forEach((node) => node.classList.remove("field-error"));
+}
+function showFormError(scope, title, errors = [], fields = []) {
+  const box = scope === "request" ? els.requestFormError : els.quickFormError;
+  const container = scope === "request" ? els.dialog : els.quickAddDialog;
+  if (!box) { msg([title].concat(errors).filter(Boolean).join(". ")); return; }
+  container?.querySelectorAll(".field-error").forEach((node) => node.classList.remove("field-error"));
+  const list = (Array.isArray(errors) ? errors : [errors]).filter(Boolean);
+  box.innerHTML = `<b>${e(title || "Не удалось сохранить")}</b>${list.length ? `<ul>${list.map((x) => `<li>${e(x)}</li>`).join("")}</ul>` : ""}<span class="error-help">Исправьте подсвеченные поля и нажмите кнопку сохранения ещё раз.</span>`;
+  box.hidden = false;
+  box.classList.add("modal-error-sticky");
+  const focusable = fields.find(Boolean);
+  fields.filter(Boolean).forEach((el) => el.classList.add("field-error"));
+  box.scrollIntoView({ behavior: "smooth", block: "center" });
+  if (focusable && typeof focusable.focus === "function") setTimeout(() => focusable.focus({ preventScroll: true }), 180);
+  msg(title || "Не удалось сохранить");
+}
+function digitsOnly(value) { return String(value || "").replace(/\D/g, ""); }
+function validateServiceRows(prefix) {
+  const rows = [...(autoServiceContainer(prefix)?.querySelectorAll("[data-auto-service-row]") || [])];
+  const errors = [];
+  const fields = [];
+  const filledRows = rows.filter((row) => {
+    const name = row.querySelector(".auto-service-name")?.value.trim() || "";
+    const material = row.querySelector(".auto-service-material")?.value.trim() || "";
+    const price = row.querySelector(".auto-service-price")?.value.trim() || "";
+    return name || material || price;
+  });
+  if (!filledRows.length) {
+    errors.push("Добавьте хотя бы одну услугу в блоке «Услуги и стоимость».");
+    const first = rows[0]?.querySelector(".auto-service-name");
+    if (first) fields.push(first);
+  }
+  filledRows.forEach((row, index) => {
+    const nameInput = row.querySelector(".auto-service-name");
+    const priceInput = row.querySelector(".auto-service-price");
+    const name = nameInput?.value.trim() || "";
+    const price = priceInput?.value.trim() || "";
+    if (!name) {
+      errors.push(`В услуге №${index + 1} заполните название услуги.`);
+      if (nameInput) fields.push(nameInput);
+    }
+    if (price && Number(price) < 0) {
+      errors.push(`В услуге №${index + 1} сумма не может быть отрицательной.`);
+      if (priceInput) fields.push(priceInput);
+    }
+  });
+  return { errors, fields };
+}
+function validateQuickAddBeforeSave() {
+  clearFormError("quick");
+  const errors = [];
+  const fields = [];
+  const need = (el, label) => { if (!String(el?.value || "").trim()) { errors.push(`Заполните поле «${label}».`); if (el) fields.push(el); } };
+  need(els.quickName, "Фамилия и имя");
+  need(els.quickPhone, "Телефон");
+  if (els.quickPhone && String(els.quickPhone.value || "").trim() && digitsOnly(els.quickPhone.value).length < 10) { errors.push("Телефон заполнен не полностью. Укажите номер в формате +7..."); fields.push(els.quickPhone); }
+  need(els.quickDate, "Дата записи");
+  need(els.quickTime, "Время записи");
+  const serviceCheck = validateServiceRows("quick");
+  errors.push(...serviceCheck.errors);
+  fields.push(...serviceCheck.fields);
+  return { ok: !errors.length, errors, fields };
+}
+function validateRequestBeforeSave() {
+  clearFormError("request");
+  const errors = [];
+  const fields = [];
+  const need = (el, label) => { if (!String(el?.value || "").trim()) { errors.push(`Заполните поле «${label}».`); if (el) fields.push(el); } };
+  need(els.editName, "ФИО клиента");
+  need(els.editPhone, "Телефон");
+  if (els.editPhone && String(els.editPhone.value || "").trim() && digitsOnly(els.editPhone.value).length < 10) { errors.push("Телефон заполнен не полностью. Укажите номер в формате +7..."); fields.push(els.editPhone); }
+  need(els.editDate, "Дата записи");
+  need(els.editTime, "Время записи");
+  const serviceCheck = validateServiceRows("edit");
+  errors.push(...serviceCheck.errors);
+  fields.push(...serviceCheck.fields);
+  return { ok: !errors.length, errors, fields };
+}
+function readableSaveError(error) {
+  const text = error?.message || String(error || "Неизвестная ошибка");
+  if (/Failed to fetch|NetworkError|Load failed/i.test(text)) return "Нет связи с сервером. Проверьте интернет и попробуйте ещё раз.";
+  if (/auth|password|unauthorized|forbidden|403|401/i.test(text)) return "Нет прав или истекла авторизация. Обновите страницу и войдите снова.";
+  return text;
+}
+
 function currentEditFields() {
   const direction = els.editDirection?.value || recordDirection(current);
   const autoServices = collectAutoServices("edit");
@@ -1439,15 +1531,24 @@ function currentEditFields() {
 }
 async function saveRequest() {
   if (!current) return;
-  const oldFields = current.fields || {};
-  const fields = currentEditFields();
-  const changes = diffFields(oldFields, fields);
-  let history = getHistoryForRecord(current);
-  if (changes.length) history = addHistory(current, "Изменение заявки", changes.join("; "), history);
-  fields["История изменений"] = JSON.stringify(history);
-  await updateRecord(current.id, fields, "Заявка сохранена");
-  els.dialog.close();
-  renderAll();
+  const validation = validateRequestBeforeSave();
+  if (!validation.ok) {
+    showFormError("request", "Заявка не сохранена — нужно заполнить обязательные поля", validation.errors, validation.fields);
+    return;
+  }
+  try {
+    const oldFields = current.fields || {};
+    const fields = currentEditFields();
+    const changes = diffFields(oldFields, fields);
+    let history = getHistoryForRecord(current);
+    if (changes.length) history = addHistory(current, "Изменение заявки", changes.join("; "), history);
+    fields["История изменений"] = JSON.stringify(history);
+    await updateRecord(current.id, fields, "Заявка сохранена");
+    els.dialog.close();
+    renderAll();
+  } catch (error) {
+    showFormError("request", "Заявка не сохранена", [readableSaveError(error)], []);
+  }
 }
 async function cancelCurrentRequest() {
   if (!canDeleteRecords()) return msg("У вас нет прав на удаление. Можно создавать и редактировать, но нельзя удалять.");
@@ -1778,6 +1879,7 @@ function applyQuickClient(record) {
 
 function openQuickAdd(prefill = null) {
   setDefaultDates();
+  clearFormError("quick");
   quickCalendarEvent = prefill && prefill.calendarEvent ? prefill.calendarEvent : null;
   els.quickName.value = prefill?.name || "";
   if (els.quickCompany) els.quickCompany.value = prefill?.company || "";
@@ -1815,6 +1917,11 @@ async function saveQuickAdd() {
     msg("Заявка уже создаётся. Дождитесь завершения, чтобы не было дублей.");
     return;
   }
+  const validation = validateQuickAddBeforeSave();
+  if (!validation.ok) {
+    showFormError("quick", "Заявка не создана — нужно заполнить обязательные поля", validation.errors, validation.fields);
+    return;
+  }
   quickAddSaving = true;
   const oldButtonText = els.quickSaveBtn ? els.quickSaveBtn.textContent : "";
   if (els.quickSaveBtn) {
@@ -1827,7 +1934,7 @@ async function saveQuickAdd() {
     const direction = els.quickDirection?.value || currentWorkspace || "architecture";
     const isAuto = direction === "auto";
     const autoServices = collectAutoServices("quick");
-    if (!autoServices.length) { msg("Добавьте хотя бы одну услугу"); return; }
+    if (!autoServices.length) { showFormError("quick", "Заявка не создана", ["Добавьте хотя бы одну услугу в блоке «Услуги и стоимость»."], []); return; }
     const autoServiceTitle = autoServices.map((s) => s.name).filter(Boolean).join("; ") || (isAuto ? "Авто" : "Архитектура");
     const record = {
       "Направление": isAuto ? "Авто" : "Архитектура",
@@ -1846,7 +1953,7 @@ async function saveQuickAdd() {
       "Общая стоимость": String(autoServicesTotal(autoServices))
     };
     if (isAuto) { record["Авто"] = els.quickAuto?.value.trim() || ""; record["Пленка"] = els.quickFilm?.value.trim() || ""; record["Монтажники"] = AUTO_DEFAULT_INSTALLER; record["Ответственный"] = AUTO_DEFAULT_RESPONSIBLE; }
-    if (!record["Имя клиента"] || !record["Телефон"] || !record["Дата записи"] || !record["Время записи"]) { msg("Заполните ФИО, телефон, дату и время"); return; }
+    if (!record["Имя клиента"] || !record["Телефон"] || !record["Дата записи"] || !record["Время записи"]) { showFormError("quick", "Заявка не создана", ["Заполните ФИО, телефон, дату и время."], [els.quickName, els.quickPhone, els.quickDate, els.quickTime]); return; }
 
     const response = await fetch("/create-zayavka", { method: "POST", headers: { "Content-Type": "application/json", "x-admin-password": pwd() }, body: JSON.stringify({ fields: record }) });
     const data = await response.json();
@@ -1867,7 +1974,7 @@ async function saveQuickAdd() {
     else if (syncGoogle && googleResult && !googleResult.ok) msg("Заявка создана, но Google Календарь не создал событие: " + (googleResult.error || "ошибка"));
     else msg("Быстрая заявка создана");
   } catch (error) {
-    msg(error.message);
+    showFormError("quick", "Заявка не создана", [readableSaveError(error)], []);
   } finally {
     quickAddSaving = false;
     if (els.quickSaveBtn) {
@@ -3202,6 +3309,7 @@ function formatRuDate(value) {
 
 async function sendCurrentRequestNotification() {
   if (!current) return;
+  clearFormError("request");
   const f = current.fields || {};
   const channel = els.notifyChannel?.value || "sms";
   const messageText = els.notifyMessage?.value.trim() || "";
@@ -3692,6 +3800,7 @@ function updateScheduleSmsEditor() {
 
 async function scheduleSmsForCurrentRequest() {
   if (!current) return;
+  clearFormError("request");
   const f = current.fields || {};
   const date = els.scheduleSmsDate?.value || "";
   const time = els.scheduleSmsTime?.value || "";
@@ -3705,6 +3814,7 @@ async function scheduleSmsForCurrentRequest() {
 
 async function scheduleDefaultSmsForCurrentRequest() {
   if (!current) return;
+  clearFormError("request");
   const f = current.fields || {};
   if (!f["Телефон"]) return setNotificationStatus(els.scheduleSmsStatus, "В заявке нет телефона клиента", false);
   if (!f["Дата записи"] || !f["Время записи"]) return setNotificationStatus(els.scheduleSmsStatus, "В заявке нет даты или времени записи", false);
