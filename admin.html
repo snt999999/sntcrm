@@ -344,25 +344,11 @@
           <div><span>Отправлено</span><b id="smsStatSent">0</b></div>
           <div><span>Ошибки</span><b id="smsStatErrors">0</b></div>
         </section>
-        <section class="card notification-console sms-control-grid">
-          <div>
-            <h2>Тестовая отправка</h2>
-            <div class="dialog-grid">
-              <label>Канал<select id="testNotifyChannel"><option value="sms">SMS клиенту</option><option value="telegram">Telegram администратору</option></select></label>
-              <label>Телефон<input id="testNotifyTo" data-ru-phone placeholder="+7" inputmode="tel" autocomplete="tel" /></label>
-              <label class="wide">Текст сообщения<textarea id="testNotifyMessage">СОЛНЦАНЕТ: Тест</textarea></label>
-            </div>
-            <div class="dialog-actions"><button id="sendTestNotifyBtn" type="button">Отправить тест</button><button id="copyTestNotifyBtn" type="button" class="ghost">Скопировать текст</button></div>
-            <p id="notificationStatus" class="muted-text"></p><p id="smsBalanceText" class="muted-text"></p>
-          </div>
-          <div>
-            <h2>Проверка статуса SIGMA</h2>
-            <div class="dialog-grid">
-              <label class="wide">ID SIGMA<input id="sigmaStatusId" placeholder="Например: 000000-10000000" /></label>
-            </div>
-            <div class="dialog-actions"><button id="checkSigmaStatusBtn" type="button">Проверить статус</button></div>
-            <p id="sigmaStatusText" class="muted-text"></p>
-          </div>
+        <section class="card notification-console sms-service-status">
+          <h2>Состояние сервиса</h2>
+          <p id="notificationStatus" class="muted-text"></p>
+          <p id="smsBalanceText" class="muted-text"></p>
+          <p id="sigmaStatusText" class="muted-text"></p>
         </section>
         <section class="card notification-console sms-schedule-console">
           <div class="sms-section-title"><div><h2>История и очередь SMS</h2></div><button data-sms-refresh type="button" class="ghost">Обновить</button></div>
@@ -560,7 +546,7 @@
       <button class="close" value="cancel">×</button>
       <h2>Быстрая запись по звонку</h2>
       <p class="modal-note">Заполните минимум: ФИО, телефон, услугу, дату и время. Заявка сразу попадёт в Supabase.</p>
-      <div class="dialog-grid"><label>Фамилия и имя<input id="quickName" placeholder="Иванов Сергей" /></label><label>Компания<input id="quickCompany" placeholder="Например: ООО Ромашка" /></label><label>Телефон<input id="quickPhone" inputmode="tel" autocomplete="tel" placeholder="+7 (___) ___-__-__" /></label><div id="quickClientHint" class="quick-client-hint wide">Начните вводить номер — подходящие клиенты появятся списком ниже.</div><label class="wide inline-check quick-google-sync"><input id="quickGoogleSync" type="checkbox" checked /> <span>Дублировать запись в Google Календарь</span></label><div id="quickClientSuggestions" class="quick-client-suggestions wide" hidden></div><label>Направление<select id="quickDirection"><option value="architecture">Архитектура</option><option value="auto">Авто</option></select></label><label id="quickServiceLabel" class="quick-architecture-only" style="display:none">Услуга<select id="quickService"><option>Тонировка балконов и окон</option><option>Тонировка витрин</option><option>Бронирование стекол и витрин</option><option>Декоративные пленки для офисных перегородок</option><option>Замер / консультация</option><option>Другое по архитектуре</option></select></label><section id="quickAutoFields" class="wide auto-fields service-fields" style="display:none">
+      <div class="dialog-grid"><label>Фамилия и имя<input id="quickName" placeholder="Иванов Сергей" /></label><label>Компания<input id="quickCompany" placeholder="Например: ООО Ромашка" /></label><label>Телефон<input id="quickPhone" inputmode="tel" autocomplete="tel" placeholder="+7 (___) ___-__-__" /></label><div id="quickClientSuggestions" class="quick-client-suggestions wide" hidden></div><div id="quickClientHint" class="quick-client-hint wide">Начните вводить номер — подходящие клиенты появятся списком ниже.</div><label class="wide inline-check quick-google-sync"><input id="quickGoogleSync" type="checkbox" checked /> <span>Дублировать запись в Google Календарь</span></label><label>Направление<select id="quickDirection"><option value="architecture">Архитектура</option><option value="auto">Авто</option></select></label><label id="quickServiceLabel" class="quick-architecture-only" style="display:none">Услуга<select id="quickService"><option>Тонировка балконов и окон</option><option>Тонировка витрин</option><option>Бронирование стекол и витрин</option><option>Декоративные пленки для офисных перегородок</option><option>Замер / консультация</option><option>Другое по архитектуре</option></select></label><section id="quickAutoFields" class="wide auto-fields service-fields" style="display:none">
           <h3 id="quickServicesTitle">Услуги и стоимость</h3>
           <div class="dialog-grid auto-only-fields">
             <label>Автомобиль<input id="quickAuto" placeholder="Например: Solaris 2015, BMW X5" /></label>

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'solncanet-v61-supabase-sms-auto-cron-worker';
+const CACHE_NAME = 'solncanet-v61-supabase-notifications-cleanup';
 const APP_SHELL = [
   '/',
   '/index.html',
