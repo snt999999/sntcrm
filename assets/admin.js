@@ -49,7 +49,7 @@ const AUTO_PAY_RATES = [
     "direction": "Тонировка",
     "service": "Тонирование передней полусферы",
     "unit": "авто",
-    "price": 4000.0,
+    "price": 7000.0,
     "pay": 4000.0
   },
   {
@@ -105,7 +105,7 @@ const AUTO_PAY_RATES = [
     "direction": "Тонировка",
     "service": "Тонирование люка",
     "unit": "шт.",
-    "price": "",
+    "price": 2000.0,
     "percent": 0.5
   },
   {
