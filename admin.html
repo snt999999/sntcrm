@@ -441,10 +441,10 @@
         <label>Ответственный<input id="editResponsible" /></label>
         <label id="editServiceLabel" style="display:none">Услуга<input id="editService" /></label>
         <section id="editAutoFields" class="wide auto-fields service-fields" style="display:none">
-          <h3 id="editServicesTitle">Услуги и стоимость</h3>
+          <h3 id="editServicesTitle" hidden></h3>
           <div class="dialog-grid auto-only-fields">
             <label>Автомобиль<input id="editAuto" placeholder="Например: Solaris 2015, BMW X5" /></label>
-            <label>Плёнка<input id="editFilm" placeholder="Плёнка / материал" /></label>
+            <input id="editFilm" type="hidden" value="" />
           </div>
           <div class="auto-services-head"><b id="editServicesHeadText">Услуги и стоимость</b><button id="editAddServiceBtn" type="button" class="ghost-small">+ услуга</button></div>
           <div id="editAutoServices" class="auto-services"></div>
@@ -549,10 +549,10 @@
       <p class="modal-note">Заполните минимум: ФИО, телефон, услугу, дату и время. Заявка сразу попадёт в Supabase.</p>
       <div id="quickFormError" class="form-error-banner" hidden></div>
       <div class="dialog-grid"><label>Фамилия и имя<input id="quickName" placeholder="Иванов Сергей" /></label><label>Компания<input id="quickCompany" placeholder="Например: ООО Ромашка" /></label><label>Телефон<input id="quickPhone" inputmode="tel" autocomplete="tel" placeholder="+7 (___) ___-__-__" /></label><div id="quickClientSuggestions" class="quick-client-suggestions wide" hidden></div><div id="quickClientHint" class="quick-client-hint wide">Начните вводить номер — подходящие клиенты появятся списком ниже.</div><label class="wide inline-check quick-google-sync"><input id="quickGoogleSync" type="checkbox" checked /> <span>Дублировать запись в Google Календарь</span></label><label>Направление<select id="quickDirection"><option value="architecture">Архитектура</option><option value="auto">Авто</option></select></label><label id="quickServiceLabel" class="quick-architecture-only" style="display:none">Услуга<select id="quickService"><option>Тонировка балконов и окон</option><option>Тонировка витрин</option><option>Бронирование стекол и витрин</option><option>Декоративные пленки для офисных перегородок</option><option>Замер / консультация</option><option>Другое по архитектуре</option></select></label><section id="quickAutoFields" class="wide auto-fields service-fields" style="display:none">
-          <h3 id="quickServicesTitle">Услуги и стоимость</h3>
+          <h3 id="quickServicesTitle" hidden></h3>
           <div class="dialog-grid auto-only-fields">
             <label>Автомобиль<input id="quickAuto" placeholder="Например: Solaris 2015, BMW X5" /></label>
-            <label>Плёнка<input id="quickFilm" placeholder="Плёнка / материал" /></label>
+            <input id="quickFilm" type="hidden" value="" />
           </div>
           <div class="auto-services-head"><b id="quickServicesHeadText">Услуги и стоимость</b><button id="quickAddServiceBtn" type="button" class="ghost-small">+ услуга</button></div>
           <div id="quickAutoServices" class="auto-services"></div>

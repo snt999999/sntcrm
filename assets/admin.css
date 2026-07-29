@@ -544,3 +544,11 @@ body.access-staff #cancelRequestBtn{display:none!important;pointer-events:none!i
 @media(max-width:620px){.calendar-day-agenda-head{display:grid}.calendar-create-day-btn{width:100%}.calendar-create-slot{padding:9px}.calendar-create-slot small{display:none}}
 
 .form-error-banner{margin:14px 0 16px;padding:14px 16px;border:2px solid #fecaca;background:#fef2f2;color:#991b1b;border-radius:16px;font-weight:900;box-shadow:0 14px 36px rgba(185,28,28,.14);line-height:1.45}.form-error-banner[hidden]{display:none}.form-error-banner b{display:block;font-size:16px;margin-bottom:6px}.form-error-banner ul{margin:8px 0 0 20px;padding:0}.form-error-banner li{margin:4px 0}.field-error{border-color:#ef4444!important;box-shadow:0 0 0 4px rgba(239,68,68,.16)!important;background:#fff7f7!important}.form-error-banner .error-help{display:block;color:#7f1d1d;font-weight:800;margin-top:8px}.modal-error-sticky{position:sticky;top:8px;z-index:20}
+
+
+/* service UI polish: open suggestions on focus, brighter add button, no obsolete film field/title */
+#quickServicesTitle,#editServicesTitle{display:none!important}
+#quickAddServiceBtn,#editAddServiceBtn{background:#2563eb!important;color:#fff!important;border:1px solid #2563eb!important;border-radius:10px!important;padding:9px 14px!important;font-weight:900!important;box-shadow:0 8px 18px rgba(37,99,235,.20)!important;min-height:38px!important}
+#quickAddServiceBtn:hover,#editAddServiceBtn:hover{background:#1d4ed8!important;border-color:#1d4ed8!important;color:#fff!important}
+.auto-services-head{align-items:center!important}
+.auto-suggest-box{max-height:320px;overflow:auto}

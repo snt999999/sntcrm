@@ -19,6 +19,14 @@ const ARCHITECTURE_SERVICES = [
 
 const AUTO_DEFAULT_INSTALLER = "Роман З";
 const AUTO_DEFAULT_RESPONSIBLE = "Роман";
+const POLYURETHANE_DEFAULT_SERVICES = [
+  "Бронирование лобового стекла",
+  "Бронирование фар",
+  "Бронирование 1 фары",
+  "Бронирование противотуманных фар (1 шт)",
+  "Бронирование порогов",
+  "Полоса на крышу"
+];
 const AUTO_PAY_RATES = [
   {
     "code": "Зад.полусфера",
@@ -1153,14 +1161,15 @@ function showAutoServiceSuggestions(input, prefix) {
   const row = input?.closest("[data-auto-service-row]");
   if (!row) return;
   const q = input.value || "";
-  if (norm(q).length < 1) { hideAutoServiceSuggestions(row); return; }
   const mode = serviceModeForPrefix(prefix);
   const source = serviceSuggestionsForMode(mode);
-  const matches = source
-    .map((item) => ({ item, score: scoreAutoSuggestion(q, item.name) }))
-    .filter((x) => x.score > 0)
-    .sort((a, b) => b.score - a.score || String(a.item.name).localeCompare(String(b.item.name)))
-    .slice(0, 7);
+  const matches = norm(q).length < 1
+    ? source.slice(0, 12).map((item, index) => ({ item, score: 1000 - index }))
+    : source
+        .map((item) => ({ item, score: scoreAutoSuggestion(q, item.name) }))
+        .filter((x) => x.score > 0)
+        .sort((a, b) => b.score - a.score || String(a.item.name).localeCompare(String(b.item.name)))
+        .slice(0, 12);
   if (!matches.length) { hideAutoServiceSuggestions(row); return; }
   let box = row.querySelector(".auto-suggest-box");
   if (!box) {
@@ -1210,16 +1219,30 @@ function defaultAutoServicePrice(name) {
   if (rate.price !== undefined && rate.price !== null && rate.price !== "") return String(Number(rate.price) || "");
   return "";
 }
+function defaultAutoServiceMaterial(name) {
+  const n = norm(name || "");
+  if (!n) return "";
+  return POLYURETHANE_DEFAULT_SERVICES.some((service) => {
+    const s = norm(service);
+    return n === s || n.includes(s) || s.includes(n);
+  }) ? "полиуретан" : "";
+}
 function applyAutoServiceDefault(row) {
   if (!row) return;
   const nameInput = row.querySelector(".auto-service-name");
   const priceInput = row.querySelector(".auto-service-price");
+  const materialInput = row.querySelector(".auto-service-material");
   if (!nameInput || !priceInput) return;
-  const exactName = norm(nameInput.value || "");
+  const serviceName = String(nameInput.value || "").trim();
+  const exactName = norm(serviceName);
   const rate = AUTO_PAY_RATES.find((r) => norm(r.service) === exactName);
   if (rate && !String(priceInput.value || "").trim()) {
     const p = defaultAutoServicePrice(rate.service);
     if (p) priceInput.value = p;
+  }
+  if (materialInput && !String(materialInput.value || "").trim()) {
+    const defaultMaterial = defaultAutoServiceMaterial(rate?.service || serviceName);
+    if (defaultMaterial) materialInput.value = defaultMaterial;
   }
 }
 function renderAutoServiceRows(prefix, list = null) {
@@ -1230,7 +1253,11 @@ function renderAutoServiceRows(prefix, list = null) {
   const arr = list && list.length ? list : [{ name: "", material: "", price: "" }];
   box.classList.toggle("services-mode-auto", isAuto);
   box.classList.toggle("services-mode-architecture", !isAuto);
-  box.innerHTML = arr.map((item) => `<div class="auto-service-row ${isAuto ? "service-row-auto" : "service-row-architecture"}" data-auto-service-row><input class="auto-service-name" autocomplete="off" placeholder="${isAuto ? "Полное название услуги" : "Название услуги"}" value="${e(item.name || "")}" /><input class="auto-service-material" placeholder="Материал" value="${e(item.material || item["Материал"] || "")}" ${isAuto ? "" : "hidden"} /><input class="auto-service-price" type="number" step="1" placeholder="Сумма" value="${e(item.price || "")}" /><button type="button" class="ghost-small" data-auto-service-remove>×</button></div>`).join("");
+  box.innerHTML = arr.map((item) => {
+    const name = item.name || "";
+    const material = item.material || item["Материал"] || (isAuto ? defaultAutoServiceMaterial(name) : "");
+    return `<div class="auto-service-row ${isAuto ? "service-row-auto" : "service-row-architecture"}" data-auto-service-row><input class="auto-service-name" autocomplete="off" placeholder="${isAuto ? "Полное название услуги" : "Название услуги"}" value="${e(name)}" /><input class="auto-service-material" placeholder="Материал" value="${e(material)}" ${isAuto ? "" : "hidden"} /><input class="auto-service-price" type="number" step="1" placeholder="Сумма" value="${e(item.price || "")}" /><button type="button" class="ghost-small" data-auto-service-remove>×</button></div>`;
+  }).join("");
   box.querySelectorAll(".auto-service-name").forEach((input) => {
     input.addEventListener("input", () => { showAutoServiceSuggestions(input, prefix); updateAutoTotal(prefix); });
     input.addEventListener("focus", () => { showAutoServiceSuggestions(input, prefix); });
@@ -1245,6 +1272,12 @@ function addAutoServiceRow(prefix) {
   const list = collectAutoServices(prefix);
   list.push({ name: "", material: "", price: "" });
   renderAutoServiceRows(prefix, list);
+  const rows = autoServiceContainer(prefix)?.querySelectorAll("[data-auto-service-row]");
+  const input = rows && rows.length ? rows[rows.length - 1].querySelector(".auto-service-name") : null;
+  if (input) {
+    input.focus();
+    showAutoServiceSuggestions(input, prefix);
+  }
 }
 function collectAutoServices(prefix) {
   const box = autoServiceContainer(prefix);
@@ -1273,7 +1306,7 @@ function updateQuickDirectionUI() {
     els.quickAutoFields.classList.toggle("is-architecture", !isAuto);
     els.quickAutoFields.querySelectorAll(".auto-only-fields").forEach((node) => { node.style.display = isAuto ? "" : "none"; });
     const title = els.quickAutoFields.querySelector("#quickServicesTitle");
-    if (title) title.textContent = isAuto ? "Авто" : "Архитектура";
+    if (title) { title.textContent = ""; title.style.display = "none"; }
     const head = els.quickAutoFields.querySelector("#quickServicesHeadText");
     if (head) head.textContent = isAuto ? "Услуги и стоимость" : "Архитектурные услуги и стоимость";
   }
@@ -1290,7 +1323,7 @@ function updateEditDirectionUI() {
     els.editAutoFields.classList.toggle("is-architecture", !isAuto);
     els.editAutoFields.querySelectorAll(".auto-only-fields").forEach((node) => { node.style.display = isAuto ? "" : "none"; });
     const title = els.editAutoFields.querySelector("#editServicesTitle");
-    if (title) title.textContent = isAuto ? "Авто" : "Архитектура";
+    if (title) { title.textContent = ""; title.style.display = "none"; }
     const head = els.editAutoFields.querySelector("#editServicesHeadText");
     if (head) head.textContent = isAuto ? "Услуги и стоимость" : "Архитектурные услуги и стоимость";
   }
@@ -1339,7 +1372,7 @@ function openRequest(id) {
   clearFormError("request");
   const f = current.fields || {};
   els.dialogTitle.textContent = "Заявка " + requestDisplayNumber(current);
-  els.requestInfo.innerHTML = requestClientCardHtml(current) + `<div class="request-current-summary"><b>Текущая заявка ${e(requestDisplayNumber(current))}</b><br>${e(f["Дата записи"] || "")} ${e(f["Время записи"] || "")}<br>${e(f["Услуга"] || "")}<br>${recordDirection(current)==="auto" ? `<b>Авто:</b> ${e(f["Авто"]||"—")}<br><b>Плёнка:</b> ${e(f["Пленка"]||"—")}<br>` : ""}<b>Стоимость:</b> ${e(f["Общая стоимость"]||"0")} ₽<br>${e(f["Адрес"] || "")}<br><br>${nl2br(f["Комментарий клиента"] || f["Комментарий"] || "")}</div>`;
+  els.requestInfo.innerHTML = requestClientCardHtml(current) + `<div class="request-current-summary"><b>Текущая заявка ${e(requestDisplayNumber(current))}</b><br>${e(f["Дата записи"] || "")} ${e(f["Время записи"] || "")}<br>${e(f["Услуга"] || "")}<br>${recordDirection(current)==="auto" ? `<b>Авто:</b> ${e(f["Авто"]||"—")}<br>` : ""}<b>Стоимость:</b> ${e(f["Общая стоимость"]||"0")} ₽<br>${e(f["Адрес"] || "")}<br><br>${nl2br(f["Комментарий клиента"] || f["Комментарий"] || "")}</div>`;
   bindActionButtons();
   els.editDate.value = f["Дата записи"] || "";
   els.editTime.value = f["Время записи"] || "";
