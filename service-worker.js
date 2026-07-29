@@ -1,4 +1,4 @@
-const CACHE_NAME = 'solncanet-v61-supabase-notifications-cleanup';
+const CACHE_NAME = 'solncanet-v61-supabase-reports-payroll-auto-filter';
 const APP_SHELL = [
   '/',
   '/index.html',

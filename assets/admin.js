@@ -242,7 +242,7 @@ const els = {
   dialog: $("requestDialog"), dialogTitle: $("dialogTitle"), requestInfo: $("requestInfo"), requestFormError: $("requestFormError"), copyRequestTopBtn: $("copyRequestTopBtn"), editRequestTopBtn: $("editRequestTopBtn"), editClientTopBtn: $("editClientTopBtn"), editClientBox: $("editClientBox"), editRequestBox: $("editRequestBox"), editName: $("editName"), editPhone: $("editPhone"), editDate: $("editDate"), editTime: $("editTime"), editStatus: $("editStatus"), editM2: $("editM2"), editResponsible: $("editResponsible"), editCompany: $("editCompany"), editDirection: $("editDirection"), editAutoFields: $("editAutoFields"), editAuto: $("editAuto"), editFilm: $("editFilm"), editAutoServices: $("editAutoServices"), editAddServiceBtn: $("editAddServiceBtn"), editAutoTotal: $("editAutoTotal"), editService: $("editService"), editAddress: $("editAddress"), editAdminComment: $("editAdminComment"), saveRequestBtn: $("saveRequestBtn"), cancelRequestBtn: $("cancelRequestBtn"), cancelReason: $("cancelReason"), requestHistoryBox: $("requestHistoryBox"), requestAutosaveStatus: $("requestAutosaveStatus"), requestCommentsBox: $("requestCommentsBox"), requestCommentText: $("requestCommentText"), addRequestCommentBtn: $("addRequestCommentBtn"), activityBody: $("activityBody"), requestGoogleCalendarBox: $("requestGoogleCalendarBox"), requestGoogleCreateBtn: $("requestGoogleCreateBtn"), requestGoogleOpenLink: $("requestGoogleOpenLink"), requestGoogleStatus: $("requestGoogleStatus"), exportBtn: $("exportBtn"),
   clientsBody: $("clientsBody"), objectsBody: $("objectsBody"), installersBody: $("installersBody"), trashBody: $("trashBody"), historyBody: $("historyBody"), historySearchInput: $("historySearchInput"), clearHistoryLocalBtn: $("clearHistoryLocalBtn"), filesBody: $("filesBody"), filesSearchInput: $("filesSearchInput"), filesTypeFilter: $("filesTypeFilter"),
   quickAddBtn: $("quickAddBtn"), quickAddDialog: $("quickAddDialog"), quickSaveBtn: $("quickSaveBtn"), quickFormError: $("quickFormError"), quickName: $("quickName"), quickCompany: $("quickCompany"), quickPhone: $("quickPhone"), quickClientHint: $("quickClientHint"), quickClientSuggestions: $("quickClientSuggestions"), quickGoogleSync: $("quickGoogleSync"), quickDirection: $("quickDirection"), quickAutoFields: $("quickAutoFields"), quickAuto: $("quickAuto"), quickFilm: $("quickFilm"), quickAutoServices: $("quickAutoServices"), quickAddServiceBtn: $("quickAddServiceBtn"), quickAutoTotal: $("quickAutoTotal"), quickService: $("quickService"), quickServiceLabel: $("quickServiceLabel"), quickM2Label: $("quickM2Label"), quickAddressLabel: $("quickAddressLabel"), editServiceLabel: $("editServiceLabel"), quickDate: $("quickDate"), quickTime: $("quickTime"), quickM2: $("quickM2"), quickAddress: $("quickAddress"), quickComment: $("quickComment"),
-  reportDialog: $("reportDialog"), reportTitle: $("reportTitle"), reportDateFrom: $("reportDateFrom"), reportDateTo: $("reportDateTo"), reportStatus: $("reportStatus"), reportFormat: $("reportFormat"), reportAllInstallers: $("reportAllInstallers"), downloadReportBtn: $("downloadReportBtn"), payrollOptions: $("payrollOptions"), payrollSplitMode: $("payrollSplitMode"), payrollStatusMode: $("payrollStatusMode"), payrollSettingsBody: $("payrollSettingsBody"), savePayrollSettingsBtn: $("savePayrollSettingsBtn"), previewPayrollBtn: $("previewPayrollBtn"), reportPreview: $("reportPreview"),
+  reportDialog: $("reportDialog"), reportTitle: $("reportTitle"), reportDateFrom: $("reportDateFrom"), reportDateTo: $("reportDateTo"), reportStatus: $("reportStatus"), reportFormat: $("reportFormat"), reportAllInstallers: $("reportAllInstallers"), reportInstallersFieldset: $("reportInstallersFieldset"), downloadReportBtn: $("downloadReportBtn"), payrollOptions: $("payrollOptions"), payrollSplitMode: $("payrollSplitMode"), payrollStatusMode: $("payrollStatusMode"), payrollSettingsBody: $("payrollSettingsBody"), savePayrollSettingsBtn: $("savePayrollSettingsBtn"), previewPayrollBtn: $("previewPayrollBtn"), reportPreview: $("reportPreview"),
   clientsSearchInput: $("clientsSearchInput"), clientsDateFrom: $("clientsDateFrom"), clientsDateTo: $("clientsDateTo"), clientsServiceFilter: $("clientsServiceFilter"), clientsFilmFilter: $("clientsFilmFilter"), clientsStatusFilter: $("clientsStatusFilter"), clientsClearFiltersBtn: $("clientsClearFiltersBtn"), clientsStatCount: $("clientsStatCount"), clientsStatRequests: $("clientsStatRequests"), clientsStatM2: $("clientsStatM2"), clientsStatRepeat: $("clientsStatRepeat"),
   objectsSearchInput: $("objectsSearchInput"), objectsDateFrom: $("objectsDateFrom"), objectsDateTo: $("objectsDateTo"), objectsServiceFilter: $("objectsServiceFilter"), objectsStatusFilter: $("objectsStatusFilter"), objectsInstallerFilter: $("objectsInstallerFilter"), objectsM2Min: $("objectsM2Min"), objectsM2Max: $("objectsM2Max"), objectsClearFiltersBtn: $("objectsClearFiltersBtn"), objectsStatCount: $("objectsStatCount"), objectsStatM2: $("objectsStatM2"), objectsStatDone: $("objectsStatDone"), objectsStatWork: $("objectsStatWork"),
   installersSearchInput: $("installersSearchInput"), installersDateFrom: $("installersDateFrom"), installersDateTo: $("installersDateTo"), installersStatusFilter: $("installersStatusFilter"), installersServiceFilter: $("installersServiceFilter"), installersClearFiltersBtn: $("installersClearFiltersBtn"), installersStatJobs: $("installersStatJobs"), installersStatM2: $("installersStatM2"), installersStatAmount: $("installersStatAmount"), installersStatTotal: $("installersStatTotal"), payrollGuide: $("payrollGuide"),
@@ -2318,6 +2318,9 @@ function openReport(type) {
   if (els.reportFormat) els.reportFormat.value = (type === "payroll" || type === "autoPayroll") ? "xls" : (els.reportFormat.value || "xls");
   els.reportAllInstallers.checked = true;
   document.querySelectorAll('[name="reportInstaller"]').forEach((c) => c.checked = false);
+  if (els.reportInstallersFieldset) {
+    els.reportInstallersFieldset.style.display = type === "autoPayroll" ? "none" : "block";
+  }
   els.payrollOptions.style.display = type === "payroll" ? "block" : "none";
   renderPayrollSettings();
   updateReportPreview();
@@ -2340,7 +2343,6 @@ function autoReportRows() {
   const from = els.reportDateFrom?.value || "";
   const to = els.reportDateTo?.value || "";
   const status = els.reportStatus?.value || "";
-  const selected = reportSelectedInstallers();
   return records.filter((r) => {
     if (isTrashRecord(r)) return false;
     if (recordDirection(r) !== "auto") return false;
@@ -2349,8 +2351,6 @@ function autoReportRows() {
     if (from && date < from) return false;
     if (to && date > to) return false;
     if (status && f["Статус"] !== status) return false;
-    const names = splitInstallers(f["Монтажники"] || f["Ответственный"] || "");
-    if (!els.reportAllInstallers?.checked && selected.length && (!names.length || !names.some((n) => selected.includes(n)))) return false;
     return true;
   }).sort((a, b) => String((a.fields || {})["Дата записи"] || "").localeCompare(String((b.fields || {})["Дата записи"] || "")) || String((a.fields || {})["Время записи"] || "").localeCompare(String((b.fields || {})["Время записи"] || "")) || String(a.id).localeCompare(String(b.id)));
 }
@@ -2399,7 +2399,7 @@ function buildAutoPayrollWorkbookData(rows) {
       servicesText: services.map((s) => `${s.name || "Услуга"}${s.material ? ` (${s.material})` : ""}${s.price ? ` — ${moneyNumber(num(s.price))} ₽` : ""}`).join("; "),
       address: String(f["Адрес"] || ""),
       status: String(f["Статус"] || ""),
-      installer: String(f["Монтажники"] || f["Ответственный"] || AUTO_DEFAULT_INSTALLER),
+      installer: workerLabel(AUTO_DEFAULT_INSTALLER),
       orderTotal,
       payTotal,
       comment: String(f["Комментарий администратора"] || f["Комментарий"] || f["Комментарий клиента"] || "")
@@ -2547,7 +2547,7 @@ function savePayrollSettingsFromForm() {
 function emptyPayrollSummary(worker) { return { worker, jobs: 0, m2: 0, amount: 0, bonus: 0, advance: 0, total: 0, last: "", comment: "" }; }
 function payrollRecordsForReport() {
   const settings = getPayrollSettings();
-  const rows = reportFiltered();
+  const rows = reportFiltered().filter((r) => recordDirection(r) !== "auto");
   const statusMode = els.payrollStatusMode?.value || settings.statusMode || "completed";
   if (statusMode === "report-filter") return rows;
   if (statusMode === "all-active") return rows.filter((r) => !TRASH_STATUSES.has((r.fields || {})["Статус"] || ""));
