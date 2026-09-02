@@ -1,4 +1,4 @@
-const CACHE_NAME = 'solncanet-v61-supabase-service-ui-polish';
+const CACHE_NAME = 'solncanet-v61-supabase-full-quick-streets-v63';
 const APP_SHELL = [
   '/',
   '/index.html',

@@ -194,6 +194,8 @@ const $ = (id) => document.getElementById(id);
 
 let records = [];
 let current = null;
+let requestCreateMode = false;
+let requestCreateCalendarEvent = null;
 let cal = new Date();
 let selectedCalendarDate = today();
 let currentReportType = "requests";
@@ -203,6 +205,12 @@ let calendarImportEvents = [];
 let quickCalendarEvent = null;
 let quickAddSaving = false;
 let requestGoogleSyncInFlight = false;
+let requestSaving = false;
+let requestFormSnapshot = "";
+let requestFormDirty = false;
+let quickFormSnapshot = "";
+let quickFormDirty = false;
+let activeSection = "requests";
 let currentClientKey = null;
 let smsQueueCache = [];
 let currentSmsId = null;
@@ -220,7 +228,8 @@ const storage = {
   calendarHidden: "solncanet_calendar_hidden_v22",
   activity: "solncanet_activity_v45",
   comments: "solncanet_comments_v45",
-  filesFallback: "solncanet_files_fallback_v54"
+  filesFallback: "solncanet_files_fallback_v54",
+  quickDraft: "solncanet_quick_draft_v62"
 };
 
 
@@ -247,7 +256,7 @@ let contextMenuEl = null;
 const els = {
   sidebar: $("sidebar"), mobileMenuBtn: $("mobileMenuBtn"), sidebarCloseBtn: $("sidebarCloseBtn"), sidebarOverlay: $("sidebarOverlay"),
   loginPanel: $("loginPanel"), appPanel: $("appPanel"), loginForm: $("loginForm"), passwordInput: $("passwordInput"), loginMessage: $("loginMessage"), logoutBtn: $("logoutBtn"), refreshBtn: $("refreshBtn"), listBtn: $("listBtn"), calendarBtn: $("calendarBtn"), listView: $("listView"), calendarView: $("calendarView"), requestsBody: $("requestsBody"), calendarGrid: $("calendarGrid"), monthTitle: $("monthTitle"), calendarMonthSummary: $("calendarMonthSummary"), calendarTodayBtn: $("calendarTodayBtn"), calendarCreateDayBtn: $("calendarCreateDayBtn"), calendarDayAgenda: $("calendarDayAgenda"), calendarSelectedDateTitle: $("calendarSelectedDateTitle"), calendarSelectedDateSummary: $("calendarSelectedDateSummary"), calendarSelectedEvents: $("calendarSelectedEvents"), prevMonth: $("prevMonth"), nextMonth: $("nextMonth"), searchInput: $("searchInput"), statusFilter: $("statusFilter"), installerFilter: $("installerFilter"), dateFrom: $("dateFrom"), dateTo: $("dateTo"), clearFiltersBtn: $("clearFiltersBtn"), message: $("message"), statTotal: $("statTotal"), statNew: $("statNew"), statToday: $("statToday"), statWork: $("statWork"), statVolume: $("statVolume"), statFiltered: $("statFiltered"), bulkToolbar: $("bulkToolbar"), bulkSelectedCount: $("bulkSelectedCount"), bulkSelectAll: $("bulkSelectAll"), bulkDeleteBtn: $("bulkDeleteBtn"), bulkStatusSelect: $("bulkStatusSelect"), bulkApplyStatusBtn: $("bulkApplyStatusBtn"), bulkInstallerSelect: $("bulkInstallerSelect"), bulkApplyInstallerBtn: $("bulkApplyInstallerBtn"), bulkExportBtn: $("bulkExportBtn"),
-  dialog: $("requestDialog"), dialogTitle: $("dialogTitle"), requestInfo: $("requestInfo"), requestFormError: $("requestFormError"), copyRequestTopBtn: $("copyRequestTopBtn"), editRequestTopBtn: $("editRequestTopBtn"), editClientTopBtn: $("editClientTopBtn"), editClientBox: $("editClientBox"), editRequestBox: $("editRequestBox"), editName: $("editName"), editPhone: $("editPhone"), editDate: $("editDate"), editTime: $("editTime"), editStatus: $("editStatus"), editM2: $("editM2"), editResponsible: $("editResponsible"), editCompany: $("editCompany"), editDirection: $("editDirection"), editAutoFields: $("editAutoFields"), editAuto: $("editAuto"), editFilm: $("editFilm"), editAutoServices: $("editAutoServices"), editAddServiceBtn: $("editAddServiceBtn"), editAutoTotal: $("editAutoTotal"), editService: $("editService"), editAddress: $("editAddress"), editAdminComment: $("editAdminComment"), saveRequestBtn: $("saveRequestBtn"), cancelRequestBtn: $("cancelRequestBtn"), cancelReason: $("cancelReason"), requestHistoryBox: $("requestHistoryBox"), requestAutosaveStatus: $("requestAutosaveStatus"), requestCommentsBox: $("requestCommentsBox"), requestCommentText: $("requestCommentText"), addRequestCommentBtn: $("addRequestCommentBtn"), activityBody: $("activityBody"), requestGoogleCalendarBox: $("requestGoogleCalendarBox"), requestGoogleCreateBtn: $("requestGoogleCreateBtn"), requestGoogleOpenLink: $("requestGoogleOpenLink"), requestGoogleStatus: $("requestGoogleStatus"), exportBtn: $("exportBtn"),
+  dialog: $("requestDialog"), dialogTitle: $("dialogTitle"), requestInfo: $("requestInfo"), requestFormError: $("requestFormError"), copyRequestTopBtn: $("copyRequestTopBtn"), editRequestTopBtn: $("editRequestTopBtn"), editClientTopBtn: $("editClientTopBtn"), editClientBox: $("editClientBox"), editRequestBox: $("editRequestBox"), editName: $("editName"), editPhone: $("editPhone"), editClientSuggestions: $("editClientSuggestions"), editClientHint: $("editClientHint"), editDate: $("editDate"), editTime: $("editTime"), editStatus: $("editStatus"), editM2: $("editM2"), editResponsible: $("editResponsible"), editCompany: $("editCompany"), editDirection: $("editDirection"), editAutoFields: $("editAutoFields"), editAuto: $("editAuto"), editFilm: $("editFilm"), editAutoServices: $("editAutoServices"), editAddServiceBtn: $("editAddServiceBtn"), editAutoTotal: $("editAutoTotal"), editService: $("editService"), editAddress: $("editAddress"), editAdminComment: $("editAdminComment"), saveRequestBtn: $("saveRequestBtn"), cancelRequestBtn: $("cancelRequestBtn"), cancelReason: $("cancelReason"), requestHistoryBox: $("requestHistoryBox"), requestAutosaveStatus: $("requestAutosaveStatus"), requestCommentsBox: $("requestCommentsBox"), requestCommentText: $("requestCommentText"), addRequestCommentBtn: $("addRequestCommentBtn"), activityBody: $("activityBody"), requestGoogleCalendarBox: $("requestGoogleCalendarBox"), requestGoogleCreateBtn: $("requestGoogleCreateBtn"), requestGoogleOpenLink: $("requestGoogleOpenLink"), requestGoogleStatus: $("requestGoogleStatus"), exportBtn: $("exportBtn"),
   clientsBody: $("clientsBody"), objectsBody: $("objectsBody"), installersBody: $("installersBody"), trashBody: $("trashBody"), historyBody: $("historyBody"), historySearchInput: $("historySearchInput"), clearHistoryLocalBtn: $("clearHistoryLocalBtn"), filesBody: $("filesBody"), filesSearchInput: $("filesSearchInput"), filesTypeFilter: $("filesTypeFilter"),
   quickAddBtn: $("quickAddBtn"), quickAddDialog: $("quickAddDialog"), quickSaveBtn: $("quickSaveBtn"), quickFormError: $("quickFormError"), quickName: $("quickName"), quickCompany: $("quickCompany"), quickPhone: $("quickPhone"), quickClientHint: $("quickClientHint"), quickClientSuggestions: $("quickClientSuggestions"), quickGoogleSync: $("quickGoogleSync"), quickDirection: $("quickDirection"), quickAutoFields: $("quickAutoFields"), quickAuto: $("quickAuto"), quickFilm: $("quickFilm"), quickAutoServices: $("quickAutoServices"), quickAddServiceBtn: $("quickAddServiceBtn"), quickAutoTotal: $("quickAutoTotal"), quickService: $("quickService"), quickServiceLabel: $("quickServiceLabel"), quickM2Label: $("quickM2Label"), quickAddressLabel: $("quickAddressLabel"), editServiceLabel: $("editServiceLabel"), quickDate: $("quickDate"), quickTime: $("quickTime"), quickM2: $("quickM2"), quickAddress: $("quickAddress"), quickComment: $("quickComment"),
   reportDialog: $("reportDialog"), reportTitle: $("reportTitle"), reportDateFrom: $("reportDateFrom"), reportDateTo: $("reportDateTo"), reportStatus: $("reportStatus"), reportFormat: $("reportFormat"), reportAllInstallers: $("reportAllInstallers"), reportInstallersFieldset: $("reportInstallersFieldset"), downloadReportBtn: $("downloadReportBtn"), payrollOptions: $("payrollOptions"), payrollSplitMode: $("payrollSplitMode"), payrollStatusMode: $("payrollStatusMode"), payrollSettingsBody: $("payrollSettingsBody"), savePayrollSettingsBtn: $("savePayrollSettingsBtn"), previewPayrollBtn: $("previewPayrollBtn"), reportPreview: $("reportPreview"),
@@ -286,9 +295,12 @@ function init() {
   if (els.calendarTodayBtn) els.calendarTodayBtn.addEventListener("click", () => { const now = new Date(); cal = new Date(now.getFullYear(), now.getMonth(), 1); selectedCalendarDate = today(); render(); });
   if (els.calendarCreateDayBtn) els.calendarCreateDayBtn.addEventListener("click", () => openQuickAddFromCalendarSlot(selectedCalendarDate || today(), "10:00"));
   initMobileSidebar();
+  initMobileBottomNav();
+  initAccidentalActionProtection();
   initClickableRows();
   initContextMenu();
   initAutoServiceDatalist();
+  initAddressAutocompletes();
   initDialogBackdropClose();
 
   [els.searchInput, els.statusFilter, els.installerFilter, els.dateFrom, els.dateTo].forEach((el) => {
@@ -327,6 +339,7 @@ function init() {
   if (els.clientCardEditBtn) els.clientCardEditBtn.addEventListener("click", editClientCardFromClientDialog);
   if (els.clientCardQuickBtn) els.clientCardQuickBtn.addEventListener("click", quickAddFromClientCard);
   els.quickSaveBtn.addEventListener("click", saveQuickAdd);
+  initQuickDraftTracking();
   if (els.quickPhone) {
     els.quickPhone.addEventListener("input", handleQuickPhoneInput);
     els.quickPhone.addEventListener("focus", renderQuickClientSuggestions);
@@ -335,14 +348,24 @@ function init() {
   if (els.quickClientSuggestions) {
     els.quickClientSuggestions.addEventListener("click", handleQuickClientSuggestionClick);
   }
+  if (els.editPhone) {
+    els.editPhone.addEventListener("input", () => { renderEditClientSuggestions(); });
+    els.editPhone.addEventListener("focus", renderEditClientSuggestions);
+    els.editPhone.addEventListener("keydown", (event) => { if (event.key === "Escape") hideEditClientSuggestions(); });
+  }
+  if (els.editClientSuggestions) {
+    els.editClientSuggestions.addEventListener("click", handleEditClientSuggestionClick);
+  }
   document.addEventListener("click", (event) => {
     if (els.globalSearchInput && els.globalSearchResults && !els.globalSearchInput.contains(event.target) && !els.globalSearchResults.contains(event.target)) {
       els.globalSearchResults.hidden = true;
     }
-    if (!els.quickAddDialog || !els.quickAddDialog.open) return;
     if (els.quickPhone && els.quickPhone.contains(event.target)) return;
     if (els.quickClientSuggestions && els.quickClientSuggestions.contains(event.target)) return;
-    hideQuickClientSuggestions();
+    if (els.editPhone && els.editPhone.contains(event.target)) return;
+    if (els.editClientSuggestions && els.editClientSuggestions.contains(event.target)) return;
+    if (els.quickAddDialog?.open) hideQuickClientSuggestions();
+    if (els.dialog?.open) hideEditClientSuggestions();
   });
   els.filesSearchInput.addEventListener("input", renderFiles);
   els.filesTypeFilter.addEventListener("change", renderFiles);
@@ -405,6 +428,184 @@ function openMobileSidebar() { document.body.classList.add("sidebar-open"); }
 function closeMobileSidebar() { document.body.classList.remove("sidebar-open"); }
 
 
+function initMobileBottomNav() {
+  if (document.getElementById("mobileBottomNav")) return;
+  const nav = document.createElement("nav");
+  nav.id = "mobileBottomNav";
+  nav.className = "mobile-bottom-nav";
+  nav.setAttribute("aria-label", "Быстрая навигация");
+  nav.innerHTML = `
+    <button type="button" data-mobile-section="requests"><span>Заявки</span></button>
+    <button type="button" data-mobile-section="calendar"><span>Календарь</span></button>
+    <button type="button" data-mobile-section="clients"><span>Клиенты</span></button>
+    <button type="button" data-mobile-section="files"><span>Файлы</span></button>
+    <button type="button" class="mobile-bottom-primary" data-mobile-quick="1"><span>+ Запись</span></button>`;
+  document.body.appendChild(nav);
+  nav.addEventListener("click", (event) => {
+    const quick = event.target.closest("[data-mobile-quick]");
+    if (quick) { openQuickAdd(); return; }
+    const btn = event.target.closest("[data-mobile-section]");
+    if (!btn) return;
+    setSection(btn.dataset.mobileSection);
+    try { window.scrollTo({ top: 0, behavior: "smooth" }); } catch (_) { window.scrollTo(0, 0); }
+  });
+  updateMobileBottomNavActive();
+}
+function updateMobileBottomNavActive() {
+  document.querySelectorAll("#mobileBottomNav [data-mobile-section]").forEach((btn) => {
+    const active = btn.dataset.mobileSection === activeSection;
+    btn.classList.toggle("active", active);
+    btn.setAttribute("aria-pressed", active ? "true" : "false");
+    btn.hidden = !canAccessSection(btn.dataset.mobileSection);
+  });
+}
+function initAccidentalActionProtection() {
+  window.addEventListener("beforeunload", (event) => {
+    if (!hasAnyUnsavedChanges()) return;
+    event.preventDefault();
+    event.returnValue = "";
+  });
+  [els.dialog, els.quickAddDialog].filter(Boolean).forEach((dialog) => {
+    dialog.addEventListener("cancel", (event) => {
+      if (dialogHasUnsavedChanges(dialog) && !confirmUnsavedClose()) event.preventDefault();
+    });
+    dialog.addEventListener("click", (event) => {
+      const closeButton = event.target.closest('button[value="cancel"], button.close');
+      if (!closeButton || !dialog.contains(closeButton)) return;
+      if (dialogHasUnsavedChanges(dialog) && !confirmUnsavedClose()) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+    }, true);
+    dialog.addEventListener("close", () => {
+      if (dialog === els.dialog) { requestFormDirty = false; requestFormSnapshot = ""; setAutosaveStatus("Все изменения сохранены"); }
+      if (dialog === els.quickAddDialog) { quickFormDirty = false; quickFormSnapshot = ""; }
+    });
+  });
+}
+function dialogHasUnsavedChanges(dialog) {
+  if (dialog === els.dialog) return isRequestFormDirty();
+  if (dialog === els.quickAddDialog) return isQuickFormDirty();
+  return false;
+}
+function hasAnyUnsavedChanges() {
+  return Boolean((els.dialog?.open && isRequestFormDirty()) || (els.quickAddDialog?.open && isQuickFormDirty()));
+}
+function confirmUnsavedClose() {
+  return confirm("Есть несохранённые изменения. Закрыть без сохранения?");
+}
+function safeCloseDialog(dialog) {
+  if (!dialog) return;
+  if (dialogHasUnsavedChanges(dialog) && !confirmUnsavedClose()) return;
+  dialog.close();
+}
+function stableStringify(value) {
+  try { return JSON.stringify(value || {}); } catch (_) { return String(value || ""); }
+}
+function snapshotRequestForm() {
+  if (!current && !requestCreateMode) return "";
+  try { return stableStringify(currentEditFields()); } catch (_) { return ""; }
+}
+function resetRequestDirtyState() {
+  requestFormSnapshot = snapshotRequestForm();
+  requestFormDirty = false;
+  setAutosaveStatus("Все изменения сохранены");
+}
+function isRequestFormDirty() {
+  if ((!current && !requestCreateMode) || !els.dialog?.open) return false;
+  const snap = snapshotRequestForm();
+  return Boolean(requestFormDirty || (requestFormSnapshot && snap && snap !== requestFormSnapshot));
+}
+function markQuickDirty() {
+  if (!els.quickAddDialog?.open) return;
+  quickFormDirty = snapshotQuickForm() !== quickFormSnapshot;
+  saveQuickDraft();
+}
+function snapshotQuickForm() {
+  const data = {
+    name: els.quickName?.value || "",
+    company: els.quickCompany?.value || "",
+    phone: els.quickPhone?.value || "",
+    googleSync: Boolean(els.quickGoogleSync?.checked),
+    direction: els.quickDirection?.value || "architecture",
+    auto: els.quickAuto?.value || "",
+    film: els.quickFilm?.value || "",
+    services: collectAutoServices("quick"),
+    date: els.quickDate?.value || "",
+    time: els.quickTime?.value || "",
+    m2: els.quickM2?.value || "",
+    address: els.quickAddress?.value || "",
+    comment: els.quickComment?.value || ""
+  };
+  return stableStringify(data);
+}
+function quickFormHasMeaningfulData() {
+  const values = [els.quickName, els.quickCompany, els.quickPhone, els.quickAuto, els.quickDate, els.quickTime, els.quickM2, els.quickAddress, els.quickComment]
+    .map((el) => String(el?.value || "").trim())
+    .filter(Boolean);
+  const services = collectAutoServices("quick").filter((s) => String(s.name || s.material || s.price || "").trim());
+  return values.length > 0 || services.length > 0;
+}
+function isQuickFormDirty() {
+  if (!els.quickAddDialog?.open) return false;
+  const snap = snapshotQuickForm();
+  return Boolean(quickFormHasMeaningfulData() && (quickFormDirty || (quickFormSnapshot && snap && snap !== quickFormSnapshot)));
+}
+function resetQuickDirtyState() {
+  quickFormSnapshot = snapshotQuickForm();
+  quickFormDirty = false;
+}
+function initQuickDraftTracking() {
+  const root = els.quickAddDialog;
+  if (!root) return;
+  root.addEventListener("input", markQuickDirty);
+  root.addEventListener("change", markQuickDirty);
+}
+function saveQuickDraft() {
+  if (!els.quickAddDialog?.open || quickCalendarEvent) return;
+  const snap = snapshotQuickForm();
+  try { localStorage.setItem(storage.quickDraft, snap); } catch (_) {}
+}
+function clearQuickDraft() {
+  try { localStorage.removeItem(storage.quickDraft); } catch (_) {}
+}
+function maybeRestoreQuickDraft(prefill) {
+  if (prefill || quickCalendarEvent) return null;
+  let raw = "";
+  try { raw = localStorage.getItem(storage.quickDraft) || ""; } catch (_) { raw = ""; }
+  if (!raw) return null;
+  let draft = null;
+  try { draft = JSON.parse(raw); } catch (_) { draft = null; }
+  if (!draft) return null;
+  const hasData = [draft.name, draft.company, draft.phone, draft.auto, draft.date, draft.time, draft.m2, draft.address, draft.comment]
+    .some((v) => String(v || "").trim()) || (Array.isArray(draft.services) && draft.services.some((s) => String(s?.name || s?.material || s?.price || "").trim()));
+  if (!hasData) return null;
+  if (!confirm("Найден несохранённый черновик быстрой записи. Восстановить его?")) return null;
+  return {
+    name: draft.name || "",
+    company: draft.company || "",
+    phone: draft.phone || "",
+    googleSync: draft.googleSync !== false,
+    direction: draft.direction || "architecture",
+    auto: draft.auto || "",
+    film: draft.film || "",
+    autoServices: Array.isArray(draft.services) ? draft.services : [],
+    date: draft.date || "",
+    time: draft.time || "",
+    m2: draft.m2 || "",
+    address: draft.address || "",
+    comment: draft.comment || ""
+  };
+}
+function setButtonBusy(button, busy, busyText = "Сохраняю...") {
+  if (!button) return () => {};
+  const oldText = button.textContent;
+  button.disabled = Boolean(busy);
+  if (busy) button.textContent = busyText;
+  return () => { button.disabled = false; button.textContent = oldText; };
+}
+
+
 function rowClickIgnored(target) {
   return Boolean(target.closest('button, a, input, select, textarea, label, summary, [role="button"], .file-chip, .quick-client-suggestions, .global-search-results'));
 }
@@ -457,7 +658,7 @@ function initDialogBackdropClose() {
       if (!backdropPointerDown) return;
       const shouldClose = event.target === dialog && !pointerMoved;
       backdropPointerDown = false;
-      if (shouldClose) dialog.close();
+      if (shouldClose) safeCloseDialog(dialog);
     });
 
     dialog.addEventListener('click', (event) => {
@@ -534,6 +735,7 @@ function applyAccessPolicy() {
     if (full) button.style.removeProperty("display");
     else button.style.setProperty("display", "none", "important");
   });
+  updateMobileBottomNavActive();
 }
 function setWorkspace(value) {
   currentWorkspace = ["architecture", "auto", "all"].includes(value) ? value : "all";
@@ -651,6 +853,7 @@ function startAutoRefresh() {
 function setSection(section) {
   closeMobileSidebar();
   if (!canAccessSection(section)) section = "requests";
+  activeSection = section === "calendar" ? "calendar" : section;
   applyAccessPolicy();
   document.querySelectorAll("[data-section]").forEach((a) => a.classList.toggle("active", a.dataset.section === section));
   document.querySelectorAll(".workspace-section").forEach((s) => s.style.display = "none");
@@ -660,8 +863,9 @@ function setSection(section) {
   else { const target = $(section + "Section"); if (target) target.style.display = "block"; }
 
   renderAll();
+  updateMobileBottomNavActive();
 }
-function setView(view, doRender = true) { els.listView.style.display = view === "list" ? "block" : "none"; els.calendarView.style.display = view === "calendar" ? "block" : "none"; els.listBtn.classList.toggle("active", view === "list"); els.calendarBtn.classList.toggle("active", view === "calendar"); if (doRender) render(); }
+function setView(view, doRender = true) { activeSection = view === "calendar" ? "calendar" : "requests"; els.listView.style.display = view === "list" ? "block" : "none"; els.calendarView.style.display = view === "calendar" ? "block" : "none"; els.listBtn.classList.toggle("active", view === "list"); els.calendarBtn.classList.toggle("active", view === "calendar"); updateMobileBottomNavActive(); if (doRender) render(); }
 function clearFilters() { els.searchInput.value = ""; els.statusFilter.value = ""; els.installerFilter.value = ""; els.dateFrom.value = ""; els.dateTo.value = ""; renderAll(); }
 
 function isTrashRecord(record) {
@@ -717,7 +921,7 @@ function render() {
 }
 function requestRow(r) {
   const f = r.fields || {}, status = e(f["Статус"] || ""), dir = recordDirection(r), checked = selectedRequestIds.has(String(r.id)) ? "checked" : "";
-  return `<tr class="clickable-row direction-${dir}" data-open-row="${e(r.id)}" data-context-row="${e(r.id)}"><td class="bulk-check-cell"><input type="checkbox" class="bulk-row-check" data-bulk-id="${e(r.id)}" ${checked} /></td><td>${e(f["Дата записи"])}<br><small>${e(requestDisplayNumber(r))}</small></td><td>${e(f["Время записи"])}</td><td><span class="direction-dot direction-${dir}"></span><b>${e(f["Имя клиента"])}</b></td><td>${e(f["Компания"] || "—")}</td><td>${phoneLink(f["Телефон"])}</td><td>${e(f["Услуга"])}</td><td>${e(f["Адрес"])}</td><td>${e(f["Итоговый м2"] || f["м2"])}</td><td>${e(f["Монтажники"])}</td><td class="status-cell"><span class="status" data-status="${status}">${status || "—"}</span></td><td><button class="open-btn" data-edit-request="${e(r.id)}">Редактировать заявку</button></td></tr>`;
+  return `<tr class="clickable-row direction-${dir}" data-open-row="${e(r.id)}" data-context-row="${e(r.id)}"><td class="bulk-check-cell" data-label="Выбор"><input type="checkbox" class="bulk-row-check" data-bulk-id="${e(r.id)}" ${checked} /></td><td data-label="Дата">${e(f["Дата записи"])}<br><small>${e(requestDisplayNumber(r))}</small></td><td data-label="Время">${e(f["Время записи"])}</td><td data-label="Клиент"><span class="direction-dot direction-${dir}"></span><b>${e(f["Имя клиента"])}</b></td><td data-label="Компания">${e(f["Компания"] || "—")}</td><td data-label="Телефон">${phoneLink(f["Телефон"])}</td><td data-label="Услуга">${e(f["Услуга"])}</td><td data-label="Адрес">${e(f["Адрес"])}</td><td data-label="м²">${e(f["Итоговый м2"] || f["м2"])}</td><td data-label="Монтажники">${e(f["Монтажники"])}</td><td class="status-cell" data-label="Статус"><span class="status" data-status="${status}">${status || "—"}</span></td><td data-label="Действие"><button class="open-btn" data-edit-request="${e(r.id)}">Редактировать заявку</button></td></tr>`;
 }
 
 function renderCalendar(arr) {
@@ -917,7 +1121,7 @@ function requestDisplayNumber(recordOrId) {
   const f = record.fields || {};
   const date = requestDateShort(f["Дата записи"] || f["Дата создания"] || f["Создано"] || f["CreatedAt"] || f["created_at"] || "");
   const base = requestNumberBase(record, f);
-  return `${base}-${date || "БЕЗДАТЫ"}`;
+  return `${base} — ${date || "БЕЗ ДАТЫ"}`;
 }
 
 function requestNumberBase(record, f = {}) {
@@ -931,10 +1135,10 @@ function requestNumberBase(record, f = {}) {
     .replace(/\b(г\.?|город|екатеринбург|ул\.?|улица|пр\.?|проспект|пер\.?|переулок|дом|д\.?|офис|оф\.?|кв\.?)\b/gi, " ")
     .replace(/[^0-9a-zа-я]+/gi, " ")
     .trim()
-    .replace(/\s+/g, "")
+    .replace(/\s+/g, " ")
     .toUpperCase();
   if (!value) value = dir === "auto" ? "АВТО" : "ЗАЯВКА";
-  return value.slice(0, 22);
+  return value.slice(0, 34);
 }
 
 function requestDateShort(value) {
@@ -948,6 +1152,68 @@ function requestDateShort(value) {
   if (!Number.isNaN(d.getTime())) return `${String(d.getDate()).padStart(2,"0")}.${String(d.getMonth()+1).padStart(2,"0")}`;
   return raw.slice(0, 5).replace(/\/$/, "");
 }
+
+function ekbStreetList() {
+  const list = Array.isArray(window.EKB_STREETS) ? window.EKB_STREETS : [];
+  return [...new Set(list.map((x) => String(x || "").trim()).filter(Boolean))];
+}
+function scoreStreetSuggestion(query, street) {
+  const q = norm(query || "").replace(/\b(г|город|екатеринбург|ул|улица|пр|проспект|пер|переулок|дом|д)\b/g, " ").replace(/\s+/g, " ").trim();
+  const s = norm(street || "");
+  if (!s) return 0;
+  if (!q) return 100;
+  if (s === q) return 1000;
+  if (s.startsWith(q)) return 900 - Math.max(0, s.length - q.length);
+  if (s.includes(q)) return 700 - s.indexOf(q);
+  const parts = q.split(" ").filter(Boolean);
+  if (parts.length && parts.every((part) => s.includes(part))) return 500 + parts.length * 25;
+  return 0;
+}
+function initStreetAutocomplete(input) {
+  if (!input || input.dataset.streetAutocompleteReady === "1") return;
+  input.dataset.streetAutocompleteReady = "1";
+  input.setAttribute("autocomplete", "off");
+  const box = document.createElement("div");
+  box.className = "street-suggest-box";
+  box.hidden = true;
+  input.insertAdjacentElement("afterend", box);
+  const render = () => showStreetSuggestions(input, box);
+  input.addEventListener("focus", render);
+  input.addEventListener("input", render);
+  input.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") box.hidden = true;
+  });
+  input.addEventListener("blur", () => setTimeout(() => { box.hidden = true; }, 160));
+}
+function showStreetSuggestions(input, box) {
+  const streets = ekbStreetList();
+  if (!input || !box || !streets.length) return;
+  const value = String(input.value || "");
+  const matches = streets
+    .map((street, index) => ({ street, score: scoreStreetSuggestion(value, street), index }))
+    .filter((x) => x.score > 0 || !value.trim())
+    .sort((a, b) => b.score - a.score || a.index - b.index)
+    .slice(0, 14);
+  if (!matches.length) { box.hidden = true; box.innerHTML = ""; return; }
+  box.innerHTML = matches.map(({ street }) => `<button type="button" data-street="${e(street)}"><span>${e(street)}</span><small>Екатеринбург</small></button>`).join("");
+  box.hidden = false;
+  box.querySelectorAll("button[data-street]").forEach((btn) => {
+    btn.addEventListener("pointerdown", (event) => {
+      event.preventDefault();
+      const street = btn.dataset.street || "";
+      const currentValue = String(input.value || "").trim();
+      const houseMatch = currentValue.match(/(?:^|\s|,)(?:д\.?|дом)?\s*(\d+[\wа-яА-Я\/-]*)\s*$/i);
+      input.value = `г. Екатеринбург, ${street}${houseMatch ? ", д. " + houseMatch[1] : ""}`;
+      box.hidden = true;
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+  });
+}
+function initAddressAutocompletes() {
+  initStreetAutocomplete(els.editAddress);
+  initStreetAutocomplete(els.quickAddress);
+}
+
 
 function formatDateRu(ymd, long = false) {
   if (!ymd) return "";
@@ -1367,9 +1633,12 @@ function requestClientCardHtml(record) {
 }
 
 function openRequest(id) {
+  requestCreateMode = false;
+  requestCreateCalendarEvent = null;
   current = records.find((r) => String(r.id) === String(id));
   if (!current) return;
   clearFormError("request");
+  setRequestCreateModeUI(false);
   const f = current.fields || {};
   els.dialogTitle.textContent = "Заявка " + requestDisplayNumber(current);
   els.requestInfo.innerHTML = requestClientCardHtml(current) + `<div class="request-current-summary"><b>Текущая заявка ${e(requestDisplayNumber(current))}</b><br>${e(f["Дата записи"] || "")} ${e(f["Время записи"] || "")}<br>${e(f["Услуга"] || "")}<br>${recordDirection(current)==="auto" ? `<b>Авто:</b> ${e(f["Авто"]||"—")}<br>` : ""}<b>Стоимость:</b> ${e(f["Общая стоимость"]||"0")} ₽<br>${e(f["Адрес"] || "")}<br><br>${nl2br(f["Комментарий клиента"] || f["Комментарий"] || "")}</div>`;
@@ -1398,7 +1667,8 @@ function openRequest(id) {
   renderRequestHistory(current);
   renderRequestComments(current);
   lastAutosaveSnapshot = JSON.stringify(currentEditFields());
-  setAutosaveStatus("Сохраните изменения кнопкой «Сохранить»");
+  resetRequestDirtyState();
+  setAutosaveStatus("Все изменения сохранены");
   updateRequestNotificationEditor();
   updateScheduleSmsEditor();
   renderRequestGoogleCalendar(current);
@@ -1534,7 +1804,7 @@ function readableSaveError(error) {
 }
 
 function currentEditFields() {
-  const direction = els.editDirection?.value || recordDirection(current);
+  const direction = els.editDirection?.value || (requestCreateMode ? (currentWorkspace === "auto" ? "auto" : "architecture") : recordDirection(current));
   const autoServices = collectAutoServices("edit");
   const selectedInstallers = [...document.querySelectorAll('[name="installer"]:checked')].map((x) => x.value);
   if (direction === "auto" && !selectedInstallers.length) selectedInstallers.push(AUTO_DEFAULT_INSTALLER);
@@ -1563,12 +1833,16 @@ function currentEditFields() {
   return fields;
 }
 async function saveRequest() {
+  if (requestCreateMode) return createRequestFromFullDialog();
   if (!current) return;
+  if (requestSaving) { msg("Заявка уже сохраняется. Дождитесь завершения, чтобы не было дублей."); return; }
   const validation = validateRequestBeforeSave();
   if (!validation.ok) {
     showFormError("request", "Заявка не сохранена — нужно заполнить обязательные поля", validation.errors, validation.fields);
     return;
   }
+  requestSaving = true;
+  const restoreButton = setButtonBusy(els.saveRequestBtn, true, "Сохраняю...");
   try {
     const oldFields = current.fields || {};
     const fields = currentEditFields();
@@ -1577,10 +1851,14 @@ async function saveRequest() {
     if (changes.length) history = addHistory(current, "Изменение заявки", changes.join("; "), history);
     fields["История изменений"] = JSON.stringify(history);
     await updateRecord(current.id, fields, "Заявка сохранена");
+    resetRequestDirtyState();
     els.dialog.close();
     renderAll();
   } catch (error) {
     showFormError("request", "Заявка не сохранена", [readableSaveError(error)], []);
+  } finally {
+    requestSaving = false;
+    restoreButton();
   }
 }
 async function cancelCurrentRequest() {
@@ -1726,7 +2004,8 @@ function initRequestAutosave() {
 }
 function scheduleRequestAutosave() {
   if (!current || !els.dialog?.open) return;
-  setAutosaveStatus("Есть несохранённые изменения");
+  requestFormDirty = snapshotRequestForm() !== requestFormSnapshot;
+  setAutosaveStatus(requestFormDirty ? "Есть несохранённые изменения" : "Все изменения сохранены");
 }
 async function runRequestAutosave() {
   // v61: автосохранение отключено, чтобы не было гонок и частичного сохранения.
@@ -1890,6 +2169,56 @@ function hideQuickClientSuggestions() {
   if (!els.quickClientSuggestions) return;
   els.quickClientSuggestions.hidden = true;
 }
+
+function renderEditClientSuggestions() {
+  const box = els.editClientSuggestions;
+  const value = els.editPhone?.value || "";
+  if (!box) return;
+  const key = phoneKey(value);
+  if (!key || key.length < 3) { box.hidden = true; box.innerHTML = ""; return; }
+  const matches = activeRecords()
+    .filter((r) => phoneKey((r.fields || {})["Телефон"] || "").includes(key))
+    .slice(0, 8);
+  if (!matches.length) {
+    box.hidden = true;
+    box.innerHTML = "";
+    if (els.editClientHint) {
+      els.editClientHint.classList.remove("is-found");
+      els.editClientHint.classList.add("is-empty");
+      els.editClientHint.textContent = "Клиент с таким номером пока не найден — будет создана новая карточка.";
+    }
+    return;
+  }
+  box.innerHTML = matches.map((r) => quickClientSuggestionHtml(r).replaceAll('data-quick-client=', 'data-edit-client=')).join("");
+  box.hidden = false;
+  if (els.editClientHint) {
+    els.editClientHint.classList.remove("is-empty");
+    els.editClientHint.classList.add("is-found");
+    els.editClientHint.textContent = `Найдено клиентов: ${matches.length}. Нажмите на нужную карточку, чтобы подставить данные.`;
+  }
+}
+function hideEditClientSuggestions() {
+  if (!els.editClientSuggestions) return;
+  els.editClientSuggestions.hidden = true;
+}
+function handleEditClientSuggestionClick(event) {
+  const btn = event.target.closest("[data-edit-client]");
+  if (!btn) return;
+  const record = records.find((r) => String(r.id) === String(btn.dataset.editClient));
+  if (!record) return;
+  const f = record.fields || {};
+  if (els.editName) els.editName.value = f["Имя клиента"] || "";
+  if (els.editCompany) els.editCompany.value = f["Компания"] || "";
+  if (els.editPhone) els.editPhone.value = formatQuickPhoneForTyping(f["Телефон"] || els.editPhone.value || "");
+  if (els.editAddress && !els.editAddress.value.trim() && recordDirection(record) !== "auto") els.editAddress.value = f["Адрес"] || "";
+  if (els.editClientHint) {
+    els.editClientHint.classList.remove("is-empty");
+    els.editClientHint.classList.add("is-found");
+    els.editClientHint.textContent = `Выбран клиент: ${f["Имя клиента"] || "без имени"}${f["Компания"] ? " · " + f["Компания"] : ""}. Данные подставлены.`;
+  }
+  hideEditClientSuggestions();
+}
+
 function handleQuickClientSuggestionClick(event) {
   const btn = event.target.closest("[data-quick-client]");
   if (!btn) return;
@@ -1910,40 +2239,137 @@ function applyQuickClient(record) {
   hideQuickClientSuggestions();
 }
 
-function openQuickAdd(prefill = null) {
-  setDefaultDates();
-  clearFormError("quick");
-  quickCalendarEvent = prefill && prefill.calendarEvent ? prefill.calendarEvent : null;
-  els.quickName.value = prefill?.name || "";
-  if (els.quickCompany) els.quickCompany.value = prefill?.company || "";
-  els.quickPhone.value = prefill?.phone ? formatQuickPhoneForTyping(prefill.phone) : "";
-  if (els.quickClientHint) {
-    els.quickClientHint.classList.remove("is-found", "is-empty");
-    if (prefill?.copyFromNumber) {
-      els.quickClientHint.classList.add("is-found");
-      els.quickClientHint.textContent = `Создаётся копия заявки ${prefill.copyFromNumber}. Проверьте дату, время, услуги, суммы и сохраните как новую заявку.`;
-    } else if (prefill?.calendarSlot) {
-      els.quickClientHint.classList.add("is-found");
-      els.quickClientHint.textContent = `Новая запись из календаря на ${formatDateRu(prefill.date || today())} в ${prefill.time || "10:00"}. Заполните клиента, услугу и сохраните.`;
-    } else {
-      els.quickClientHint.textContent = quickCalendarEvent ? "Данные предварительно заполнены из Google Календаря. Проверьте и сохраните заявку." : "Начните вводить номер — подходящие клиенты появятся списком ниже.";
-    }
+
+function setRequestCreateModeUI(isCreate) {
+  [els.copyRequestTopBtn, els.editRequestTopBtn, els.editClientTopBtn].filter(Boolean).forEach((btn) => { btn.hidden = Boolean(isCreate); });
+  if (els.saveRequestBtn) els.saveRequestBtn.textContent = isCreate ? "Создать заявку" : "Сохранить";
+  if (els.cancelRequestBtn) els.cancelRequestBtn.hidden = Boolean(isCreate || !canDeleteRecords());
+  const title = document.querySelector('#requestDialog details.files-box summary');
+  if (title && isCreate) title.textContent = "Файлы этой заявки — после создания";
+  else if (title) title.textContent = "Файлы этой заявки";
+  const requestFileInput = $("requestFileInput");
+  const requestUploadBtn = $("requestUploadBtn");
+  const requestFilesRefreshBtn = $("requestFilesRefreshBtn");
+  if (requestFileInput) requestFileInput.disabled = Boolean(isCreate);
+  if (requestUploadBtn) requestUploadBtn.disabled = Boolean(isCreate);
+  if (requestFilesRefreshBtn) requestFilesRefreshBtn.disabled = Boolean(isCreate);
+  if (els.requestGoogleCreateBtn) els.requestGoogleCreateBtn.disabled = Boolean(isCreate);
+  if (els.sendNotifyBtn) els.sendNotifyBtn.disabled = Boolean(isCreate);
+  if (els.scheduleSmsBtn) els.scheduleSmsBtn.disabled = Boolean(isCreate);
+  if (els.scheduleDefaultSmsBtn) els.scheduleDefaultSmsBtn.disabled = Boolean(isCreate);
+  if (els.addRequestCommentBtn) els.addRequestCommentBtn.disabled = Boolean(isCreate);
+}
+function resetRequestDialogForCreate(prefill = {}) {
+  current = null;
+  requestCreateMode = true;
+  requestCreateCalendarEvent = prefill && prefill.calendarEvent ? prefill.calendarEvent : null;
+  clearFormError("request");
+  setRequestCreateModeUI(true);
+  const direction = prefill?.direction || (currentWorkspace === "auto" ? "auto" : "architecture");
+  if (els.dialogTitle) els.dialogTitle.textContent = prefill?.copyFromNumber ? `Новая заявка — копия ${prefill.copyFromNumber}` : "Новая заявка";
+  if (els.requestInfo) {
+    const source = prefill?.copyFromNumber ? `Создаётся копия заявки ${e(prefill.copyFromNumber)}. Измените нужные данные и нажмите «Создать заявку».` : "Заполните карточку. После создания эта же карточка откроется полностью: можно будет добавить файлы, комментарии, SMS и Google Календарь.";
+    els.requestInfo.innerHTML = `<div class="request-current-summary request-create-summary"><b>Создание новой заявки</b><br>${source}</div>`;
   }
-  if (els.quickGoogleSync) els.quickGoogleSync.checked = prefill?.googleSync === false ? false : true;
-  hideQuickClientSuggestions();
-  if (els.quickService && prefill?.service && ARCHITECTURE_SERVICES.includes(prefill.service)) els.quickService.value = prefill.service;
-  if (els.quickDate && prefill?.date) els.quickDate.value = prefill.date;
-  if (els.quickTime && prefill?.time) els.quickTime.value = prefill.time;
-  els.quickAddress.value = prefill?.address || "";
-  els.quickComment.value = prefill?.comment || "";
-  els.quickM2.value = prefill?.m2 || "";
-  if (els.quickDirection) els.quickDirection.value = prefill?.direction || (currentWorkspace === "auto" ? "auto" : "architecture");
-  if (els.quickAuto) els.quickAuto.value = prefill?.auto || "";
-  if (els.quickFilm) els.quickFilm.value = prefill?.film || "";
+  if (els.editName) els.editName.value = prefill?.name || "";
+  if (els.editCompany) els.editCompany.value = prefill?.company || "";
+  if (els.editPhone) els.editPhone.value = prefill?.phone ? formatQuickPhoneForTyping(prefill.phone) : "";
+  if (els.editDate) els.editDate.value = prefill?.date || today();
+  if (els.editTime) els.editTime.value = prefill?.time || "10:00";
+  if (els.editStatus) els.editStatus.value = "Новая заявка";
+  if (els.editDirection) els.editDirection.value = direction;
+  if (els.editM2) els.editM2.value = direction === "auto" ? "" : (prefill?.m2 || "");
+  if (els.editResponsible) els.editResponsible.value = direction === "auto" ? AUTO_DEFAULT_RESPONSIBLE : "";
+  if (els.editService) els.editService.value = prefill?.service || "";
+  if (els.editAddress) els.editAddress.value = direction === "auto" ? "" : (prefill?.address || "");
+  if (els.editAdminComment) els.editAdminComment.value = prefill?.comment || "";
+  if (els.editAuto) els.editAuto.value = prefill?.auto || "";
+  if (els.editFilm) els.editFilm.value = prefill?.film || "";
   const copiedServices = Array.isArray(prefill?.autoServices) && prefill.autoServices.length ? prefill.autoServices : null;
-  renderAutoServiceRows("quick", copiedServices || (prefill?.service ? [{ name: prefill.service, price: prefill?.price || "" }] : [{ name: "", price: "" }]));
-  updateQuickDirectionUI();
-  els.quickAddDialog.showModal();
+  renderAutoServiceRows("edit", copiedServices || (prefill?.service ? [{ name: prefill.service, price: prefill?.price || "" }] : [{ name: "", material: "", price: "" }]));
+  updateEditDirectionUI();
+  document.querySelectorAll('[name="installer"]').forEach((c) => c.checked = false);
+  if (direction === "auto") document.querySelector('[name="installer"][value="Роман З"]')?.click();
+  if (els.requestFilesBox) els.requestFilesBox.innerHTML = '<p class="muted-text">Сначала нажмите «Создать заявку». После сохранения здесь сразу можно будет загрузить фото, видео, PDF и другие файлы.</p>';
+  if (els.requestHistoryBox) els.requestHistoryBox.innerHTML = '<p class="muted-text">История появится после создания заявки.</p>';
+  if (els.requestCommentsBox) els.requestCommentsBox.innerHTML = '<p class="muted-text">Комментарии можно добавлять после создания заявки.</p>';
+  if (els.requestGoogleCalendarBox) els.requestGoogleCalendarBox.innerHTML = '<div class="google-calendar-status is-empty"><span>Google Календарь</span><b>Создастся после сохранения</b><small>Заявка сначала должна получить номер в Supabase.</small></div>';
+  if (els.requestGoogleStatus) els.requestGoogleStatus.textContent = "После создания заявки можно будет создать или обновить событие Google Календаря.";
+  if (els.requestNotifyStatus) els.requestNotifyStatus.textContent = "Уведомления доступны после создания заявки.";
+  if (els.scheduleSmsStatus) els.scheduleSmsStatus.textContent = "Авто-SMS доступны после создания заявки.";
+  if (els.cancelReason) els.cancelReason.value = "";
+  lastAutosaveSnapshot = snapshotRequestForm();
+  resetRequestDirtyState();
+  setAutosaveStatus("Новая заявка ещё не сохранена");
+}
+function openFullRequestCreate(prefill = null) {
+  const restoredDraft = null;
+  if (restoredDraft) prefill = restoredDraft;
+  if (els.quickAddDialog?.open) els.quickAddDialog.close();
+  if (els.clientCardDialog?.open) els.clientCardDialog.close();
+  resetRequestDialogForCreate(prefill || {});
+  if (!els.dialog.open) els.dialog.showModal();
+  setTimeout(() => els.editPhone?.focus(), 80);
+}
+function fieldsForNewRequestFromDialog() {
+  const fields = currentEditFields();
+  fields["Статус"] = fields["Статус"] || "Новая заявка";
+  fields["Cal Booking ID"] = requestCreateCalendarEvent?.id ? "gcal-" + requestCreateCalendarEvent.id : "manual-" + Date.now();
+  if (requestCreateCalendarEvent?.id) {
+    fields["Google Calendar Event ID"] = requestCreateCalendarEvent.id;
+    fields["Ссылка на событие"] = requestCreateCalendarEvent.htmlLink || "";
+    fields["Источник"] = "Google Календарь → полная быстрая запись";
+  }
+  fields["Комментарий клиента"] = fields["Комментарий администратора"] || "";
+  if (!fields["История изменений"]) fields["История изменений"] = JSON.stringify([{ at: dateTimeY(), user: currentUserName(), action: "Создание заявки", details: "Создано из полной быстрой записи" }]);
+  return fields;
+}
+async function createRequestFromFullDialog() {
+  if (requestSaving) { msg("Заявка уже создаётся. Дождитесь завершения, чтобы не было дублей."); return; }
+  const validation = validateRequestBeforeSave();
+  if (!validation.ok) {
+    showFormError("request", "Заявка не создана — нужно заполнить обязательные поля", validation.errors, validation.fields);
+    return;
+  }
+  requestSaving = true;
+  const restoreButton = setButtonBusy(els.saveRequestBtn, true, "Создаю...");
+  try {
+    const fields = fieldsForNewRequestFromDialog();
+    const response = await fetch("/create-zayavka", { method: "POST", headers: { "Content-Type": "application/json", "x-admin-password": pwd() }, body: JSON.stringify({ fields }) });
+    const data = await response.json().catch(() => ({ ok: false, error: "Сервер вернул не JSON" }));
+    if (!response.ok || !data.ok) throw new Error(data.error || data.lastError || "Ошибка создания заявки");
+    const createdId = extractCreatedRecordId(data);
+    let googleResult = null;
+    if (!requestCreateCalendarEvent?.id) {
+      googleResult = await createGoogleCalendarEventForQuick(fields, createdId);
+      if (googleResult?.ok && createdId && (googleResult.eventId || googleResult.htmlLink)) {
+        await saveGoogleCalendarInfoToRecord(createdId, googleResult, googleResult.created === false ? "Полная быстрая запись → Google Календарь обновлён" : "Полная быстрая запись → Google Календарь");
+      }
+    }
+    if (requestCreateCalendarEvent?.id) markCalendarEventImported(requestCreateCalendarEvent.id);
+    requestCreateMode = false;
+    requestCreateCalendarEvent = null;
+    requestFormDirty = false;
+    requestFormSnapshot = "";
+    await load();
+    const created = createdId || extractCreatedRecordId(data);
+    if (els.dialog?.open) els.dialog.close();
+    if (created) openRequest(created);
+    else renderAll();
+    if (googleResult?.ok) msg("Заявка создана и продублирована в Google Календарь. Теперь можно добавить файлы.");
+    else if (googleResult && !googleResult.ok) msg("Заявка создана. Google Календарь не создал событие: " + (googleResult.error || "ошибка") + ". Файлы уже можно добавлять.");
+    else msg("Заявка создана. Теперь можно добавить файлы.");
+  } catch (error) {
+    showFormError("request", "Заявка не создана", [readableSaveError(error)], []);
+  } finally {
+    requestSaving = false;
+    restoreButton();
+    if (requestCreateMode && els.saveRequestBtn) els.saveRequestBtn.textContent = "Создать заявку";
+  }
+}
+
+function openQuickAdd(prefill = null) {
+  return openFullRequestCreate(prefill);
 }
 async function saveQuickAdd() {
   if (quickAddSaving) {
@@ -1999,6 +2425,8 @@ async function saveQuickAdd() {
         await saveGoogleCalendarInfoToRecord(createdId, googleResult, googleResult.created === false ? "Быстрая запись → Google Календарь обновлён" : "Быстрая запись → Google Календарь");
       }
     }
+    clearQuickDraft();
+    resetQuickDirtyState();
     els.quickAddDialog.close();
     if (quickCalendarEvent?.id) markCalendarEventImported(quickCalendarEvent.id);
     quickCalendarEvent = null;
@@ -3061,7 +3489,11 @@ async function uploadFilesFromPanel() {
   await uploadFiles(requestId, input?.files, input, setFilesStatus);
 }
 async function uploadFilesForCurrentRequest() {
-  if (!current) return;
+  if (!current || requestCreateMode) {
+    const box = $("requestFilesBox");
+    if (box) box.innerHTML = `<p class="muted-text">Сначала создайте заявку, затем загрузите файлы.</p>`;
+    return;
+  }
   const input = $("requestFileInput");
   await uploadFiles(current.id, input?.files, input, (text) => {
     const box = $("requestFilesBox");
@@ -3343,6 +3775,7 @@ function formatRuDate(value) {
 async function sendCurrentRequestNotification() {
   if (!current) return;
   clearFormError("request");
+  setRequestCreateModeUI(false);
   const f = current.fields || {};
   const channel = els.notifyChannel?.value || "sms";
   const messageText = els.notifyMessage?.value.trim() || "";
@@ -3834,6 +4267,7 @@ function updateScheduleSmsEditor() {
 async function scheduleSmsForCurrentRequest() {
   if (!current) return;
   clearFormError("request");
+  setRequestCreateModeUI(false);
   const f = current.fields || {};
   const date = els.scheduleSmsDate?.value || "";
   const time = els.scheduleSmsTime?.value || "";
@@ -3848,6 +4282,7 @@ async function scheduleSmsForCurrentRequest() {
 async function scheduleDefaultSmsForCurrentRequest() {
   if (!current) return;
   clearFormError("request");
+  setRequestCreateModeUI(false);
   const f = current.fields || {};
   if (!f["Телефон"]) return setNotificationStatus(els.scheduleSmsStatus, "В заявке нет телефона клиента", false);
   if (!f["Дата записи"] || !f["Время записи"]) return setNotificationStatus(els.scheduleSmsStatus, "В заявке нет даты или времени записи", false);

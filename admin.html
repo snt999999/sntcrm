@@ -429,6 +429,8 @@
         <div class="dialog-grid client-edit-grid">
           <label>ФИО клиента<input id="editName" placeholder="Имя клиента" /></label>
           <label>Телефон<input id="editPhone" placeholder="+7..." /></label>
+          <div id="editClientSuggestions" class="quick-client-suggestions wide" hidden></div>
+          <div id="editClientHint" class="quick-client-hint wide">Начните вводить номер — подходящие клиенты появятся списком ниже.</div>
           <label>Компания<input id="editCompany" placeholder="Название компании" /></label>
           </div>
       </section>
@@ -602,6 +604,7 @@
     </form>
   </dialog>
 
+  <script src="assets/ekb-streets.js"></script>
   <script src="assets/admin.js"></script>
   <script src="assets/pwa.js"></script>
 </body>
