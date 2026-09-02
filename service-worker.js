@@ -1,4 +1,4 @@
-const CACHE_NAME = 'solncanet-v61-supabase-create-near-files';
+const CACHE_NAME = 'solncanet-v61-supabase-calendar-short-events';
 self.addEventListener('install', (event) => { self.skipWaiting(); });
 self.addEventListener('activate', (event) => {
   event.waitUntil((async () => {

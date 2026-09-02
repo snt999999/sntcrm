@@ -806,6 +806,20 @@ function recordDirection(recordOrFields) {
   if (raw.includes("авто") || hay.includes("авто") || hay.includes("лобов") || hay.includes("фар") || hay.includes("полиурет") || hay.includes("керамик") || hay.includes("атерм")) return "auto";
   return "architecture";
 }
+function calendarEventKind(recordOrFields) {
+  const f = recordOrFields?.fields || recordOrFields || {};
+  const dir = recordDirection(recordOrFields);
+  const text = norm([f["Услуга"], f["Авто услуги"], f["Комментарий клиента"], f["Комментарий администратора"], f["Статус"]].join(" "));
+  if (dir === "auto") return { key: "auto", label: "Авто" };
+  if (text.includes("замер") || text.includes("консультац")) return { key: "measure", label: "Замер" };
+  return { key: "install", label: "Монтаж" };
+}
+function calendarEventShortTitle(recordOrFields) {
+  return calendarEventKind(recordOrFields).label;
+}
+function calendarEventTypeClass(recordOrFields) {
+  return `calendar-type-${calendarEventKind(recordOrFields).key}`;
+}
 function workspaceRecords(list) {
   if (currentWorkspace === "all") return list;
   return list.filter((r) => recordDirection(r) === currentWorkspace);
@@ -1008,11 +1022,14 @@ function renderCalendar(arr) {
 
 function calendarMonthEventButton(record) {
   const f = record.fields || {};
+  const shortTitle = calendarEventShortTitle(record);
   const name = f["Имя клиента"] || f["Компания"] || "Без клиента";
   const time = f["Время записи"] || "";
   const status = f["Статус"] || "";
   const dir = recordDirection(record);
-  return `<button class="event calendar-event-chip direction-${dir}" type="button" data-open="${e(record.id)}" title="${e([time, name, f["Услуга"], f["Адрес"]].filter(Boolean).join(" — "))}"><span>${e(time || "—")}</span><b>${e(name)}</b>${status ? `<small>${e(status)}</small>` : ""}</button>`;
+  const typeClass = calendarEventTypeClass(record);
+  const hint = [time, shortTitle, name, f["Услуга"], f["Адрес"]].filter(Boolean).join(" — ");
+  return `<button class="event calendar-event-chip direction-${dir} ${typeClass}" type="button" data-open="${e(record.id)}" title="${e(hint)}"><span>${e(time || "—")}</span><b>${e(shortTitle)}</b>${status ? `<small>${e(status)}</small>` : ""}</button>`;
 }
 
 function bindCalendarMonthButtons() {
@@ -1137,12 +1154,16 @@ function calendarAgendaItemHtml(record) {
   const f = record.fields || {};
   const status = e(f["Статус"] || "");
   const dir = recordDirection(record);
-  return `<article class="calendar-agenda-item direction-${dir}" data-open="${e(record.id)}">
+  const typeClass = calendarEventTypeClass(record);
+  const shortTitle = calendarEventShortTitle(record);
+  const client = [f["Имя клиента"], f["Компания"]].filter(Boolean).join(" · ");
+  const serviceLine = [f["Услуга"], f["Адрес"]].filter(Boolean).join(" · ") || "—";
+  return `<article class="calendar-agenda-item direction-${dir} ${typeClass}" data-open="${e(record.id)}">
     <div class="calendar-agenda-time"><b>${e(f["Время записи"] || "—")}</b><span class="status" data-status="${status}">${status || "—"}</span></div>
     <div class="calendar-agenda-content">
-      <h4>${e(f["Имя клиента"] || "Без клиента")}${f["Компания"] ? ` · ${e(f["Компания"])}` : ""}</h4>
-      <p>${e(f["Услуга"] || "—")}</p>
-      <small>${phoneLink(f["Телефон"])}${f["Адрес"] ? ` · ${e(f["Адрес"])}` : ""}</small>
+      <h4>${e(shortTitle)}</h4>
+      <p>${e(serviceLine)}</p>
+      <small>${client ? `<b>${e(client)}</b>` : "Без клиента"}${f["Телефон"] ? ` · ${phoneLink(f["Телефон"])}` : ""}</small>
     </div>
     <button class="open-btn" type="button" data-open="${e(record.id)}">Открыть</button>
   </article>`;

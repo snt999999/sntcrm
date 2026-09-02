@@ -651,3 +651,17 @@ body.access-staff #cancelRequestBtn{display:none!important;pointer-events:none!i
 }
 @media(min-width:901px){.request-file-upload{grid-template-columns:1fr 160px 150px 260px!important;}}
 @media(max-width:900px){.request-create-files-btn{width:100%;min-height:46px;}}
+
+/* v61 calendar short event titles and colors */
+.calendar-event-chip.calendar-type-auto,.event.calendar-type-auto{border-left-color:#7c3aed!important;background:#faf5ff!important;color:#4c1d95!important}
+.calendar-event-chip.calendar-type-measure,.event.calendar-type-measure{border-left-color:#f59e0b!important;background:#fffbeb!important;color:#92400e!important}
+.calendar-event-chip.calendar-type-install,.event.calendar-type-install{border-left-color:#16a34a!important;background:#f0fdf4!important;color:#166534!important}
+.calendar-agenda-item.calendar-type-auto{border-left:6px solid #7c3aed!important;background:#faf5ff!important}
+.calendar-agenda-item.calendar-type-measure{border-left:6px solid #f59e0b!important;background:#fffbeb!important}
+.calendar-agenda-item.calendar-type-install{border-left:6px solid #16a34a!important;background:#f0fdf4!important}
+.calendar-time-slot-items .calendar-agenda-item.calendar-type-auto:before{background:#7c3aed!important;box-shadow:0 0 0 2px #ede9fe!important}
+.calendar-time-slot-items .calendar-agenda-item.calendar-type-measure:before{background:#f59e0b!important;box-shadow:0 0 0 2px #fef3c7!important}
+.calendar-time-slot-items .calendar-agenda-item.calendar-type-install:before{background:#16a34a!important;box-shadow:0 0 0 2px #dcfce7!important}
+.calendar-agenda-item.calendar-type-auto .calendar-agenda-time{background:#ede9fe!important;color:#5b21b6!important}
+.calendar-agenda-item.calendar-type-measure .calendar-agenda-time{background:#fef3c7!important;color:#92400e!important}
+.calendar-agenda-item.calendar-type-install .calendar-agenda-time{background:#dcfce7!important;color:#166534!important}

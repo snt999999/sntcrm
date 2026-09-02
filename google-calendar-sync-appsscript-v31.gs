@@ -104,6 +104,7 @@ function createOrUpdateEventLocked_(calendar, input) {
   } else {
     ev = calendar.createEvent(title, start, end, { description, location });
   }
+  setCalendarEventColor_(ev, fields);
 
   const attachmentResult = syncEventAttachments_(ev, fields);
 
@@ -195,9 +196,27 @@ function buildServicesSummary_(fields) {
 }
 
 function buildTitle_(fields) {
-  const name = String(fields['Имя клиента'] || fields['ФИО'] || 'Клиент').trim();
-  const service = String(fields['Услуга'] || 'Запись').trim();
-  return 'СОЛНЦАНЕТ — ' + name + ' — ' + service;
+  return 'СОЛНЦАНЕТ — ' + calendarShortTitle_(fields);
+}
+
+function calendarShortTitle_(fields) {
+  const rawDirection = String(fields['Направление'] || fields['Тип направления'] || fields['Категория'] || '').toLowerCase();
+  const text = [fields['Услуга'], fields['Авто услуги'], fields['Авто'], fields['Пленка'], fields['Плёнка'], fields['Комментарий клиента'], fields['Комментарий администратора']]
+    .map(function (value) { return String(value || '').toLowerCase(); })
+    .join(' ');
+  if (rawDirection.indexOf('авто') !== -1 || text.indexOf('авто') !== -1 || text.indexOf('лобов') !== -1 || text.indexOf('фар') !== -1 || text.indexOf('полиурет') !== -1 || text.indexOf('керамик') !== -1 || text.indexOf('атерм') !== -1) return 'Авто';
+  if (text.indexOf('замер') !== -1 || text.indexOf('консультац') !== -1) return 'Замер';
+  return 'Монтаж';
+}
+
+function setCalendarEventColor_(ev, fields) {
+  if (!ev || typeof CalendarApp === 'undefined' || !CalendarApp.EventColor) return;
+  const title = calendarShortTitle_(fields);
+  let color = null;
+  if (title === 'Авто') color = CalendarApp.EventColor.MAUVE || CalendarApp.EventColor.PURPLE;
+  else if (title === 'Замер') color = CalendarApp.EventColor.ORANGE || CalendarApp.EventColor.YELLOW;
+  else color = CalendarApp.EventColor.GREEN || CalendarApp.EventColor.PALE_GREEN;
+  try { if (color) ev.setColor(color); } catch (_) {}
 }
 
 function buildDescription_(fields, recordId) {
