@@ -1,4 +1,4 @@
-const CACHE_NAME = 'solncanet-admin-recovery-cache-killer-20260902';
+const CACHE_NAME = 'solncanet-client-suggest-fix-20260902';
 self.addEventListener('install', (event) => { self.skipWaiting(); });
 self.addEventListener('activate', (event) => {
   event.waitUntil((async () => {

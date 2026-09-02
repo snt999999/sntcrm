@@ -365,18 +365,28 @@ function init() {
   if (els.clientCardQuickBtn) els.clientCardQuickBtn.addEventListener("click", quickAddFromClientCard);
   els.quickSaveBtn.addEventListener("click", saveQuickAdd);
   initQuickDraftTracking();
+  [els.quickName, els.quickCompany].forEach((el) => {
+    if (!el) return;
+    el.addEventListener("input", renderQuickClientSuggestions);
+    el.addEventListener("focus", renderQuickClientSuggestions);
+  });
   if (els.quickPhone) {
     els.quickPhone.addEventListener("input", handleQuickPhoneInput);
-    els.quickPhone.addEventListener("focus", renderQuickClientSuggestions);
+    els.quickPhone.addEventListener("focus", handleQuickPhoneFocus);
     els.quickPhone.addEventListener("keydown", handleQuickPhoneKeydown);
   }
   if (els.quickClientSuggestions) {
     els.quickClientSuggestions.addEventListener("click", handleQuickClientSuggestionClick);
   }
+  [els.editName, els.editCompany].forEach((el) => {
+    if (!el) return;
+    el.addEventListener("input", renderEditClientSuggestions);
+    el.addEventListener("focus", renderEditClientSuggestions);
+  });
   if (els.editPhone) {
-    els.editPhone.addEventListener("input", () => { renderEditClientSuggestions(); });
-    els.editPhone.addEventListener("focus", renderEditClientSuggestions);
-    els.editPhone.addEventListener("keydown", (event) => { if (event.key === "Escape") hideEditClientSuggestions(); });
+    els.editPhone.addEventListener("input", handleEditPhoneInput);
+    els.editPhone.addEventListener("focus", handleEditPhoneFocus);
+    els.editPhone.addEventListener("keydown", handleEditPhoneKeydown);
   }
   if (els.editClientSuggestions) {
     els.editClientSuggestions.addEventListener("click", handleEditClientSuggestionClick);
@@ -385,9 +395,9 @@ function init() {
     if (els.globalSearchInput && els.globalSearchResults && !els.globalSearchInput.contains(event.target) && !els.globalSearchResults.contains(event.target)) {
       els.globalSearchResults.hidden = true;
     }
-    if (els.quickPhone && els.quickPhone.contains(event.target)) return;
+    if ([els.quickName, els.quickCompany, els.quickPhone].some((el) => el && el.contains(event.target))) return;
     if (els.quickClientSuggestions && els.quickClientSuggestions.contains(event.target)) return;
-    if (els.editPhone && els.editPhone.contains(event.target)) return;
+    if ([els.editName, els.editCompany, els.editPhone].some((el) => el && el.contains(event.target))) return;
     if (els.editClientSuggestions && els.editClientSuggestions.contains(event.target)) return;
     if (els.quickAddDialog?.open) hideQuickClientSuggestions();
     if (els.dialog?.open) hideEditClientSuggestions();
@@ -1670,7 +1680,7 @@ function openRequest(id) {
   els.editM2.value = f["Итоговый м2"] || f["м2"] || "";
   els.editResponsible.value = f["Ответственный"] || "";
   if (els.editName) els.editName.value = f["Имя клиента"] || "";
-  if (els.editPhone) els.editPhone.value = f["Телефон"] || "";
+  if (els.editPhone) els.editPhone.value = formatQuickPhoneForTyping(f["Телефон"] || "");
   if (els.editCompany) els.editCompany.value = f["Компания"] || "";
   if (els.editDirection) els.editDirection.value = recordDirection(current);
   if (els.editAuto) els.editAuto.value = f["Авто"] || "";
@@ -1836,7 +1846,7 @@ function currentEditFields() {
     "Время записи": els.editTime.value,
     "Статус": els.editStatus.value,
     "Имя клиента": els.editName?.value.trim() || "",
-    "Телефон": els.editPhone?.value.trim() || "",
+    "Телефон": formatRussianPhone(els.editPhone?.value || ""),
     "Итоговый м2": direction === "auto" ? "" : els.editM2.value,
     "Ответственный": direction === "auto" ? (els.editResponsible.value.trim() || AUTO_DEFAULT_RESPONSIBLE) : els.editResponsible.value.trim(),
     "Компания": els.editCompany?.value.trim() || "",
@@ -2110,40 +2120,109 @@ function formatQuickPhoneForTyping(value) {
   if (!digits) return "";
   return "+" + digits;
 }
-function handleQuickPhoneInput() {
-  if (!els.quickPhone) return;
-  const before = els.quickPhone.value;
-  els.quickPhone.value = formatQuickPhoneForTyping(before);
-  try { els.quickPhone.setSelectionRange(els.quickPhone.value.length, els.quickPhone.value.length); } catch (_) {}
-  renderQuickClientSuggestions();
+function ensurePhonePrefix(input) {
+  if (!input) return;
+  if (!String(input.value || "").trim()) {
+    input.value = "+7";
+    try { input.setSelectionRange(input.value.length, input.value.length); } catch (_) {}
+  }
 }
-function handleQuickPhoneKeydown(event) {
-  if (!els.quickPhone) return;
+function handlePhoneTypingInput(input, renderFn) {
+  if (!input) return;
+  const before = input.value;
+  if (!String(before || "").trim()) {
+    input.value = "";
+  } else {
+    input.value = formatQuickPhoneForTyping(before);
+    try { input.setSelectionRange(input.value.length, input.value.length); } catch (_) {}
+  }
+  if (typeof renderFn === "function") renderFn();
+}
+function handlePhoneTypingKeydown(event, input, renderFn) {
+  if (!input) return;
   if (event.key !== "Backspace" && event.key !== "Delete") return;
-  const value = els.quickPhone.value || "";
-  const start = els.quickPhone.selectionStart || 0;
-  const end = els.quickPhone.selectionEnd || start;
+  const value = input.value || "";
+  const start = input.selectionStart || 0;
+  const end = input.selectionEnd || start;
   if (start !== end) return;
   if (event.key === "Backspace" && start <= 2) {
     event.preventDefault();
-    els.quickPhone.value = "";
-    renderQuickClientSuggestions();
+    input.value = "";
+    if (typeof renderFn === "function") renderFn();
   }
 }
-function getQuickClientMatches(value) {
-  const query = phoneSearchKey(value);
-  if (!query) return [];
-  const latestByPhone = new Map();
-  activeRecords().sort(sortByDateDesc).forEach((r) => {
-    const f = r.fields || {};
-    const key = phoneKey(f["Телефон"]);
-    if (!key || latestByPhone.has(key)) return;
-    latestByPhone.set(key, r);
+function handleQuickPhoneInput() { handlePhoneTypingInput(els.quickPhone, renderQuickClientSuggestions); }
+function handleQuickPhoneFocus() { ensurePhonePrefix(els.quickPhone); renderQuickClientSuggestions(); }
+function handleQuickPhoneKeydown(event) { handlePhoneTypingKeydown(event, els.quickPhone, renderQuickClientSuggestions); }
+function handleEditPhoneInput() { handlePhoneTypingInput(els.editPhone, renderEditClientSuggestions); }
+function handleEditPhoneFocus() { ensurePhonePrefix(els.editPhone); renderEditClientSuggestions(); }
+function handleEditPhoneKeydown(event) {
+  if (event.key === "Escape") return hideEditClientSuggestions();
+  handlePhoneTypingKeydown(event, els.editPhone, renderEditClientSuggestions);
+}
+function clientSearchValues(scope) {
+  const isQuick = scope === "quick";
+  return {
+    name: isQuick ? (els.quickName?.value || "") : (els.editName?.value || ""),
+    company: isQuick ? (els.quickCompany?.value || "") : (els.editCompany?.value || ""),
+    phone: isQuick ? (els.quickPhone?.value || "") : (els.editPhone?.value || "")
+  };
+}
+function clientSuggestionKey(record) {
+  const f = record?.fields || {};
+  const key = clientKeyFromFields(f);
+  if (key && key !== "unknown") return key;
+  return [phoneKey(f["Телефон"]), norm(f["Имя клиента"]), norm(f["Компания"])].filter(Boolean).join("|") || String(record?.id || "");
+}
+function getClientMatchesByFields(scope) {
+  const values = clientSearchValues(scope);
+  const nameQ = norm(values.name);
+  const companyQ = norm(values.company);
+  const phoneQ = phoneSearchKey(values.phone);
+  const hasName = nameQ.length >= 2;
+  const hasCompany = companyQ.length >= 2;
+  const hasPhone = phoneQ.length >= 1;
+  if (!hasName && !hasCompany && !hasPhone) return [];
+
+  const latest = new Map();
+  activeRecords().slice().sort(sortByDateDesc).forEach((record) => {
+    const key = clientSuggestionKey(record);
+    if (!latest.has(key)) latest.set(key, record);
   });
-  return [...latestByPhone.values()].filter((r) => {
-    const key = phoneKey((r.fields || {})["Телефон"]);
-    return key && (key.startsWith(query) || key.includes(query));
-  }).slice(0, 8);
+
+  const scored = [];
+  for (const record of latest.values()) {
+    const f = record.fields || {};
+    const recordName = norm(f["Имя клиента"] || "");
+    const recordCompany = norm(f["Компания"] || "");
+    const recordPhone = phoneKey(f["Телефон"] || "");
+    let score = 0;
+    if (hasPhone && recordPhone) {
+      if (recordPhone.startsWith(phoneQ)) score += 100;
+      else if (recordPhone.includes(phoneQ)) score += 70;
+    }
+    if (hasName && recordName) {
+      if (recordName.startsWith(nameQ)) score += 60;
+      else if (recordName.includes(nameQ)) score += 35;
+    }
+    if (hasCompany && recordCompany) {
+      if (recordCompany.startsWith(companyQ)) score += 55;
+      else if (recordCompany.includes(companyQ)) score += 30;
+    }
+    if (score > 0) scored.push({ record, score });
+  }
+  return scored.sort((a, b) => b.score - a.score || String((b.record.fields || {})["Дата записи"] || "").localeCompare(String((a.record.fields || {})["Дата записи"] || ""))).slice(0, 8).map((x) => x.record);
+}
+function getQuickClientMatches(value) {
+  if (value !== undefined) {
+    const phoneQ = phoneSearchKey(value);
+    if (!phoneQ) return [];
+    return getClientMatchesByFields("quick").filter((r) => {
+      const key = phoneKey((r.fields || {})["Телефон"]);
+      return key && (key.startsWith(phoneQ) || key.includes(phoneQ));
+    }).slice(0, 8);
+  }
+  return getClientMatchesByFields("quick");
 }
 function findClientByPhone(value) {
   const key = phoneKey(value);
@@ -2151,73 +2230,54 @@ function findClientByPhone(value) {
   const matches = activeRecords().filter((r) => phoneKey((r.fields || {})["Телефон"]) === key).sort(sortByDateDesc);
   return matches[0] || null;
 }
-function renderQuickClientSuggestions() {
-  const hint = els.quickClientHint;
-  const box = els.quickClientSuggestions;
-  const value = els.quickPhone?.value || "";
-  const query = phoneSearchKey(value);
-  if (hint) hint.classList.remove("is-found", "is-empty");
+function quickClientSuggestionHtml(record, mode = "quick") {
+  const f = record.fields || {};
+  const attr = mode === "edit" ? "data-edit-client" : "data-quick-client";
+  const lastDate = f["Дата записи"] ? " · последняя: " + e(f["Дата записи"]) : "";
+  const address = f["Адрес"] ? " · " + e(f["Адрес"]) : "";
+  return `<button type="button" class="quick-client-item" ${attr}="${e(record.id)}"><b>${e(f["Имя клиента"] || "Без имени")}</b>${f["Компания"] ? `<span>${e(f["Компания"])}</span>` : ""}<small>${e(f["Телефон"] || "")}${address}${lastDate}</small></button>`;
+}
+function renderClientSuggestions(scope) {
+  const isQuick = scope === "quick";
+  const hint = isQuick ? els.quickClientHint : els.editClientHint;
+  const box = isQuick ? els.quickClientSuggestions : els.editClientSuggestions;
   if (!box) return;
-  if (!query) {
+  const values = clientSearchValues(scope);
+  const phoneQ = phoneSearchKey(values.phone);
+  const nameQ = norm(values.name);
+  const companyQ = norm(values.company);
+  const hasAnyQuery = phoneQ.length >= 1 || nameQ.length >= 2 || companyQ.length >= 2;
+  if (hint) hint.classList.remove("is-found", "is-empty");
+  if (!hasAnyQuery) {
     box.hidden = true;
     box.innerHTML = "";
-    if (hint) hint.textContent = "Начните вводить номер — подходящие клиенты появятся списком ниже.";
+    if (hint) hint.textContent = "Начните вводить ФИО, телефон или компанию — подходящие клиенты появятся списком ниже.";
     return;
   }
-  const matches = getQuickClientMatches(value);
+  const matches = getClientMatchesByFields(scope);
   if (!matches.length) {
     box.hidden = true;
     box.innerHTML = "";
     if (hint) {
       hint.classList.add("is-empty");
-      hint.textContent = query.length < 3 ? "Продолжайте вводить номер — ищу совпадения в базе." : "Совпадений пока нет — будет создана новая заявка.";
+      hint.textContent = "Совпадений пока нет — будет создана новая карточка клиента.";
     }
     return;
   }
   box.hidden = false;
-  box.innerHTML = matches.map((r) => quickClientSuggestionHtml(r)).join("");
-  const exact = findClientByPhone(value);
+  box.innerHTML = matches.map((r) => quickClientSuggestionHtml(r, isQuick ? "quick" : "edit")).join("");
+  const exact = findClientByPhone(values.phone);
   if (hint) {
-    hint.classList.add(exact ? "is-found" : "");
-    hint.textContent = exact ? "Номер найден. Нажмите на клиента в списке, чтобы заполнить карточку." : `Найдено совпадений: ${matches.length}. Выберите клиента из списка.`;
+    hint.classList.add("is-found");
+    hint.textContent = exact ? "Клиент найден по номеру. Нажмите на карточку, чтобы подставить данные." : `Найдено клиентов: ${matches.length}. Нажмите на нужную карточку, чтобы подставить данные.`;
   }
 }
-function quickClientSuggestionHtml(record) {
-  const f = record.fields || {};
-  return `<button type="button" class="quick-client-item" data-quick-client="${e(record.id)}"><b>${e(f["Имя клиента"] || "Без имени")}</b>${f["Компания"] ? `<span>${e(f["Компания"])}</span>` : ""}<small>${e(f["Телефон"] || "")}${f["Адрес"] ? " · " + e(f["Адрес"]) : ""}${f["Дата записи"] ? " · последняя: " + e(f["Дата записи"]) : ""}</small></button>`;
-}
+function renderQuickClientSuggestions() { renderClientSuggestions("quick"); }
 function hideQuickClientSuggestions() {
   if (!els.quickClientSuggestions) return;
   els.quickClientSuggestions.hidden = true;
 }
-
-function renderEditClientSuggestions() {
-  const box = els.editClientSuggestions;
-  const value = els.editPhone?.value || "";
-  if (!box) return;
-  const key = phoneKey(value);
-  if (!key || key.length < 3) { box.hidden = true; box.innerHTML = ""; return; }
-  const matches = activeRecords()
-    .filter((r) => phoneKey((r.fields || {})["Телефон"] || "").includes(key))
-    .slice(0, 8);
-  if (!matches.length) {
-    box.hidden = true;
-    box.innerHTML = "";
-    if (els.editClientHint) {
-      els.editClientHint.classList.remove("is-found");
-      els.editClientHint.classList.add("is-empty");
-      els.editClientHint.textContent = "Клиент с таким номером пока не найден — будет создана новая карточка.";
-    }
-    return;
-  }
-  box.innerHTML = matches.map((r) => quickClientSuggestionHtml(r).replaceAll('data-quick-client=', 'data-edit-client=')).join("");
-  box.hidden = false;
-  if (els.editClientHint) {
-    els.editClientHint.classList.remove("is-empty");
-    els.editClientHint.classList.add("is-found");
-    els.editClientHint.textContent = `Найдено клиентов: ${matches.length}. Нажмите на нужную карточку, чтобы подставить данные.`;
-  }
-}
+function renderEditClientSuggestions() { renderClientSuggestions("edit"); }
 function hideEditClientSuggestions() {
   if (!els.editClientSuggestions) return;
   els.editClientSuggestions.hidden = true;
@@ -2231,15 +2291,15 @@ function handleEditClientSuggestionClick(event) {
   if (els.editName) els.editName.value = f["Имя клиента"] || "";
   if (els.editCompany) els.editCompany.value = f["Компания"] || "";
   if (els.editPhone) els.editPhone.value = formatQuickPhoneForTyping(f["Телефон"] || els.editPhone.value || "");
-  if (els.editAddress && !els.editAddress.value.trim() && recordDirection(record) !== "auto") els.editAddress.value = f["Адрес"] || "";
+  if (els.editAddress && !els.editAddress.value.trim() && (els.editDirection?.value || recordDirection(record)) !== "auto") els.editAddress.value = f["Адрес"] || "";
   if (els.editClientHint) {
     els.editClientHint.classList.remove("is-empty");
     els.editClientHint.classList.add("is-found");
     els.editClientHint.textContent = `Выбран клиент: ${f["Имя клиента"] || "без имени"}${f["Компания"] ? " · " + f["Компания"] : ""}. Данные подставлены.`;
   }
   hideEditClientSuggestions();
+  scheduleRequestAutosave();
 }
-
 function handleQuickClientSuggestionClick(event) {
   const btn = event.target.closest("[data-quick-client]");
   if (!btn) return;
@@ -2259,7 +2319,6 @@ function applyQuickClient(record) {
   }
   hideQuickClientSuggestions();
 }
-
 
 function setRequestCreateModeUI(isCreate) {
   [els.copyRequestTopBtn, els.editRequestTopBtn, els.editClientTopBtn].filter(Boolean).forEach((btn) => { btn.hidden = Boolean(isCreate); });
@@ -2320,6 +2379,11 @@ function resetRequestDialogForCreate(prefill = {}) {
   if (els.scheduleSmsStatus) els.scheduleSmsStatus.textContent = "Авто-SMS доступны после создания заявки.";
   if (els.cancelReason) els.cancelReason.value = "";
   lastAutosaveSnapshot = snapshotRequestForm();
+  hideEditClientSuggestions();
+  if (els.editClientHint) {
+    els.editClientHint.classList.remove("is-found", "is-empty");
+    els.editClientHint.textContent = "Начните вводить ФИО, телефон или компанию — подходящие клиенты появятся списком ниже.";
+  }
   resetRequestDirtyState();
   setAutosaveStatus("Новая заявка ещё не сохранена");
 }

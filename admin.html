@@ -12,7 +12,7 @@
   <meta name="apple-mobile-web-app-title" content="СОЛНЦАНЕТ" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png" />
-  <link rel="stylesheet" href="assets/admin.css?v=20260902-admin-recovery-cache-fix-v1" />
+  <link rel="stylesheet" href="assets/admin.css?v=20260902-client-suggest-fix-v1" />
 
   <script>
     (function(){
@@ -427,11 +427,11 @@
       <section id="editClientBox" class="wide client-edit-box request-edit-anchor">
         <div class="section-head compact-section-head"><h3>Карточка клиента</h3><span class="muted-text">ФИО, телефон и компания</span></div>
         <div class="dialog-grid client-edit-grid">
-          <label>ФИО клиента<input id="editName" placeholder="Имя клиента" /></label>
-          <label>Телефон<input id="editPhone" placeholder="+7..." /></label>
+          <label>ФИО клиента<input id="editName" autocomplete="name" placeholder="Имя клиента" /></label>
+          <label>Телефон<input id="editPhone" inputmode="tel" autocomplete="tel" placeholder="+7..." /></label>
+          <label>Компания<input id="editCompany" autocomplete="organization" placeholder="Название компании" /></label>
           <div id="editClientSuggestions" class="quick-client-suggestions wide" hidden></div>
-          <div id="editClientHint" class="quick-client-hint wide">Начните вводить номер — подходящие клиенты появятся списком ниже.</div>
-          <label>Компания<input id="editCompany" placeholder="Название компании" /></label>
+          <div id="editClientHint" class="quick-client-hint wide">Начните вводить ФИО, телефон или компанию — подходящие клиенты появятся списком ниже.</div>
           </div>
       </section>
       <div id="editRequestBox" class="dialog-grid request-edit-box request-edit-anchor">
@@ -604,8 +604,8 @@
     </form>
   </dialog>
 
-  <script src="assets/ekb-streets.js?v=20260902-admin-recovery-cache-fix-v1"></script>
-  <script src="assets/admin.js?v=20260902-admin-recovery-cache-fix-v1"></script>
-  <script src="assets/pwa.js?v=20260902-admin-recovery-cache-fix-v1"></script>
+  <script src="assets/ekb-streets.js?v=20260902-client-suggest-fix-v1"></script>
+  <script src="assets/admin.js?v=20260902-client-suggest-fix-v1"></script>
+  <script src="assets/pwa.js?v=20260902-client-suggest-fix-v1"></script>
 </body>
 </html>

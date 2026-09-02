@@ -620,3 +620,8 @@ body.access-staff #cancelRequestBtn{display:none!important;pointer-events:none!i
 .street-suggest-box small{color:#64748b;font-weight:800;white-space:nowrap}
 #saveRequestBtn[disabled],#quickSaveBtn[disabled],.request-file-upload button[disabled],.notification-box button[disabled]{opacity:.65;cursor:wait}
 @media(max-width:620px){.street-suggest-box{max-height:230px}.street-suggest-box button{align-items:flex-start;display:grid}.request-create-summary{font-size:14px}}
+
+/* client suggestions: full request card lookup by ФИО, phone, company */
+.client-edit-grid .quick-client-suggestions.wide{grid-column:1/-1;margin-top:-2px}
+.client-edit-grid .quick-client-hint.wide{grid-column:1/-1}
+#editPhone::placeholder,#quickPhone::placeholder{color:#64748b}
