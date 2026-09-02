@@ -271,6 +271,10 @@ const els = {
   clientCardDialog: $("clientCardDialog"), clientCardTitle: $("clientCardTitle"), clientCardSubtitle: $("clientCardSubtitle"), clientCardEditBtn: $("clientCardEditBtn"), clientCardQuickBtn: $("clientCardQuickBtn"), clientCardStatRequests: $("clientCardStatRequests"), clientCardStatM2: $("clientCardStatM2"), clientCardStatDone: $("clientCardStatDone"), clientCardStatLast: $("clientCardStatLast"), clientCardInfo: $("clientCardInfo"), clientCardAddresses: $("clientCardAddresses"), clientCardRequestsBody: $("clientCardRequestsBody"), clientCardFiles: $("clientCardFiles"), clientCardComments: $("clientCardComments")
 };
 
+const STAFF_ALLOWED_SECTIONS = new Set(["requests", "calendar", "clients", "objects", "files"]);
+const CALENDAR_CREATE_START_HOUR = 8;
+const CALENDAR_CREATE_END_HOUR = 21;
+
 const NOTIFICATION_TEMPLATES = {
   confirm: { title: "Подтверждение записи", text: "СОЛНЦАНЕТ: запись оформлена на {date} в {time}." },
   reminder: { title: "Напоминание за день", text: "СОЛНЦАНЕТ: напоминаем о записи {date} в {time}." },
@@ -684,7 +688,6 @@ function hasFullAccess() {
 function canDeleteRecords() {
   return hasFullAccess();
 }
-const STAFF_ALLOWED_SECTIONS = new Set(["requests", "calendar", "clients", "objects", "files"]);
 function canAccessSection(section) {
   return hasFullAccess() || STAFF_ALLOWED_SECTIONS.has(section);
 }
@@ -1033,9 +1036,6 @@ function timelineHourLabel(minutes) {
   const hh = String(Math.floor(safe / 60)).padStart(2, "0");
   return `${hh}:00`;
 }
-
-const CALENDAR_CREATE_START_HOUR = 8;
-const CALENDAR_CREATE_END_HOUR = 21;
 
 function calendarDayTimelineHtml(items, date = selectedCalendarDate) {
   const groups = new Map();
