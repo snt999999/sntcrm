@@ -1,4 +1,4 @@
-const CACHE_NAME = 'solncanet-client-suggest-fix-20260902';
+const CACHE_NAME = 'solncanet-v61-supabase-create-near-files';
 self.addEventListener('install', (event) => { self.skipWaiting(); });
 self.addEventListener('activate', (event) => {
   event.waitUntil((async () => {

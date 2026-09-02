@@ -227,6 +227,7 @@ let quickCalendarEvent = null;
 let quickAddSaving = false;
 let requestGoogleSyncInFlight = false;
 let requestSaving = false;
+let focusFilesAfterCreate = false;
 let requestFormSnapshot = "";
 let requestFormDirty = false;
 let quickFormSnapshot = "";
@@ -340,6 +341,8 @@ function init() {
   if (els.bulkApplyInstallerBtn) els.bulkApplyInstallerBtn.addEventListener("click", bulkApplyInstaller);
   if (els.bulkExportBtn) els.bulkExportBtn.addEventListener("click", bulkExportSelected);
   els.saveRequestBtn.addEventListener("click", saveRequest);
+  const requestCreateForFilesBtn = $("requestCreateForFilesBtn");
+  if (requestCreateForFilesBtn) requestCreateForFilesBtn.addEventListener("click", createRequestAndOpenFiles);
   if (els.copyRequestTopBtn) els.copyRequestTopBtn.addEventListener("click", copyCurrentRequest);
   if (els.editRequestTopBtn) els.editRequestTopBtn.addEventListener("click", focusRequestEditBlock);
   if (els.editClientTopBtn) els.editClientTopBtn.addEventListener("click", focusClientEditBlock);
@@ -2330,6 +2333,10 @@ function setRequestCreateModeUI(isCreate) {
   const requestFileInput = $("requestFileInput");
   const requestUploadBtn = $("requestUploadBtn");
   const requestFilesRefreshBtn = $("requestFilesRefreshBtn");
+  const requestCreateForFilesBtn = $("requestCreateForFilesBtn");
+  const filesDetails = $("requestFilesDetails");
+  if (requestCreateForFilesBtn) requestCreateForFilesBtn.hidden = !Boolean(isCreate);
+  if (filesDetails && isCreate) filesDetails.open = true;
   if (requestFileInput) requestFileInput.disabled = Boolean(isCreate);
   if (requestUploadBtn) requestUploadBtn.disabled = Boolean(isCreate);
   if (requestFilesRefreshBtn) requestFilesRefreshBtn.disabled = Boolean(isCreate);
@@ -2370,7 +2377,7 @@ function resetRequestDialogForCreate(prefill = {}) {
   updateEditDirectionUI();
   document.querySelectorAll('[name="installer"]').forEach((c) => c.checked = false);
   if (direction === "auto") document.querySelector('[name="installer"][value="Роман З"]')?.click();
-  if (els.requestFilesBox) els.requestFilesBox.innerHTML = '<p class="muted-text">Сначала нажмите «Создать заявку». После сохранения здесь сразу можно будет загрузить фото, видео, PDF и другие файлы.</p>';
+  if (els.requestFilesBox) els.requestFilesBox.innerHTML = '<div class="create-before-files-note"><b>Файлы можно добавить после создания заявки</b><span>Нажмите кнопку рядом с загрузкой файлов: «Создать заявку и перейти к файлам». После сохранения заявка откроется уже с активной загрузкой фото, видео, PDF и других файлов.</span></div>';
   if (els.requestHistoryBox) els.requestHistoryBox.innerHTML = '<p class="muted-text">История появится после создания заявки.</p>';
   if (els.requestCommentsBox) els.requestCommentsBox.innerHTML = '<p class="muted-text">Комментарии можно добавлять после создания заявки.</p>';
   if (els.requestGoogleCalendarBox) els.requestGoogleCalendarBox.innerHTML = '<div class="google-calendar-status is-empty"><span>Google Календарь</span><b>Создастся после сохранения</b><small>Заявка сначала должна получить номер в Supabase.</small></div>';
@@ -2439,18 +2446,44 @@ async function createRequestFromFullDialog() {
     await load();
     const created = createdId || extractCreatedRecordId(data);
     if (els.dialog?.open) els.dialog.close();
-    if (created) openRequest(created);
-    else renderAll();
+    const shouldFocusFiles = focusFilesAfterCreate;
+    focusFilesAfterCreate = false;
+    if (created) {
+      openRequest(created);
+      if (shouldFocusFiles) focusRequestFilesBlock();
+    } else {
+      renderAll();
+    }
     if (googleResult?.ok) msg("Заявка создана и продублирована в Google Календарь. Теперь можно добавить файлы.");
     else if (googleResult && !googleResult.ok) msg("Заявка создана. Google Календарь не создал событие: " + (googleResult.error || "ошибка") + ". Файлы уже можно добавлять.");
     else msg("Заявка создана. Теперь можно добавить файлы.");
   } catch (error) {
+    focusFilesAfterCreate = false;
     showFormError("request", "Заявка не создана", [readableSaveError(error)], []);
   } finally {
     requestSaving = false;
     restoreButton();
     if (requestCreateMode && els.saveRequestBtn) els.saveRequestBtn.textContent = "Создать заявку";
   }
+}
+
+function createRequestAndOpenFiles() {
+  focusFilesAfterCreate = true;
+  return createRequestFromFullDialog();
+}
+function focusRequestFilesBlock() {
+  const details = $("requestFilesDetails") || document.querySelector("#requestDialog details.files-box");
+  if (details) details.open = true;
+  const input = $("requestFileInput");
+  const box = details || input || $("requestFilesBox");
+  setTimeout(() => {
+    if (box && typeof box.scrollIntoView === "function") box.scrollIntoView({ behavior: "smooth", block: "center" });
+    if (details) {
+      details.classList.add("attention-pulse");
+      setTimeout(() => details.classList.remove("attention-pulse"), 2200);
+    }
+    if (input && !input.disabled) input.focus({ preventScroll: true });
+  }, 180);
 }
 
 function openQuickAdd(prefill = null) {

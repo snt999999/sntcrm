@@ -625,3 +625,29 @@ body.access-staff #cancelRequestBtn{display:none!important;pointer-events:none!i
 .client-edit-grid .quick-client-suggestions.wide{grid-column:1/-1;margin-top:-2px}
 .client-edit-grid .quick-client-hint.wide{grid-column:1/-1}
 #editPhone::placeholder,#quickPhone::placeholder{color:#64748b}
+
+/* UX: create request from files block */
+.request-create-files-btn{
+  background:#16a34a!important;
+  color:#fff!important;
+  border:0!important;
+  box-shadow:0 10px 24px rgba(22,163,74,.22)!important;
+}
+.create-before-files-note{
+  display:grid;
+  gap:6px;
+  background:#ecfdf5;
+  border:1px solid #86efac;
+  color:#14532d;
+  border-radius:14px;
+  padding:12px 14px;
+  font-weight:800;
+}
+.create-before-files-note span{color:#166534;font-size:13px;line-height:1.35;font-weight:700;}
+.attention-pulse{animation:solncanetAttentionPulse 1s ease-in-out 2;}
+@keyframes solncanetAttentionPulse{
+  0%,100%{box-shadow:var(--ui-shadow-soft,0 10px 28px rgba(15,35,71,.08));}
+  50%{box-shadow:0 0 0 4px rgba(22,163,74,.18),0 16px 38px rgba(22,163,74,.18);border-color:#22c55e;}
+}
+@media(min-width:901px){.request-file-upload{grid-template-columns:1fr 160px 150px 260px!important;}}
+@media(max-width:900px){.request-create-files-btn{width:100%;min-height:46px;}}
