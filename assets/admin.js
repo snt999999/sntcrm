@@ -1,3 +1,23 @@
+// Runtime safety: show visible error instead of silent dead interface.
+function showAdminRuntimeError(error) {
+  const message = error && (error.message || error.reason?.message || String(error)) || "Неизвестная ошибка";
+  try {
+    console.error("SOLNCANET admin runtime error:", error);
+    let box = document.getElementById("adminRuntimeError");
+    if (!box) {
+      box = document.createElement("div");
+      box.id = "adminRuntimeError";
+      box.style.cssText = "position:fixed;left:14px;right:14px;top:14px;z-index:2147483647;background:#991b1b;color:#fff;border-radius:16px;padding:14px 16px;box-shadow:0 18px 60px rgba(0,0,0,.28);font:700 14px/1.45 Arial,sans-serif;";
+      document.body && document.body.appendChild(box);
+    }
+    box.innerHTML = "<b>Ошибка интерфейса CRM</b><br>" + escapeHtml(String(message)) + "<br><small>Обновите страницу с очисткой кеша. Если ошибка повторится — пришлите этот текст.</small>";
+  } catch (_) {}
+}
+if (typeof window !== "undefined") {
+  window.addEventListener("error", (event) => showAdminRuntimeError(event.error || event.message));
+  window.addEventListener("unhandledrejection", (event) => showAdminRuntimeError(event.reason));
+}
+
 const WORKER_PROFILES = [
   { key: "Никита П", full: "Пахнев Никита", aliases: ["Никита П", "Пахнев Никита", "Пахнев"], defaultRates: { 1: 500, 2: 300, 3: 300, 4: 300, 5: 300 } },
   { key: "Андрей Ш", full: "Шолохов Андрей", aliases: ["Андрей Ш", "Шолохов Андрей", "Шолохов"], defaultRates: { 1: 500, 2: 300, 3: 250, 4: 250, 5: 250 } },
@@ -194,6 +214,7 @@ const $ = (id) => document.getElementById(id);
 
 let records = [];
 let current = null;
+let currentUser = null;
 let requestCreateMode = false;
 let requestCreateCalendarEvent = null;
 let cal = new Date();
@@ -283,7 +304,7 @@ const NOTIFICATION_TEMPLATES = {
   review: { title: "Благодарность + отзыв", text: "Спасибо, что выбрали СОЛНЦАНЕТ! Оставьте отзыв: https://clck.su/solncanet" }
 };
 
-init();
+try { init(); } catch (error) { showAdminRuntimeError(error); }
 
 function init() {
   const saved = localStorage.getItem(storage.password);
@@ -399,7 +420,7 @@ function init() {
   document.querySelectorAll("[data-section]").forEach((link) => link.addEventListener("click", (e) => { e.preventDefault(); setSection(link.dataset.section); }));
   document.querySelectorAll("[data-report]").forEach((button) => button.addEventListener("click", () => openReport(button.dataset.report)));
 
-  els.reportAllInstallers.addEventListener("change", () => {
+  if (els.reportAllInstallers) els.reportAllInstallers.addEventListener("change", () => {
     if (els.reportAllInstallers.checked) document.querySelectorAll('[name="reportInstaller"]').forEach((c) => c.checked = false);
     updateReportPreview();
   });
@@ -409,9 +430,9 @@ function init() {
   }));
   [els.reportDateFrom, els.reportDateTo, els.reportStatus, els.reportFormat, els.payrollSplitMode, els.payrollStatusMode].forEach((el) => el && el.addEventListener("change", updateReportPreview));
 
-  els.savePayrollSettingsBtn.addEventListener("click", () => { savePayrollSettingsFromForm(); msg("Ставки зарплаты сохранены в браузере"); updateReportPreview(); });
-  els.previewPayrollBtn.addEventListener("click", updateReportPreview);
-  els.downloadReportBtn.addEventListener("click", downloadReport);
+  if (els.savePayrollSettingsBtn) els.savePayrollSettingsBtn.addEventListener("click", () => { savePayrollSettingsFromForm(); msg("Ставки зарплаты сохранены в браузере"); updateReportPreview(); });
+  if (els.previewPayrollBtn) els.previewPayrollBtn.addEventListener("click", updateReportPreview);
+  if (els.downloadReportBtn) els.downloadReportBtn.addEventListener("click", downloadReport);
   if (els.payrollSettingsBody) els.payrollSettingsBody.addEventListener("input", () => { savePayrollSettingsFromForm(); updateReportPreview(); });
 
   setDefaultDates();
@@ -4771,3 +4792,5 @@ function detectServiceFromText(text) {
   if (/замер|консультац/.test(s)) return "Замер / консультация";
   return "Замер / консультация";
 }
+
+// admin-recovery-cache-fix 2026-09-02

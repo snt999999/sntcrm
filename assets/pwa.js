@@ -1,64 +1,30 @@
 (function () {
-  let deferredPrompt = null;
-
-  function isStandalone() {
-    return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
-  }
-
-  function isIOS() {
-    return /iphone|ipad|ipod/i.test(window.navigator.userAgent || '');
-  }
-
-  function shouldShowInstallBox() {
-    // Установочный баннер показываем только в админке.
-    // На клиентском главном экране он не нужен и не должен отвлекать клиентов.
-    return /(^|\/)admin\.html($|[?#])/.test(window.location.pathname + window.location.search);
-  }
-
-  function createInstallButton() {
-    if (!shouldShowInstallBox() || document.getElementById('pwaInstallBox') || isStandalone()) return;
+  // Emergency cache reset: old service worker could serve a broken cached admin.js.
+  function showCacheResetNote() {
+    if (!/(^|\/)admin\.html($|[?#])/.test(window.location.pathname + window.location.search)) return;
+    if (sessionStorage.getItem('solncanet_cache_reset_note') === '1') return;
+    sessionStorage.setItem('solncanet_cache_reset_note', '1');
     const box = document.createElement('div');
-    box.id = 'pwaInstallBox';
-    box.className = 'pwa-install-box';
-    const iosText = 'На iPhone: нажмите «Поделиться» → «На экран Домой».';
-    box.innerHTML = `
-      <div><b>СОЛНЦАНЕТ как приложение</b><span>${isIOS() ? iosText : 'Установите ярлык на телефон для быстрого входа.'}</span></div>
-      <button type="button" id="pwaInstallBtn">Установить</button>
-      <button type="button" id="pwaInstallClose" aria-label="Скрыть">×</button>
-    `;
+    box.id = 'pwaCacheResetNote';
+    box.style.cssText = 'position:fixed;right:14px;bottom:14px;z-index:9999;background:#0f2347;color:white;border-radius:14px;padding:12px 14px;box-shadow:0 16px 48px rgba(0,0,0,.24);font:700 13px/1.35 Arial,sans-serif;max-width:330px';
+    box.innerHTML = 'Кеш CRM очищен. Если кнопки не ожили — закройте все вкладки сайта и откройте админку заново.';
     document.body.appendChild(box);
-    const btn = document.getElementById('pwaInstallBtn');
-    const close = document.getElementById('pwaInstallClose');
-    close.addEventListener('click', () => { localStorage.setItem('solncanet_pwa_install_hidden', '1'); box.remove(); });
-    btn.addEventListener('click', async () => {
-      if (deferredPrompt) {
-        deferredPrompt.prompt();
-        await deferredPrompt.userChoice.catch(() => null);
-        deferredPrompt = null;
-        box.remove();
-      } else if (isIOS()) {
-        alert(iosText);
-      } else {
-        alert('Откройте меню браузера и выберите «Установить приложение» или «Добавить на главный экран».');
+    setTimeout(() => box.remove(), 7000);
+  }
+
+  async function clearOldCacheAndWorkers() {
+    try {
+      if ('caches' in window) {
+        const keys = await caches.keys();
+        await Promise.all(keys.filter((key) => String(key).includes('solncanet')).map((key) => caches.delete(key)));
       }
-    });
+      if ('serviceWorker' in navigator) {
+        const regs = await navigator.serviceWorker.getRegistrations();
+        await Promise.all(regs.map((reg) => reg.unregister().catch(() => null)));
+      }
+      showCacheResetNote();
+    } catch (_) {}
   }
 
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('/service-worker.js').catch(() => null);
-    });
-  }
-
-  window.addEventListener('beforeinstallprompt', (event) => {
-    event.preventDefault();
-    deferredPrompt = event;
-    if (localStorage.getItem('solncanet_pwa_install_hidden') !== '1') createInstallButton();
-  });
-
-  window.addEventListener('load', () => {
-    if (isIOS() && !isStandalone() && localStorage.getItem('solncanet_pwa_install_hidden') !== '1') {
-      setTimeout(createInstallButton, 1600);
-    }
-  });
+  window.addEventListener('load', clearOldCacheAndWorkers);
 })();
