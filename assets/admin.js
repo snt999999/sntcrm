@@ -1660,34 +1660,39 @@ function updateEditDirectionUI() {
   ensureRomanInstallerForAuto("edit");
 }
 
-function requestClientCardHtml(record) {
+function requestCardTopInfoHtml(record) {
   const f = record.fields || {};
+  const kind = calendarEventKind(record);
+  const typeClass = calendarEventTypeClass(record);
+  const dir = recordDirection(record);
+  const services = parseAutoServices(f["Авто услуги"], f["Общая стоимость"], f["Услуга"]);
+  const servicesText = services.length
+    ? services.map((item) => [item.name, item.material ? `материал: ${item.material}` : "", item.price ? `${moneyNumber(item.price)} ₽` : ""].filter(Boolean).join(" · ")).join("; ")
+    : (f["Услуга"] || "—");
+  const total = f["Общая стоимость"] || (services.length ? autoServicesTotal(services) : "");
+  const comment = f["Комментарий клиента"] || f["Комментарий"] || f["Комментарий администратора"] || "";
   const key = clientKeyFromFields(f);
-  const rows = clientRecordsByKey(key);
-  const s = rows.length ? clientSummaryFromRows(rows) : {
-    name: f["Имя клиента"] || "Без имени",
-    company: f["Компания"] || "",
-    phone: f["Телефон"] || ""
-  };
-  const phones = uniqueValues(rows.map((r) => (r.fields || {})["Телефон"]).concat(f["Телефон"] || ""));
-  const companies = uniqueValues(rows.map((r) => (r.fields || {})["Компания"]).concat(f["Компания"] || ""));
-  return `<section class="request-client-card request-client-card-brief">
-    <div class="request-client-card-head">
+  return `<section class="request-top-info ${typeClass}">
+    <div class="request-top-info-head">
       <div>
-        <span class="request-client-card-kicker">Клиент</span>
-        <h3>${e(s.name || "Без имени")}</h3>
-        <p>${phones.length ? phones.map(phoneLink).join(", ") : "Телефон не указан"}</p>
+        <span class="request-kind-badge ${typeClass}">${e(kind.label)}</span>
+        <h3>Информация о заявке</h3>
+        <p>${e(f["Дата записи"] || "Дата не указана")}${f["Время записи"] ? ` · ${e(f["Время записи"])}` : ""}${f["Статус"] ? ` · ${e(f["Статус"])}` : ""}</p>
       </div>
       <div class="request-client-actions">
-        <button class="open-btn" type="button" data-open-client="${e(key)}">Открыть полную карточку</button>
         <button class="open-btn ghost-small" type="button" data-copy-request="${e(record.id)}">Скопировать заявку</button>
-        <button class="open-btn ghost-small" type="button" data-edit-client-request="${e(record.id)}">Редактировать карточку</button>
+        <button class="open-btn ghost-small" type="button" data-open-client="${e(key)}">Открыть клиента</button>
       </div>
     </div>
-    <div class="request-client-grid request-client-grid-brief">
-      <p><b>ФИО:</b> ${e(s.name || "—")}</p>
-      <p><b>Телефон:</b> ${phones.length ? phones.map(phoneLink).join("<br>") : "—"}</p>
-      <p><b>Компания:</b> ${e(companies.join(", ") || s.company || "—")}</p>
+    <div class="request-top-info-grid">
+      <p><span>Телефон</span><b>${f["Телефон"] ? phoneLink(f["Телефон"]) : "—"}</b></p>
+      <p><span>Адрес</span><b>${e(f["Адрес"] || "—")}</b></p>
+      <p><span>Клиент</span><b>${e(f["Имя клиента"] || "—")}</b></p>
+      <p><span>Компания</span><b>${e(f["Компания"] || "—")}</b></p>
+      ${dir === "auto" ? `<p><span>Автомобиль</span><b>${e(f["Авто"] || "—")}</b></p>` : `<p><span>Площадь</span><b>${e(f["Итоговый м2"] || f["м2"] || "—")}</b></p>`}
+      <p><span>Стоимость</span><b>${total ? `${moneyNumber(total)} ₽` : "—"}</b></p>
+      <p class="wide"><span>Услуги</span><b>${e(servicesText)}</b></p>
+      ${comment ? `<p class="wide"><span>Комментарий</span><b>${nl2br(comment)}</b></p>` : ""}
     </div>
   </section>`;
 }
@@ -1701,7 +1706,7 @@ function openRequest(id) {
   setRequestCreateModeUI(false);
   const f = current.fields || {};
   els.dialogTitle.textContent = "Карточка заявки";
-  els.requestInfo.innerHTML = requestClientCardHtml(current) + `<div class="request-current-summary"><b>Текущая заявка</b><br>${e(f["Дата записи"] || "")} ${e(f["Время записи"] || "")}<br>${e(f["Услуга"] || "")}<br>${recordDirection(current)==="auto" ? `<b>Авто:</b> ${e(f["Авто"]||"—")}<br>` : ""}<b>Стоимость:</b> ${e(f["Общая стоимость"]||"0")} ₽<br>${e(f["Адрес"] || "")}<br><br>${nl2br(f["Комментарий клиента"] || f["Комментарий"] || "")}</div>`;
+  els.requestInfo.innerHTML = requestCardTopInfoHtml(current);
   bindActionButtons();
   els.editDate.value = f["Дата записи"] || "";
   els.editTime.value = f["Время записи"] || "";
