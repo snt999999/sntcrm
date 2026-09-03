@@ -1127,6 +1127,7 @@ function calendarCreateSlotButton(date, time) {
 function bindCalendarCreateSlots() {
   document.querySelectorAll("[data-calendar-create-slot-date]").forEach((button) => {
     button.onclick = (event) => {
+      if (event.target.closest("[data-open], .calendar-agenda-item, .calendar-event-chip")) return;
       event.preventDefault();
       event.stopPropagation();
       openQuickAddFromCalendarSlot(button.dataset.calendarCreateSlotDate, button.dataset.calendarCreateSlotTime);
@@ -1288,7 +1289,11 @@ function plural(n, one, few, many) {
 
 function renderStats(all, arr) { const t = today(); const active = workspaceRecords(activeRecords()); els.statTotal.textContent = active.length; els.statNew.textContent = active.filter((r) => (r.fields || {})["Статус"] === "Новая заявка").length; els.statToday.textContent = active.filter((r) => (r.fields || {})["Дата записи"] === t).length; els.statWork.textContent = active.filter((r) => (r.fields || {})["Статус"] === "В работе").length; els.statFiltered.textContent = arr.length; els.statVolume.textContent = moneyNumber(arr.reduce((s, r) => s + getM2(r.fields || {}), 0)); }
 function bindActionButtons() {
-  document.querySelectorAll("[data-open]").forEach((button) => button.onclick = () => openRequest(button.dataset.open));
+  document.querySelectorAll("[data-open]").forEach((button) => button.onclick = (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    openRequest(button.dataset.open);
+  });
   document.querySelectorAll("[data-open-client]").forEach((button) => button.onclick = () => openClientCard(button.dataset.openClient));
   document.querySelectorAll("[data-edit-client-request]").forEach((button) => button.onclick = (event) => { event.stopPropagation(); openRequest(button.dataset.editClientRequest); setTimeout(focusClientEditBlock, 80); });
   document.querySelectorAll("[data-copy-request]").forEach((button) => button.onclick = (event) => { event.stopPropagation(); copyRequestById(button.dataset.copyRequest); });
@@ -1695,8 +1700,8 @@ function openRequest(id) {
   clearFormError("request");
   setRequestCreateModeUI(false);
   const f = current.fields || {};
-  els.dialogTitle.textContent = "Заявка " + requestDisplayNumber(current);
-  els.requestInfo.innerHTML = requestClientCardHtml(current) + `<div class="request-current-summary"><b>Текущая заявка ${e(requestDisplayNumber(current))}</b><br>${e(f["Дата записи"] || "")} ${e(f["Время записи"] || "")}<br>${e(f["Услуга"] || "")}<br>${recordDirection(current)==="auto" ? `<b>Авто:</b> ${e(f["Авто"]||"—")}<br>` : ""}<b>Стоимость:</b> ${e(f["Общая стоимость"]||"0")} ₽<br>${e(f["Адрес"] || "")}<br><br>${nl2br(f["Комментарий клиента"] || f["Комментарий"] || "")}</div>`;
+  els.dialogTitle.textContent = "Карточка заявки";
+  els.requestInfo.innerHTML = requestClientCardHtml(current) + `<div class="request-current-summary"><b>Текущая заявка</b><br>${e(f["Дата записи"] || "")} ${e(f["Время записи"] || "")}<br>${e(f["Услуга"] || "")}<br>${recordDirection(current)==="auto" ? `<b>Авто:</b> ${e(f["Авто"]||"—")}<br>` : ""}<b>Стоимость:</b> ${e(f["Общая стоимость"]||"0")} ₽<br>${e(f["Адрес"] || "")}<br><br>${nl2br(f["Комментарий клиента"] || f["Комментарий"] || "")}</div>`;
   bindActionButtons();
   els.editDate.value = f["Дата записи"] || "";
   els.editTime.value = f["Время записи"] || "";
