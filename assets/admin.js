@@ -829,8 +829,8 @@ async function login(password) {
   if (!password) { els.loginMessage.textContent = "Введите пароль"; return; }
   const account = accountFromPassword(password);
   try {
-    const response = await fetch("/list-zayavki", { headers: { "x-admin-password": password } });
-    const data = await response.json();
+    const response = await fetch(`/list-zayavki?limit=2000&_=${Date.now()}`, { headers: { "x-admin-password": password }, cache: "no-store" });
+    const data = await readJsonResponse(response, "/list-zayavki");
     if (!response.ok || !data.ok) { els.loginMessage.textContent = data.error || "Неверный пароль"; return showLogin(); }
     localStorage.setItem(storage.password, password);
     if (account) { currentUser = account; localStorage.setItem(storage.userName, account.name); }
@@ -851,12 +851,26 @@ function showApp() { document.body.classList.remove("logged-out"); document.body
 function showLogin() { if (autoRefreshTimer) clearInterval(autoRefreshTimer); autoRefreshTimer = null; document.body.classList.remove("logged-in"); document.body.classList.add("logged-out"); els.appPanel.style.display = "none"; els.loginPanel.style.display = "block"; }
 function pwd() { return localStorage.getItem(storage.password) || ""; }
 
+async function readJsonResponse(response, endpointName = "сервер") {
+  const text = await response.text();
+  const shortText = String(text || "").trim().slice(0, 500);
+  if (!shortText) {
+    throw new Error(`${endpointName}: сервер вернул пустой ответ (HTTP ${response.status}). Проверь Cloudflare Pages Functions: открой /test и /list-zayavki. Если /test не открывается JSON-ом — функции не развернулись или загружен не тот архив.`);
+  }
+  try {
+    return JSON.parse(text);
+  } catch (e) {
+    throw new Error(`${endpointName}: сервер вернул не JSON (HTTP ${response.status}). Первые символы ответа: ${shortText}`);
+  }
+}
+
+
 async function load(options = {}) {
   const silent = Boolean(options.silent);
   if (!silent) msg("Загружаю...");
   try {
-    const response = await fetch("/list-zayavki", { headers: { "x-admin-password": pwd() }, cache: "no-store" });
-    const data = await response.json();
+    const response = await fetch(`/list-zayavki?limit=2000&_=${Date.now()}`, { headers: { "x-admin-password": pwd() }, cache: "no-store" });
+    const data = await readJsonResponse(response, "/list-zayavki");
     if (!response.ok || !data.ok) throw new Error(data.error || "Ошибка загрузки");
     records = data.records || [];
     await loadFiles(true);
