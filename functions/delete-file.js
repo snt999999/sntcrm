@@ -5,7 +5,7 @@ function json(body, status = 200) {
   });
 }
 function allowedPasswords(env) {
-  const builtin = ["Bebelya9", "Bebelya91", "BebelyaA", "BebelyaNP", "BebelyaNK", "BebelyaD"];
+  const builtin = ["Bebelya9", "Bebelya91", "BebelyaNP", "BebelyaPD", "BebelyaSA"];
   const extra = String(env.USER_PASSWORDS || "").split(/[;,\n]/).map((x) => x.trim()).filter(Boolean);
   if (env.ADMIN_PASSWORD) builtin.push(String(env.ADMIN_PASSWORD));
   return new Set([...builtin, ...extra]);
@@ -17,7 +17,7 @@ function checkAdmin(request, env) {
   return { ok: true, password: provided };
 }
 function isStaffPassword(password) {
-  return new Set(["BebelyaA", "BebelyaNP", "BebelyaNK", "BebelyaD"]).has(String(password || "").trim());
+  return new Set(["BebelyaNP", "BebelyaPD", "BebelyaSA"]).has(String(password || "").trim());
 }
 function stripHtml(text) {
   return String(text || "").replace(/<script[\s\S]*?<\/script>/gi, " ").replace(/<style[\s\S]*?<\/style>/gi, " ").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim().slice(0, 900);

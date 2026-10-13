@@ -6,9 +6,9 @@ function normalizePhone(value) { let d = String(value || "").replace(/\D/g, "");
 function toNumber(value) { if (value === "" || value === null || value === undefined) return null; const n = Number(String(value).replace(/\s/g, "").replace(",", ".")); return Number.isFinite(n) ? n : null; }
 function dateOnly(value) { return String(value || "").slice(0, 10) || null; }
 function timeOnly(value) { return String(value || "").slice(0, 5) || null; }
-function allowedPasswords(env) { const builtin = ["Bebelya9", "Bebelya91", "BebelyaA", "BebelyaNP", "BebelyaNK", "BebelyaD"]; const extra = String(env.USER_PASSWORDS || "").split(/[;,\n]/).map((x) => x.trim()).filter(Boolean); if (env.ADMIN_PASSWORD) builtin.push(String(env.ADMIN_PASSWORD)); return new Set([...builtin, ...extra]); }
+function allowedPasswords(env) { const builtin = ["Bebelya9", "Bebelya91", "BebelyaNP", "BebelyaPD", "BebelyaSA"]; const extra = String(env.USER_PASSWORDS || "").split(/[;,\n]/).map((x) => x.trim()).filter(Boolean); if (env.ADMIN_PASSWORD) builtin.push(String(env.ADMIN_PASSWORD)); return new Set([...builtin, ...extra]); }
 function checkAdmin(request, env) { const provided = (request.headers.get("x-admin-password") || "").trim(); if (!provided) return { ok: false, status: 401, body: { ok: false, error: "Не передан пароль" } }; if (!allowedPasswords(env).has(provided)) return { ok: false, status: 401, body: { ok: false, error: "Неверный пароль" } }; return { ok: true, password: provided }; }
-function isStaffPassword(password) { return new Set(["BebelyaA", "BebelyaNP", "BebelyaNK", "BebelyaD"]).has(String(password || "").trim()); }
+function isStaffPassword(password) { return new Set(["BebelyaNP", "BebelyaPD", "BebelyaSA"]).has(String(password || "").trim()); }
 function isDeleteLikeUpdate(fields = {}) {
   const status = String(fields["Статус"] || fields.status || "").toLowerCase();
   if (fields.__moveToTrash === true) return true;

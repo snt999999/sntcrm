@@ -1,4 +1,4 @@
-const CACHE_NAME = 'solncanet-v61-supabase-request-top-info-card';
+const CACHE_NAME = 'solncanet-v61-supabase-staff-final-limited';
 self.addEventListener('install', (event) => { self.skipWaiting(); });
 self.addEventListener('activate', (event) => {
   event.waitUntil((async () => {
