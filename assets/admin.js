@@ -4958,14 +4958,9 @@ function onlineBookingEnable(){
   if(!panel.hidden)onlineBookingLoad();
 }
 async function onlineBookingAPI(url,init={}){
- let approval=sessionStorage.getItem('solncanet_booking_admin_action_key')||'';
- if(!approval){approval=prompt('Введите секрет онлайн-записи для Сергея и Романа (BOOKING_ADMIN_ACTION_KEY):')||'';
-   if(!approval)throw new Error('Секрет онлайн-записи не введён');
-   sessionStorage.setItem('solncanet_booking_admin_action_key',approval);
- }
- const res=await fetch(url,{cache:'no-store',...init,headers:{'x-admin-password':pwd(),'x-booking-approval-key':approval,...(init.headers||{})}});
+ // Authorize the request using the existing CRM login. There is no second browser password dialog.
+ const res=await fetch(url,{cache:'no-store',...init,headers:{'x-admin-password':pwd(),...(init.headers||{})}});
  const raw=await res.text();let data;try{data=JSON.parse(raw);}catch{throw new Error('Cloudflare вернул не JSON (HTTP '+res.status+')');}
- if(res.status===403)sessionStorage.removeItem('solncanet_booking_admin_action_key');
  if(!res.ok||!data.ok)throw new Error(data.error||'Ошибка онлайн-записи');
  return data;
 }
@@ -5005,21 +5000,15 @@ async function onlineBookingAction(evn){const button=evn.target.closest('[data-b
  button.disabled=true;onlineBookingMsg('Сохраняем решение…');
  try{const data=await onlineBookingAPI('/booking-admin',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({mode:action==='calendar_sync'?'calendar_sync':'action',id:b.id,action,date,time,reason})});onlineBookingMsg(data.calendarWarning?'Заявка обработана, но Google Календарь: '+data.calendarWarning:('Сохранено: '+action),Boolean(data.calendarWarning));await onlineBookingLoad(true);await load({silent:true});}catch(error){onlineBookingMsg(error.message,true);}finally{button.disabled=false;}
 }
-async function onlineBookingLoadServices(){if(!onlineBookingIsManager())return;try{const d=await onlineBookingAPI('/booking-admin?mode=services');onlineBookingServices=d.services||[];const wrap=$('onlineBookingServices');wrap.innerHTML=onlineBookingServices.map(s=>`<div class="online-service-row" data-service-row="${e(s.id)}"><div><b>${e(s.kind)} · ${e(s.name)}</b><small>${e(s.direction)}</small></div><label>Цена от, ₽<input data-field="price" type="number" min="0" step="0.01" value="${s.price_from??''}" /></label><label>Минут<input data-field="duration" type="number" min="15" max="720" step="15" value="${s.duration_minutes??''}" /></label><label>Шаг, мин<input data-field="step" type="number" min="15" max="180" step="15" value="${s.slot_step_minutes??30}" /></label><label class="online-publish"><input data-field="published" type="checkbox" ${s.published?'checked':''}/>На сайте</label><button data-save-booking-service="${e(s.id)}" type="button">Сохранить</button></div>`).join('');}catch(error){onlineBookingMsg(error.message,true);}}
+async function onlineBookingLoadServices(){if(!onlineBookingIsManager())return;try{const d=await onlineBookingAPI('/booking-admin?mode=services');onlineBookingServices=d.services||[];const wrap=$('onlineBookingServices');wrap.innerHTML=onlineBookingServices.map(s=>`<div class="online-service-row" data-service-row="${e(s.id)}"><div><b>${e(s.kind)} · ${e(s.name)}</b><small>${e(s.direction)}</small></div><label>${s.kind==='Замер'?'Замер бесплатно':(s.direction==='Архитектура'?'Цена от, ₽/м²':(s.name==='Бронирование порогов'?'Цена от, ₽/шт.':'Цена от, ₽'))}<input data-field="price" type="number" min="0" step="0.01" value="${s.kind==='Замер'?0:(s.price_from??'')}" ${s.kind==='Замер'?'disabled':''} /></label><label>Минут<input data-field="duration" type="number" min="15" max="720" step="15" value="${s.duration_minutes??''}" /></label><label>Шаг, мин<input data-field="step" type="number" min="15" max="180" step="15" value="${s.slot_step_minutes??30}" /></label><label class="online-publish"><input data-field="published" type="checkbox" ${s.published?'checked':''}/>На сайте</label><button data-save-booking-service="${e(s.id)}" type="button">Сохранить</button></div>`).join('');}catch(error){onlineBookingMsg(error.message,true);}}
 async function onlineBookingSaveService(evn){const btn=evn.target.closest('[data-save-booking-service]');if(!btn)return;const row=btn.closest('[data-service-row]');const get=(key)=>row.querySelector('[data-field="'+key+'"]');btn.disabled=true;
  try{await onlineBookingAPI('/booking-admin',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({mode:'service',id:btn.dataset.saveBookingService,priceFrom:get('price').value,durationMinutes:get('duration').value,stepMinutes:get('step').value,published:get('published').checked})});onlineBookingMsg('Услуга сохранена. Настройки сайта обновились.');}catch(error){onlineBookingMsg(error.message,true);}finally{btn.disabled=false;}}
-async function onlineBookingLoadBlocks(){if(!onlineBookingIsManager())return;try{const d=await onlineBookingAPI('/booking-admin?mode=blocks');$('onlineBookingBlocks').innerHTML=(d.blocks||[]).map(b=>`<div class="online-booking-block-item"><span>${e(b.direction)} · ${e(new Date(b.start_at).toLocaleString('ru-RU',{timeZone:'Asia/Yekaterinburg'}))} — ${e(new Date(b.end_at).toLocaleString('ru-RU',{timeZone:'Asia/Yekaterinburg'}))} · ${b.blocked_places} мест · ${e(b.reason||'')}</span><button data-delete-booking-block="${e(b.id)}" type="button">Убрать</button></div>`).join('')||'<p class="muted-text">Блокировок нет.</p>';}catch(e){onlineBookingMsg(e.message,true);}}
-async function onlineBookingAddBlock(){const date=$('onlineBookingBlockDate').value,from=$('onlineBookingBlockFrom').value,to=$('onlineBookingBlockTo').value;if(!date||!from||!to){onlineBookingMsg('Заполните дату и время',true);return;}
- try{const startAt=new Date(date+'T'+from+':00+05:00').toISOString(),endAt=new Date(date+'T'+to+':00+05:00').toISOString();await onlineBookingAPI('/booking-admin',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({mode:'block',direction:$('onlineBookingBlockDirection').value,startAt,endAt,places:Number($('onlineBookingBlockPlaces').value),reason:$('onlineBookingBlockReason').value})});onlineBookingMsg('Время заблокировано');await onlineBookingLoadBlocks();}catch(e){onlineBookingMsg(e.message,true);}}
-async function onlineBookingDeleteBlock(evn){const btn=evn.target.closest('[data-delete-booking-block]');if(!btn)return;if(!confirm('Удалить блокировку времени?'))return;try{await onlineBookingAPI('/booking-admin',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({mode:'delete_block',id:btn.dataset.deleteBookingBlock})});await onlineBookingLoadBlocks();}catch(e){onlineBookingMsg(e.message,true);}}
 function initOnlineBookingPanel(){const panel=$('onlineBookingPanel');if(!panel)return;
  $('onlineBookingRefresh').addEventListener('click',()=>onlineBookingLoad());
  $('onlineBookingItems').addEventListener('click',onlineBookingAction);
  $('onlineBookingServicesRefresh').addEventListener('click',onlineBookingLoadServices);
  $('onlineBookingServices').addEventListener('click',onlineBookingSaveService);
- $('onlineBookingAddBlock').addEventListener('click',onlineBookingAddBlock);
- $('onlineBookingBlocks').addEventListener('click',onlineBookingDeleteBlock);
- panel.querySelectorAll('details').forEach((node,index)=>node.addEventListener('toggle',()=>{if(node.open){if(index===0)onlineBookingLoadServices();else onlineBookingLoadBlocks();}}));
+ panel.querySelectorAll('.online-booking-settings').forEach(node=>node.addEventListener('toggle',()=>{if(node.open)onlineBookingLoadServices();}));
 }
 async function onlineBookingFileLinks(recordId){const target=$('requestR2FilesBox');if(!target||!recordId)return;target.textContent='Проверяем вложения клиента…';
  try{const response=await fetch('/booking-files?requestId='+encodeURIComponent(recordId),{cache:'no-store',headers:{'x-admin-password':pwd()}});const data=await response.json();if(!response.ok||!data.ok)throw new Error(data.error||'Не удалось получить файлы');if(current?.id!==recordId)return;

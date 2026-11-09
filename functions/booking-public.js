@@ -6,7 +6,7 @@ export async function onRequest(context){
     if(request.method==='GET'){
       const url=new URL(request.url);const mode=url.searchParams.get('mode')||'config';
       if(mode==='config'){
-        const missing=checkSetup(env);const privacy=String(env.BOOKING_PRIVACY_URL||'');const privacyUrl=/^https:\/\/[^\s]+/i.test(privacy)?privacy:null;const ready=missing.length===0&&Boolean(env.TURNSTILE_SITE_KEY&&env.TURNSTILE_SECRET_KEY&&privacyUrl&&env.FILES_BUCKET&&env.BOOKING_SERGEY_PASSWORD&&env.BOOKING_ROMAN_PASSWORD&&env.BOOKING_ADMIN_ACTION_KEY&&String(env.BOOKING_ADMIN_ACTION_KEY).length>=32&&env.BOOKING_TELEGRAM_BOT_TOKEN&&env.BOOKING_TELEGRAM_SERGEY_CHAT_ID&&env.BOOKING_TELEGRAM_ROMAN_CHAT_ID&&env.BOOKING_CRON_SECRET&&String(env.BOOKING_CRON_SECRET).length>=24&&env.SIGMA_API_TOKEN);
+        const missing=checkSetup(env);const privacy=String(env.BOOKING_PRIVACY_URL||'');const privacyUrl=/^https:\/\/[^\s]+/i.test(privacy)?privacy:null;const ready=missing.length===0&&Boolean(env.TURNSTILE_SITE_KEY&&env.TURNSTILE_SECRET_KEY&&privacyUrl&&env.FILES_BUCKET&&env.BOOKING_SERGEY_PASSWORD&&env.BOOKING_ROMAN_PASSWORD&&env.BOOKING_TELEGRAM_BOT_TOKEN&&env.BOOKING_TELEGRAM_SERGEY_CHAT_ID&&env.BOOKING_TELEGRAM_ROMAN_CHAT_ID&&env.BOOKING_CRON_SECRET&&String(env.BOOKING_CRON_SECRET).length>=24&&env.SIGMA_API_TOKEN);
         const services=await db(env,'/rest/v1/booking_services?select=id,direction,kind,name,price_from,duration_minutes,slot_step_minutes&published=eq.true&order=direction.asc,kind.asc,sort_order.asc');
         return respond({ok:true,ready,notice:ready?'':'Онлайн-запись готовится к запуску: настройте секреты и опубликуйте услуги.',turnstileSiteKey:ready?String(env.TURNSTILE_SITE_KEY):null,privacyUrl:ready?privacyUrl:null,services});
       }
@@ -19,7 +19,7 @@ export async function onRequest(context){
       throw new BookingError('Неизвестный режим');
     }
     if(request.method!=='POST')return respond({ok:false,error:'Method not allowed'},405);
-    if(checkSetup(env).length || !env.TURNSTILE_SECRET_KEY || !env.TURNSTILE_SITE_KEY || !env.FILES_BUCKET || !/^https:\/\/[^\s]+/i.test(String(env.BOOKING_PRIVACY_URL||'')) || !env.BOOKING_ADMIN_ACTION_KEY || String(env.BOOKING_ADMIN_ACTION_KEY).length<32 || !env.BOOKING_SERGEY_PASSWORD || !env.BOOKING_ROMAN_PASSWORD)throw new BookingError('Сервис записи ещё настраивается',503);
+    if(checkSetup(env).length || !env.TURNSTILE_SECRET_KEY || !env.TURNSTILE_SITE_KEY || !env.FILES_BUCKET || !/^https:\/\/[^\s]+/i.test(String(env.BOOKING_PRIVACY_URL||'')) || !env.BOOKING_SERGEY_PASSWORD || !env.BOOKING_ROMAN_PASSWORD)throw new BookingError('Сервис записи ещё настраивается',503);
     if(Number(request.headers.get('content-length')||0)>15000)throw new BookingError('Слишком большой запрос',413);
     const body=await request.json();
     if(body.website||body.hpCompany)throw new BookingError('Запрос отклонён',400);

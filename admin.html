@@ -12,7 +12,7 @@
   <meta name="apple-mobile-web-app-title" content="СОЛНЦАНЕТ" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png" />
-  <link rel="stylesheet" href="assets/admin.css?v=booking-v1" />
+  <link rel="stylesheet" href="assets/admin.css?v=booking-v1-compact" />
 
   <script>
     (function(){
@@ -98,13 +98,18 @@
           <div><span>В фильтре</span><b id="statFiltered">0</b></div>
         </section>
 
-        <section id="onlineBookingPanel" class="card online-booking-panel" hidden>
-          <div class="online-booking-head"><div><h2>Онлайн-заявки с сайта <span id="onlineBookingBadge" class="online-booking-badge">0</span></h2><p>Подтверждение и перенос — только Сергей и Роман. Клиенту SMS придёт после подтверждения.</p></div><button id="onlineBookingRefresh" type="button">Обновить</button></div>
-          <div id="onlineBookingMessage" class="online-booking-msg" role="status"></div>
-          <div id="onlineBookingItems" class="online-booking-items"><p class="muted-text">Загрузка онлайн-заявок…</p></div>
-          <details class="online-booking-settings"><summary>Услуги для сайта — цены и продолжительность</summary><p class="muted-text">Услуга появится на сайте только после указания длительности и включения публикации. Текущие цены взяты из CRM, для отсутствующих цен используйте пустое поле.</p><button id="onlineBookingServicesRefresh" type="button">Загрузить список услуг</button><div id="onlineBookingServices" class="online-booking-services"></div></details>
-          <details class="online-booking-settings"><summary>Заблокировать время в онлайн-календаре</summary><div class="online-booking-block-fields"><label>Направление<select id="onlineBookingBlockDirection"><option>Авто</option><option>Архитектура</option></select></label><label>Дата<input type="date" id="onlineBookingBlockDate" /></label><label>С<input type="time" id="onlineBookingBlockFrom" value="09:00" /></label><label>По<input type="time" id="onlineBookingBlockTo" value="18:00" /></label><label>Мест<select id="onlineBookingBlockPlaces"><option value="2">2 места</option><option value="1">1 место</option></select></label><label>Причина<input type="text" id="onlineBookingBlockReason" placeholder="Выходной, мероприятие…" /></label></div><button id="onlineBookingAddBlock" type="button">Заблокировать</button><div id="onlineBookingBlocks"></div></details>
-        </section>
+        <details id="onlineBookingPanel" class="online-booking-panel online-booking-compact" hidden>
+          <summary class="online-booking-summary">
+            <span>Заявки с сайта <span id="onlineBookingBadge" class="online-booking-badge">0</span></span>
+            <span class="online-booking-summary-hint">Открыть</span>
+          </summary>
+          <div class="online-booking-content">
+            <div class="online-booking-head"><p>Новые заявки и решения Сергея или Романа.</p><button id="onlineBookingRefresh" type="button">Обновить</button></div>
+            <div id="onlineBookingMessage" class="online-booking-msg" role="status"></div>
+            <div id="onlineBookingItems" class="online-booking-items"><p class="muted-text">Загрузка онлайн-заявок…</p></div>
+            <details class="online-booking-settings"><summary>Услуги для сайта — цены и продолжительность</summary><p class="muted-text">Список будем настраивать по согласованным названиям, ценам и длительности.</p><button id="onlineBookingServicesRefresh" type="button">Загрузить список услуг</button><div id="onlineBookingServices" class="online-booking-services"></div></details>
+          </div>
+        </details>
         <section class="filters filters-advanced">
           <input id="searchInput" placeholder="Поиск: клиент, телефон, адрес, услуга, монтажник" />
           <select id="statusFilter">
@@ -613,7 +618,7 @@
   </dialog>
 
   <script src="assets/ekb-streets.js?v=20260902-client-suggest-fix-v1"></script>
-  <script src="assets/admin.js?v=booking-v1"></script>
+  <script src="assets/admin.js?v=services-excel-20261109"></script>
   <script src="assets/pwa.js?v=20260902-client-suggest-fix-v1"></script>
 </body>
 </html>

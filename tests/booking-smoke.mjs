@@ -4,7 +4,7 @@ import { onRequest as publicHandler } from '../functions/booking-public.js';
 import { onRequest as adminHandler } from '../functions/booking-admin.js';
 import { verifyToken } from '../lib/booking-server.js';
 const uuid='a0b1c2d3-1111-4111-8111-111111111111',sid='a0b1c2d3-2222-4222-8222-222222222222',zid='a0b1c2d3-3333-4333-8333-333333333333';
-const env={SUPABASE_URL:'https://example.supabase.co',SUPABASE_SECRET_KEY:'not-a-real-key',BOOKING_TOKEN_SECRET:'a'.repeat(48),BOOKING_ADMIN_ACTION_KEY:'b'.repeat(48),BOOKING_SERGEY_PASSWORD:'sample-manager-1',BOOKING_ROMAN_PASSWORD:'sample-manager-2',BOOKING_CRON_SECRET:'c'.repeat(48),BOOKING_PRIVACY_URL:'https://example.org/privacy',BOOKING_SITE_URL:'https://example.org',TURNSTILE_SITE_KEY:'site',TURNSTILE_SECRET_KEY:'secret',FILES_BUCKET:{},BOOKING_TELEGRAM_BOT_TOKEN:'fake',BOOKING_TELEGRAM_SERGEY_CHAT_ID:'123',BOOKING_TELEGRAM_ROMAN_CHAT_ID:'456',SIGMA_API_TOKEN:'test'};
+const env={SUPABASE_URL:'https://example.supabase.co',SUPABASE_SECRET_KEY:'not-a-real-key',BOOKING_TOKEN_SECRET:'a'.repeat(48),BOOKING_SERGEY_PASSWORD:'sample-manager-1',BOOKING_ROMAN_PASSWORD:'sample-manager-2',BOOKING_CRON_SECRET:'c'.repeat(48),BOOKING_PRIVACY_URL:'https://example.org/privacy',BOOKING_SITE_URL:'https://example.org',TURNSTILE_SITE_KEY:'site',TURNSTILE_SECRET_KEY:'secret',FILES_BUCKET:{},BOOKING_TELEGRAM_BOT_TOKEN:'fake',BOOKING_TELEGRAM_SERGEY_CHAT_ID:'123',BOOKING_TELEGRAM_ROMAN_CHAT_ID:'456',SIGMA_API_TOKEN:'test'};
 const prev=globalThis.fetch;
 let sentSms=0;
 globalThis.fetch=async (url,options={})=>{
@@ -25,7 +25,7 @@ try{
  const input={requestKey:'a0b1c2d3-4444-4444-8444-444444444444',serviceId:sid,date:'2026-11-11',time:'09:00',name:'Тестовый Клиент',phone:'+79990000000',address:'',car:'Hyundai Solaris',comment:'',consent:true,formStartedAt:Date.now()-30000,turnstileToken:'turnstile-test',website:''};
  r=await publicHandler({request:new Request('https://example.org/booking-public',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(input)}),env,waitUntil:p=>p});data=await r.json();assert.equal(r.status,201);assert.equal(data.reference,'A0B1C2D3');assert.equal(await verifyToken(env,data.uploadToken,'upload'),uuid);assert.equal(await verifyToken(env,data.manageToken,'manage'),uuid);assert.equal(sentSms,0);
  r=await adminHandler({request:new Request('https://example.org/booking-admin?mode=requests'),env});assert.equal(r.status,403);
- r=await adminHandler({request:new Request('https://example.org/booking-admin?mode=requests',{headers:{'x-admin-password':'sample-manager-1','x-booking-approval-key':'bad'}}),env});assert.equal(r.status,403);
- r=await adminHandler({request:new Request('https://example.org/booking-admin?mode=requests',{headers:{'x-admin-password':'sample-manager-1','x-booking-approval-key':env.BOOKING_ADMIN_ACTION_KEY}}),env});assert.equal(r.status,200);
+ r=await adminHandler({request:new Request('https://example.org/booking-admin?mode=requests',{headers:{'x-admin-password':'sample-staff'}}),env});assert.equal(r.status,403);
+ r=await adminHandler({request:new Request('https://example.org/booking-admin?mode=requests',{headers:{'x-admin-password':'sample-manager-1'}}),env});assert.equal(r.status,200);
  console.log('BOOKING SMOKE TESTS: PASS (config, slots, create, signed links, no early SMS, admin access)');
 }finally{globalThis.fetch=prev;}

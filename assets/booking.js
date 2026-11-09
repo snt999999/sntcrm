@@ -8,7 +8,7 @@
  const plusDays=(s,n)=>{const d=dateUTC(s);d.setUTCDate(d.getUTCDate()+n);return d.toISOString().slice(0,10)};
  const monthFirst=s=>s.slice(0,7)+'-01';
  const nextMonth=(s,delta)=>{const d=dateUTC(s);d.setUTCDate(1);d.setUTCMonth(d.getUTCMonth()+delta);return d.toISOString().slice(0,10)};
- const money=v=>v===null||v===undefined?'Цена уточняется':'от '+Number(v).toLocaleString('ru-RU')+' ₽';
+ const money=(v,s)=>v===null||v===undefined?'Цена уточняется':Number(v)===0?'Бесплатно':'от '+Number(v).toLocaleString('ru-RU')+' ₽'+(s?.direction==='Архитектура'&&s?.kind==='Монтаж'?'/м²':s?.name==='Бронирование порогов'?'/шт.':'');
  const alert=(message,good=false)=>{const e=$('bookingAlert');e.textContent=message;e.classList.toggle('good',good);e.hidden=!message;};
  const api=async (url,init={})=>{const r=await fetch(url,{cache:'no-store',...init});const raw=await r.text();let d;try{d=JSON.parse(raw)}catch{throw new Error('Сервер вернул некорректный ответ. Проверьте Cloudflare Pages Functions.');}if(!r.ok||!d.ok)throw new Error(d.error||'Ошибка соединения');return d;};
  const service=()=>state.services.find(s=>s.id===state.serviceId);
@@ -20,7 +20,7 @@
    $('bookingService').innerHTML='<option value="">Выберите услугу</option>'+options.map(s=>`<option value="${esc(s.id)}">${esc(s.name)}</option>`).join('');
    $('bookingServiceHint').textContent=options.length?'Выберите услугу, чтобы увидеть минимальную цену и продолжительность.':'Пока нет опубликованных услуг этого типа. Уточните возможность записи по телефону.';
    validate();}
- function pickService(id){state.serviceId=id;state.date='';state.time='';const s=service();$('bookingServiceHint').textContent=s?`${money(s.price_from)} · ${s.duration_minutes} мин.`:'';validate();}
+ function pickService(id){state.serviceId=id;state.date='';state.time='';const s=service();$('bookingServiceHint').textContent=s?`${money(s.price_from,s)} · ${s.duration_minutes} мин.`:'';validate();}
  function isDateAllowed(day){const today=ekbDay(),last=plusDays(today,30),dow=dateUTC(day).getUTCDay();return day>today&&day<=last&&dow!==0&&dow!==6;}
  function renderCalendar(){const d=dateUTC(state.month);$('bookingMonthTitle').textContent=new Intl.DateTimeFormat('ru-RU',{month:'long',year:'numeric',timeZone:'UTC'}).format(d);
    const y=d.getUTCFullYear(),m=d.getUTCMonth(),firstDay=(new Date(Date.UTC(y,m,1)).getUTCDay()+6)%7,days=new Date(Date.UTC(y,m+1,0)).getUTCDate();let html=['Пн','Вт','Ср','Чт','Пт','Сб','Вс'].map(x=>`<span class="booking-weekday">${x}</span>`).join('');
@@ -31,7 +31,7 @@
    $('bookingPrevMonth').disabled=monthFirst(state.month)<=monthFirst(ekbDay());$('bookingNextMonth').disabled=monthFirst(state.month)>=monthFirst(plusDays(ekbDay(),30));
  }
  async function pickDay(day){state.date=day;state.time='';renderCalendar();validate();$('bookingSlots').textContent='Проверяем свободное время…';try{const r=await api('/booking-public?mode=slots&service='+encodeURIComponent(state.serviceId)+'&date='+encodeURIComponent(day));if(day!==state.date)return;state.slots=r.slots;$('bookingSlots').innerHTML=r.slots.length?r.slots.map(t=>`<button class="booking-slot" type="button" data-slot="${esc(t)}">${esc(t)}</button>`).join(''):'<span class="booking-hint">На эту дату свободных мест нет. Выберите другой день.</span>';document.querySelectorAll('[data-slot]').forEach(b=>b.onclick=()=>{state.time=b.dataset.slot;document.querySelectorAll('[data-slot]').forEach(x=>x.classList.toggle('selected',x===b));validate();});}catch(e){$('bookingSlots').textContent=e.message;}}
- function summary(){const s=service();$('bookingSummary').innerHTML=`<b>${esc(state.kind)} · ${esc(s?.name||'')}</b><div>${esc(state.date.split('-').reverse().join('.'))} в ${esc(state.time)} · Екатеринбург</div><div>${esc(money(s?.price_from))}</div>`;$('bookingAddressBox').hidden=state.direction!=='Архитектура';$('bookingCarBox').hidden=state.direction!=='Авто';}
+ function summary(){const s=service();$('bookingSummary').innerHTML=`<b>${esc(state.kind)} · ${esc(s?.name||'')}</b><div>${esc(state.date.split('-').reverse().join('.'))} в ${esc(state.time)} · Екатеринбург</div><div>${esc(money(s?.price_from,s))}</div>`;$('bookingAddressBox').hidden=state.direction!=='Архитектура';$('bookingCarBox').hidden=state.direction!=='Авто';}
  function renderTurnstile(){if(state.turnstileId!==null||!state.ready)return;if(!window.turnstile){setTimeout(renderTurnstile,250);return;}state.turnstileId=window.turnstile.render('#bookingTurnstile',{sitekey:state.siteKey,callback:v=>state.turnstileToken=v,'expired-callback':()=>state.turnstileToken='','error-callback':()=>state.turnstileToken='' });}
  const normalizePhone=v=>{let d=v.replace(/\D/g,'');if(d.startsWith('8'))d='7'+d.slice(1);if(d.length===10&&d.startsWith('9'))d='7'+d;return d};
  async function submit(e){e.preventDefault();if(state.busy)return;
