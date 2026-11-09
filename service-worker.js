@@ -1,4 +1,4 @@
-const CACHE_NAME = 'solncanet-v61-supabase-login-json-empty-fix';
+const CACHE_NAME = 'solncanet-v61-custom-booking-v1';
 self.addEventListener('install', (event) => { self.skipWaiting(); });
 self.addEventListener('activate', (event) => {
   event.waitUntil((async () => {

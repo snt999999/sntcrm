@@ -198,6 +198,12 @@ export async function onRequestPost(context) {
   try {
     const existing = await getZayavka(env, body.id);
     if (!existing) return json({ ok: false, error: "Заявка не найдена в Supabase" }, 404);
+    if (existing.meta?.online_booking) {
+      const previous = fieldsFromZayavka(existing);
+      const controlled = ["Статус", "Дата записи", "Время записи", "Направление", "Удалено"];
+      const changed = controlled.filter(k => Object.prototype.hasOwnProperty.call(requested,k) && String(requested[k] ?? '') !== String(previous[k] ?? ''));
+      if (requested.__moveToTrash || changed.length) return json({ ok: false, error: "Для изменения статуса, даты, времени и отмены онлайн-записи используйте действия «Подтвердить / Предложить / Отказать» в блоке «Онлайн-заявки»." }, 409);
+    }
     const oldFields = fieldsFromZayavka(existing);
     const clientFields = { ...oldFields, ...requested };
     let client = existing.clients || null;
@@ -207,9 +213,9 @@ export async function onRequestPost(context) {
     const updated = await sbFetch(env, `/rest/v1/zayavki?id=eq.${encodeURIComponent(body.id)}&select=*`, { method: "PATCH", headers: { "Prefer": "return=representation" }, body: JSON.stringify(payload) });
     await syncServiceRows(env, body.id, requested);
     let fresh = await getZayavka(env, body.id) || asArr(updated)[0];
-    if (shouldRescheduleAutoSms(oldFields, { ...oldFields, ...requested }) && !fresh.deleted_at) { await cancelFutureAutoSms(env, body.id); await scheduleAutoSms(env, fresh, { includeConfirmation: false }); fresh = await getZayavka(env, body.id) || fresh; }
+    if ((!existing.meta?.online_booking || String(fresh.status) === "Подтверждена") && shouldRescheduleAutoSms(oldFields, { ...oldFields, ...requested }) && !fresh.deleted_at) { await cancelFutureAutoSms(env, body.id); await scheduleAutoSms(env, fresh, { includeConfirmation: false }); fresh = await getZayavka(env, body.id) || fresh; }
     if (fresh.deleted_at) await cancelFutureAutoSms(env, body.id);
-    const calendarSync = await syncGoogleCalendarAfterUpdate(env, fresh, oldFields, requested);
+    const calendarSync = (!existing.meta?.online_booking || String(fresh.status) === "Подтверждена") ? await syncGoogleCalendarAfterUpdate(env, fresh, oldFields, requested) : { ok: true, skipped: true, reason: "Ожидание подтверждения онлайн-записи" };
     if (calendarSync?.updated) fresh = await getZayavka(env, body.id) || fresh;
     await addHistory(env, "zayavka", body.id, fresh.deleted_at ? "deleted_or_updated" : "updated", request.headers.get("x-admin-password") || "admin", "Изменение заявки", oldFields, fieldsFromZayavka(fresh));
     const savedFields = Object.fromEntries(Object.entries(requested).filter(([k]) => !String(k).startsWith("__")));

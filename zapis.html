@@ -2,46 +2,96 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#0b2a66" />
+  <meta name="referrer" content="no-referrer" />
+  <meta name="description" content="Онлайн-заявка на замер, монтаж и автомобильные услуги СОЛНЦАНЕТ в Екатеринбурге. Подтверждение записи менеджером." />
   <title>Онлайн-запись — СОЛНЦАНЕТ</title>
-
   <link rel="manifest" href="/manifest.webmanifest" />
-  <meta name="theme-color" content="#111827" />
-  <meta name="mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-title" content="СОЛНЦАНЕТ" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-  <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png" />
-  <link rel="stylesheet" href="assets/site.css?v=20260902-admin-recovery-cache-fix-v1" />
+  <link rel="icon" href="/assets/icons/icon-192.png" />
+  <link rel="stylesheet" href="/assets/booking.css?v=booking-v1" />
+  <script defer src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit"></script>
+  <script defer src="/assets/booking.js?v=booking-v1"></script>
 </head>
-<body class="booking-page">
-  <header class="site-header">
-    <a class="logo" href="index.html"><img src="assets/logo-solncanet.png" alt="СОЛНЦАНЕТ" /><span>Онлайн-запись</span></a>
-    <div class="header-contacts"><a href="tel:+73433612244">8 (343) 361-22-44</a><a href="tel:+79126629235">+7 (912) 662-92-35</a></div>
-    <nav class="nav"><a href="index.html">Главная</a><a href="admin.html">Админ-панель</a></nav>
+<body>
+  <header class="booking-header">
+    <a class="booking-brand" href="/index.html"><img src="/assets/logo-solncanet.png" alt="СОЛНЦАНЕТ" /><span>Онлайн-запись</span></a>
+    <a class="booking-home" href="/index.html">← На сайт</a>
   </header>
-  <main class="booking-only">
-    <section class="booking-only__intro">
-      <p class="pretitle">СОЛНЦАНЕТ</p>
-      <h1>Онлайн-запись</h1>
-      <p>Выберите свободную дату и время. После заявки мы свяжемся с вами для уточнения деталей.</p>
-    <div class="booking-contact-choice">
-        <a class="messenger messenger--tg" href="https://t.me/infosnt" target="_blank" rel="noopener">Написать в Telegram</a>
-        <a class="messenger messenger--max" href="https://max.ru/u/f9LHodD0cOJzCTZONeauAnUFGMjW4PM404PirE-rPHovceQ9714S84993z8" target="_blank" rel="noopener">Написать в MAX</a>
-        <a class="messenger messenger--phone" href="tel:+79221812244">Позвонить</a>
+  <main class="booking-layout">
+    <section class="booking-heading">
+      <div class="booking-eyebrow">СОЛНЦАНЕТ · ЕКАТЕРИНБУРГ</div>
+      <h1>Запись на услугу</h1>
+      <p>Выберите удобное время и оставьте заявку. Сергей или Роман проверит запись и подтвердит её. До подтверждения время зарезервировано предварительно.</p>
+    </section>
+    <section class="booking-card" id="bookingApp" aria-live="polite">
+      <div class="booking-progress" id="bookingProgress" aria-label="Шаги записи">
+        <span class="current">1 <b>Услуга</b></span><span>2 <b>Дата и время</b></span><span>3 <b>Контакты</b></span>
+      </div>
+      <div id="bookingAlert" class="booking-alert" role="alert" hidden></div>
+      <div id="bookingLoading" class="booking-loading">Загружаем доступные услуги…</div>
+      <div id="bookingWizard" hidden>
+        <section class="booking-step" data-step="1">
+          <h2>Что нужно сделать?</h2>
+          <div class="booking-choice" id="bookingDirections">
+            <button type="button" class="choice" data-direction="Архитектура"><span>▦</span><b>Архитектура</b><small>Окна, балконы, стеклянные перегородки</small></button>
+            <button type="button" class="choice" data-direction="Авто"><span>▰</span><b>Авто</b><small>Тонирование, бронирование и защита</small></button>
+          </div>
+          <div id="bookingKinds" class="booking-field" hidden><label>Тип записи</label><div class="booking-choice booking-choice--kinds"><button class="choice" type="button" data-kind="Замер">Замер</button><button class="choice" type="button" data-kind="Монтаж">Монтаж</button></div></div>
+          <div class="booking-field" id="bookingServiceBox" hidden>
+            <label for="bookingService">Услуга</label>
+            <select id="bookingService"><option value="">Выберите услугу</option></select>
+            <div class="booking-hint" id="bookingServiceHint"></div>
+          </div>
+        </section>
+        <section class="booking-step" data-step="2" hidden>
+          <h2>Когда вам удобно?</h2>
+          <p class="booking-hint">Понедельник — пятница, 09:00–18:00. Запись со следующего дня, на 30 дней вперёд. Время указано по Екатеринбургу.</p>
+          <div class="booking-month"><button type="button" id="bookingPrevMonth" aria-label="Предыдущий месяц">‹</button><b id="bookingMonthTitle"></b><button type="button" id="bookingNextMonth" aria-label="Следующий месяц">›</button></div>
+          <div class="booking-calendar" id="bookingCalendar"></div>
+          <div class="booking-field"><label>Доступное время</label><div id="bookingSlots" class="booking-slots"><span class="booking-hint">Выберите дату в календаре</span></div></div>
+          <p class="booking-hint">Для каждого направления предусмотрено два места. Неподтверждённые заявки резервируют время на срок до 24 часов.</p>
+        </section>
+        <section class="booking-step" data-step="3" hidden>
+          <h2>Ваши контактные данные</h2>
+          <div class="booking-summary" id="bookingSummary"></div>
+          <form id="bookingSubmitForm" novalidate>
+            <div class="booking-fields-grid">
+              <div class="booking-field"><label for="bookingName">Имя <em>*</em></label><input id="bookingName" autocomplete="given-name" maxlength="160" required placeholder="Как к вам обращаться" /></div>
+              <div class="booking-field"><label for="bookingPhone">Телефон <em>*</em></label><input id="bookingPhone" inputmode="tel" autocomplete="tel" maxlength="20" required placeholder="+7 (999) 000-00-00" /></div>
+              <div class="booking-field" id="bookingAddressBox" hidden><label for="bookingAddress">Адрес объекта <em>*</em></label><input id="bookingAddress" autocomplete="street-address" maxlength="400" placeholder="Екатеринбург, улица, дом" /></div>
+              <div class="booking-field" id="bookingCarBox" hidden><label for="bookingCar">Марка и модель автомобиля <em>*</em></label><input id="bookingCar" maxlength="200" placeholder="Например, Hyundai Solaris" /></div>
+            </div>
+            <div class="booking-field"><label for="bookingComment">Комментарий</label><textarea id="bookingComment" rows="3" maxlength="2000" placeholder="Дополнительная информация, пожелания"></textarea></div>
+            <div class="booking-field"><label for="bookingAttachments">Фотографии и документы</label><input id="bookingAttachments" type="file" multiple accept="image/jpeg,image/png,image/webp,image/gif,image/heic,image/heif,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.rtf" /><span class="booking-hint">До 15 файлов на заявку. После отправки заявки появится шкала загрузки каждого файла.</span></div>
+            <div class="booking-hidden-honeypot"><label>Сайт <input id="bookingWebsite" tabindex="-1" autocomplete="off" /></label></div>
+            <label class="booking-consent"><input id="bookingConsent" type="checkbox" required /><span>Согласен(на) на обработку персональных данных в соответствии с <a id="bookingPrivacyLink" href="#" target="_blank" rel="noopener">политикой обработки персональных данных</a>.</span></label>
+            <div id="bookingTurnstile" class="booking-turnstile"></div>
+            <button id="bookingSubmit" class="booking-primary" type="submit">Отправить заявку</button>
+          </form>
+        </section>
+        <div class="booking-actions" id="bookingNavigation"><button class="booking-back" id="bookingBack" type="button" hidden>← Назад</button><button class="booking-primary" id="bookingNext" type="button" disabled>Продолжить →</button></div>
       </div>
     </section>
-    <iframe src="https://cal.com/solncanet?embed=true" title="Онлайн-запись СОЛНЦАНЕТ" loading="lazy" allow="camera; microphone; fullscreen; autoplay; clipboard-write"></iframe>
+    <section id="bookingSuccess" class="booking-card booking-success" hidden>
+      <div class="booking-success-icon">✓</div><h2>Заявка отправлена</h2>
+      <p><b>Заявка № <span id="bookingReference"></span></b> принята. Выбранное время ещё не подтверждено. Менеджер проверит запись и свяжется с вами.</p>
+      <p class="booking-hint">До подтверждения выбранный интервал зарезервирован максимум на 24 часа. SMS поступит после подтверждения.</p>
+      <div class="booking-field"><label>Ссылка для запроса переноса или отмены</label><div class="booking-link-row"><input id="bookingManageLink" readonly /><button id="bookingCopyLink" type="button">Скопировать</button></div><p class="booking-hint">Сохраните эту ссылку. Пока она не включена в согласованный шаблон SMS, повторно получить её будет невозможно.</p></div>
+      <div id="bookingUploadPanel" hidden><h3>Загрузка вложений в заявку</h3><p class="booking-hint">При обрыве связи можно обновить страницу, снова выбрать тот же файл и продолжить загрузку. Закройте вкладку только после завершения.</p><div class="booking-field"><input id="bookingExtraFiles" type="file" multiple accept="image/jpeg,image/png,image/webp,image/gif,image/heic,image/heif,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.rtf" /></div><div id="bookingUploads"></div><button id="bookingUploadStart" type="button" class="booking-primary">Загрузить выбранные файлы</button> <button id="bookingUploadCancel" type="button" class="booking-back" hidden>Отменить загрузку</button></div>
+      <div class="booking-success-links"><a class="booking-back booking-back-link" href="/zapis.html?new=1">Оформить ещё одну заявку</a><a class="booking-back booking-back-link" href="/index.html">На главную</a></div>
+    </section>
+    <section id="bookingManagePane" class="booking-card" hidden>
+      <h2>Управление записью</h2><div id="bookingManageInfo" class="booking-summary">Проверяем ссылку…</div>
+      <form id="bookingManageForm" hidden>
+        <div class="booking-choice booking-choice--kinds"><button data-manage="change" type="button" class="choice">Запросить перенос</button><button data-manage="cancel" type="button" class="choice">Запросить отмену</button></div>
+        <div id="bookingManageChange" class="booking-fields-grid" hidden><div class="booking-field"><label for="bookingManageDate">Желаемая дата</label><input id="bookingManageDate" type="date" /></div><div class="booking-field"><label for="bookingManageTime">Желаемое время</label><input id="bookingManageTime" type="time" min="09:00" max="18:00" step="900" /></div></div>
+        <div class="booking-field"><label for="bookingManageComment">Комментарий</label><textarea id="bookingManageComment" maxlength="1000" rows="3"></textarea></div>
+        <button class="booking-primary" type="submit">Отправить запрос</button>
+      </form>
+      <div class="booking-alert" role="status" id="bookingManageAlert" hidden></div>
+    </section>
+    <div class="booking-footnote">Нужна помощь? <a href="tel:+79221812244">+7 (922) 181-22-44</a> · <a href="https://t.me/infosnt" target="_blank" rel="noopener">Написать в Telegram</a></div>
   </main>
-  <div class="floating-contact">
-    <button class="floating-contact__main" type="button" aria-label="Связаться">Написать</button>
-    <div class="floating-contact__menu">
-      <a href="https://t.me/infosnt" target="_blank" rel="noopener">Telegram</a>
-      <a href="https://max.ru/u/f9LHodD0cOJzCTZONeauAnUFGMjW4PM404PirE-rPHovceQ9714S84993z8" target="_blank" rel="noopener">MAX</a>
-      <a href="tel:+79221812244">Позвонить</a>
-    </div>
-  </div>
-  <script src="assets/site.js?v=20260902-admin-recovery-cache-fix-v1"></script>
-  <script src="assets/pwa.js?v=20260902-admin-recovery-cache-fix-v1"></script>
 </body>
 </html>

@@ -1,3 +1,4 @@
+import {db as bookingDb} from '../lib/booking-server.js';
 function json(body, status = 200) {
   return new Response(JSON.stringify(body, null, 2), {
     status,
@@ -101,6 +102,12 @@ export async function onRequestPost(context) {
   if (!auth.ok) return json(auth.body, auth.status);
   let input = {};
   try { input = await request.json(); } catch (_) { return json({ ok: false, error: "Invalid JSON" }, 400); }
+  if (/^[0-9a-f-]{36}$/i.test(String(input.recordId || ""))) {
+    try {
+      const b = await bookingDb(env, "/rest/v1/booking_requests?select=status&zayavka_id=eq." + encodeURIComponent(input.recordId) + "&limit=1");
+      if (b?.length && b[0].status !== "confirmed") return json({ ok: false, error: "Сначала подтвердите онлайн-заявку в CRM" }, 409);
+    } catch (error) { return json({ ok: false, error: "Не удалось проверить статус записи: " + error.message }, 503); }
+  }
   const fields = enrichCalendarFields(input.fields || {});
   if (!fields["Имя клиента"] && !fields["Телефон"]) return json({ ok: false, error: "Недостаточно данных для события календаря" }, 400);
   if (!fields["Дата записи"] || !fields["Время записи"]) return json({ ok: false, error: "Для Google Календаря нужны дата и время записи" }, 400);

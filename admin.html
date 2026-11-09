@@ -12,7 +12,7 @@
   <meta name="apple-mobile-web-app-title" content="СОЛНЦАНЕТ" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png" />
-  <link rel="stylesheet" href="assets/admin.css?v=20261013-login-json-empty-fix-v1" />
+  <link rel="stylesheet" href="assets/admin.css?v=booking-v1" />
 
   <script>
     (function(){
@@ -98,11 +98,19 @@
           <div><span>В фильтре</span><b id="statFiltered">0</b></div>
         </section>
 
+        <section id="onlineBookingPanel" class="card online-booking-panel" hidden>
+          <div class="online-booking-head"><div><h2>Онлайн-заявки с сайта <span id="onlineBookingBadge" class="online-booking-badge">0</span></h2><p>Подтверждение и перенос — только Сергей и Роман. Клиенту SMS придёт после подтверждения.</p></div><button id="onlineBookingRefresh" type="button">Обновить</button></div>
+          <div id="onlineBookingMessage" class="online-booking-msg" role="status"></div>
+          <div id="onlineBookingItems" class="online-booking-items"><p class="muted-text">Загрузка онлайн-заявок…</p></div>
+          <details class="online-booking-settings"><summary>Услуги для сайта — цены и продолжительность</summary><p class="muted-text">Услуга появится на сайте только после указания длительности и включения публикации. Текущие цены взяты из CRM, для отсутствующих цен используйте пустое поле.</p><button id="onlineBookingServicesRefresh" type="button">Загрузить список услуг</button><div id="onlineBookingServices" class="online-booking-services"></div></details>
+          <details class="online-booking-settings"><summary>Заблокировать время в онлайн-календаре</summary><div class="online-booking-block-fields"><label>Направление<select id="onlineBookingBlockDirection"><option>Авто</option><option>Архитектура</option></select></label><label>Дата<input type="date" id="onlineBookingBlockDate" /></label><label>С<input type="time" id="onlineBookingBlockFrom" value="09:00" /></label><label>По<input type="time" id="onlineBookingBlockTo" value="18:00" /></label><label>Мест<select id="onlineBookingBlockPlaces"><option value="2">2 места</option><option value="1">1 место</option></select></label><label>Причина<input type="text" id="onlineBookingBlockReason" placeholder="Выходной, мероприятие…" /></label></div><button id="onlineBookingAddBlock" type="button">Заблокировать</button><div id="onlineBookingBlocks"></div></details>
+        </section>
         <section class="filters filters-advanced">
           <input id="searchInput" placeholder="Поиск: клиент, телефон, адрес, услуга, монтажник" />
           <select id="statusFilter">
             <option value="">Все статусы</option>
             <option>Новая заявка</option>
+            <option>Ожидает подтверждения</option><option>Подтверждена</option><option>Предложено другое время</option><option>Запрошен перенос</option><option>Запрошена отмена</option><option>Истекло ожидание</option><option>Отказано</option>
             <option>Связались</option>
             <option>Замер</option>
             <option>Согласовано</option>
@@ -255,7 +263,7 @@
           <input id="clientsDateTo" type="date" title="По дату" />
           <select id="clientsServiceFilter"><option value="">Все услуги</option><option>Тонировка стекол автомобиля</option><option>Атермальная тонировка автомобиля</option><option>Тонировка балконов и окон</option><option>Бронирование стекол и витрин</option><option>Бронирование фар</option><option>Защита авто полиуретановой пленкой</option><option>Тонирование витрин</option><option>Декоративное тонирование офисных перегородок</option><option>Замер / консультация</option></select>
           <input id="clientsFilmFilter" placeholder="Плёнка / материал: XPEL, Silver, Safety..." />
-          <select id="clientsStatusFilter"><option value="">Все статусы</option><option>Новая заявка</option><option>Связались</option><option>Замер</option><option>Согласовано</option><option>В работе</option><option>Выполнено</option><option>Оплачено</option><option>Отказ</option><option>Отменена</option></select>
+          <select id="clientsStatusFilter"><option value="">Все статусы</option><option>Новая заявка</option><option>Ожидает подтверждения</option><option>Подтверждена</option><option>Предложено другое время</option><option>Запрошен перенос</option><option>Запрошена отмена</option><option>Истекло ожидание</option><option>Отказано</option><option>Связались</option><option>Замер</option><option>Согласовано</option><option>В работе</option><option>Выполнено</option><option>Оплачено</option><option>Отказ</option><option>Отменена</option></select>
           <button id="clientsClearFiltersBtn" type="button">Сбросить</button>
         </section>
         <section class="stats stats-four compact-stats"><div><span>Клиентов</span><b id="clientsStatCount">0</b></div><div><span>Заявок</span><b id="clientsStatRequests">0</b></div><div><span>Объём, м²</span><b id="clientsStatM2">0</b></div><div><span>Повторных</span><b id="clientsStatRepeat">0</b></div></section>
@@ -456,7 +464,7 @@
         <label class="wide">Комментарий администратора<textarea id="editAdminComment"></textarea></label>
       </div>
       <fieldset><legend>Монтажники</legend><label><input type="checkbox" name="installer" value="Никита П" /> Пахнев Никита</label><label><input type="checkbox" name="installer" value="Андрей Ш" /> Шолохов Андрей</label><label><input type="checkbox" name="installer" value="Никита К" /> Кислов Никита</label><label><input type="checkbox" name="installer" value="Дмитрий П" /> Петухов Дмитрий</label><label><input type="checkbox" name="installer" value="Роман З" /> Зинченко Роман</label></fieldset>
-      <details class="files-box crm-accordion" id="requestFilesDetails" open><summary>Файлы этой заявки</summary><div class="request-file-upload"><input id="requestFileInput" type="file" multiple /><button id="requestUploadBtn" type="button">Загрузить</button><button id="requestFilesRefreshBtn" type="button" class="ghost-small">Обновить список</button><button id="requestCreateForFilesBtn" type="button" class="request-create-files-btn" hidden>Создать заявку и перейти к файлам</button></div><div id="requestFilesBox" class="request-files-box"></div></details>
+      <details class="files-box crm-accordion" id="requestFilesDetails" open><summary>Файлы этой заявки</summary><div class="request-file-upload"><input id="requestFileInput" type="file" multiple /><button id="requestUploadBtn" type="button">Загрузить</button><button id="requestFilesRefreshBtn" type="button" class="ghost-small">Обновить список</button><button id="requestCreateForFilesBtn" type="button" class="request-create-files-btn" hidden>Создать заявку и перейти к файлам</button></div><div id="requestFilesBox" class="request-files-box"></div><div id="requestR2FilesBox" class="request-r2-files"></div></details>
       <details class="files-box google-calendar-box crm-accordion"><summary>Google Календарь</summary><div id="requestGoogleCalendarBox" class="google-calendar-status-box"></div><div class="dialog-actions"><button id="requestGoogleCreateBtn" type="button">Создать / обновить событие</button><a id="requestGoogleOpenLink" class="dialog-link-button ghost-link" href="#" target="_blank" rel="noopener" hidden>Открыть в Google</a></div><p id="requestGoogleStatus" class="muted-text"></p></details>
       <details class="files-box notification-box crm-accordion"><summary>Уведомление клиенту</summary><div class="dialog-grid"><label>Шаблон<select id="notifyTemplate"><option value="reschedule">Перенос записи</option><option value="review">Благодарность + отзыв</option><option value="confirm">Подтверждение записи</option><option value="reminder">Напоминание за день</option><option value="reminder2h">Напоминание за 2 часа</option></select></label><label>Канал<select id="notifyChannel"><option value="sms">SMS клиенту</option><option value="telegram">Telegram администратору</option></select></label><label class="wide">Текст сообщения<textarea id="notifyMessage" placeholder="Текст уведомления"></textarea></label></div><div class="dialog-actions"><button id="sendNotifyBtn" type="button">Отправить сейчас</button><button id="copyNotifyBtn" type="button" class="ghost">Скопировать</button></div><p id="requestNotifyStatus" class="muted-text"></p></details>
       <details class="files-box notification-box crm-accordion"><summary>Авто-SMS</summary><div class="dialog-grid"><label>Шаблон<select id="scheduleSmsTemplate"><option value="reschedule">Перенос записи</option><option value="review">Благодарность + отзыв</option><option value="confirm">Подтверждение записи</option><option value="reminder">Напоминание за день</option><option value="reminder2h">Напоминание за 2 часа</option></select></label><label>Дата отправки<input id="scheduleSmsDate" type="date" /></label><label>Время отправки<input id="scheduleSmsTime" type="time" /></label><label class="wide">Текст SMS<textarea id="scheduleSmsMessage" placeholder="Текст SMS"></textarea></label></div><div class="dialog-actions"><button id="scheduleSmsBtn" type="button">Запланировать SMS</button><button id="scheduleDefaultSmsBtn" type="button" class="ghost">Создать напоминания за день и за 2 часа</button></div><p id="scheduleSmsStatus" class="muted-text"></p></details>
@@ -605,7 +613,7 @@
   </dialog>
 
   <script src="assets/ekb-streets.js?v=20260902-client-suggest-fix-v1"></script>
-  <script src="assets/admin.js?v=20261013-login-json-empty-fix-v1"></script>
+  <script src="assets/admin.js?v=booking-v1"></script>
   <script src="assets/pwa.js?v=20260902-client-suggest-fix-v1"></script>
 </body>
 </html>

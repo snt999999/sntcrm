@@ -319,6 +319,7 @@ function init() {
   els.nextMonth.addEventListener("click", () => { cal.setMonth(cal.getMonth() + 1); render(); });
   if (els.calendarTodayBtn) els.calendarTodayBtn.addEventListener("click", () => { const now = new Date(); cal = new Date(now.getFullYear(), now.getMonth(), 1); selectedCalendarDate = today(); render(); });
   if (els.calendarCreateDayBtn) els.calendarCreateDayBtn.addEventListener("click", () => openQuickAddFromCalendarSlot(selectedCalendarDate || today(), "10:00"));
+  initOnlineBookingPanel();
   initMobileSidebar();
   initMobileBottomNav();
   initAccidentalActionProtection();
@@ -809,6 +810,7 @@ function calendarEventKind(recordOrFields) {
   const f = recordOrFields?.fields || recordOrFields || {};
   const dir = recordDirection(recordOrFields);
   const text = norm([f["Услуга"], f["Авто услуги"], f["Комментарий клиента"], f["Комментарий администратора"], f["Статус"]].join(" "));
+  if (String(f["Тип записи"] || "").toLowerCase() === "замер") return { key: "measure", label: "Замер" };
   if (dir === "auto") return { key: "auto", label: "Авто" };
   if (text.includes("замер") || text.includes("консультац")) return { key: "measure", label: "Замер" };
   return { key: "install", label: "Монтаж" };
@@ -841,13 +843,15 @@ async function login(password) {
     showApp();
     setSection("calendar");
     renderAll();
+    const opened = new URLSearchParams(location.search).get("open");
+    if (opened && /^[0-9a-f-]{36}$/i.test(opened)) { openRequest(opened); history.replaceState(null, "", location.pathname+location.hash); }
   } catch (error) {
     els.loginMessage.textContent = "Ошибка входа: " + error.message;
     showLogin();
   }
 }
 
-function showApp() { document.body.classList.remove("logged-out"); document.body.classList.add("logged-in"); applyAccessPolicy(); els.loginPanel.style.display = "none"; els.appPanel.style.display = "block"; updateWorkspaceUI(); applyAccessPolicy(); startAutoRefresh(); }
+function showApp() { document.body.classList.remove("logged-out"); document.body.classList.add("logged-in"); applyAccessPolicy(); els.loginPanel.style.display = "none"; els.appPanel.style.display = "block"; updateWorkspaceUI(); applyAccessPolicy(); startAutoRefresh(); onlineBookingEnable(); }
 function showLogin() { if (autoRefreshTimer) clearInterval(autoRefreshTimer); autoRefreshTimer = null; document.body.classList.remove("logged-in"); document.body.classList.add("logged-out"); els.appPanel.style.display = "none"; els.loginPanel.style.display = "block"; }
 function pwd() { return localStorage.getItem(storage.password) || ""; }
 
@@ -876,6 +880,7 @@ async function load(options = {}) {
     await loadFiles(true);
     await loadSmsQueue(true);
     renderAll();
+    if (onlineBookingIsManager() && Date.now()-onlineBookingLastLoad>60000) onlineBookingLoad(true);
     lastLoadAt = Date.now();
     if (!silent) msg("Готово");
   } catch (error) { if (!silent) msg(error.message); }
@@ -1741,7 +1746,12 @@ function openRequest(id) {
   let names = splitInstallers(f["Монтажники"]);
   if (recordDirection(current) === "auto" && !names.length) names = [AUTO_DEFAULT_INSTALLER];
   document.querySelectorAll('[name="installer"]').forEach((c) => c.checked = names.includes(c.value));
+  const onlineRecord = Boolean(f["Источник"] === "С сайта" || f["Тип записи"]);
+  els.editStatus.disabled = onlineRecord;
+  els.editDate.disabled = onlineRecord;
+  els.editTime.disabled = onlineRecord;
   renderRequestFiles(current.id);
+  onlineBookingFileLinks(current.id);
   renderRequestHistory(current);
   renderRequestComments(current);
   lastAutosaveSnapshot = JSON.stringify(currentEditFields());
@@ -4935,3 +4945,84 @@ function detectServiceFromText(text) {
 }
 
 // admin-recovery-cache-fix 2026-09-02
+
+
+/* This file is concatenated into assets/admin.js and shares the original CRM scope. */
+var onlineBookingLastLoad=0;
+var onlineBookingRows=[];
+var onlineBookingServices=[];
+function onlineBookingIsManager(){return currentUser?.access==='full' && (currentUser.name==='Сергей Н'||currentUser.name==='Роман');}
+function onlineBookingEnable(){
+  const panel=$('onlineBookingPanel');if(!panel)return;
+  panel.hidden=!onlineBookingIsManager();
+  if(!panel.hidden)onlineBookingLoad();
+}
+async function onlineBookingAPI(url,init={}){
+ let approval=sessionStorage.getItem('solncanet_booking_admin_action_key')||'';
+ if(!approval){approval=prompt('Введите секрет онлайн-записи для Сергея и Романа (BOOKING_ADMIN_ACTION_KEY):')||'';
+   if(!approval)throw new Error('Секрет онлайн-записи не введён');
+   sessionStorage.setItem('solncanet_booking_admin_action_key',approval);
+ }
+ const res=await fetch(url,{cache:'no-store',...init,headers:{'x-admin-password':pwd(),'x-booking-approval-key':approval,...(init.headers||{})}});
+ const raw=await res.text();let data;try{data=JSON.parse(raw);}catch{throw new Error('Cloudflare вернул не JSON (HTTP '+res.status+')');}
+ if(res.status===403)sessionStorage.removeItem('solncanet_booking_admin_action_key');
+ if(!res.ok||!data.ok)throw new Error(data.error||'Ошибка онлайн-записи');
+ return data;
+}
+function onlineBookingMsg(message,error=false){const e=$('onlineBookingMessage');if(e){e.textContent=message||'';e.classList.toggle('error',Boolean(error));}}
+async function onlineBookingLoad(silent=false){if(!onlineBookingIsManager())return;try{
+  if(!silent)onlineBookingMsg('Проверяем новые онлайн-заявки…');
+  const d=await onlineBookingAPI('/booking-admin?mode=requests&_='+Date.now());onlineBookingRows=d.bookings||[];onlineBookingLastLoad=Date.now();onlineBookingRender();onlineBookingMsg('Данные обновлены');
+ }catch(error){onlineBookingMsg(error.message,true);}}
+function onlineBookingRender(){const active=['pending','proposed','change_requested','cancel_requested'];const pending=onlineBookingRows.filter(b=>active.includes(b.status));$('onlineBookingBadge').textContent=String(pending.length);
+ const statuses={pending:'Ожидает подтверждения',confirmed:'Подтверждена',proposed:'Предложено другое время',expired:'Резерв истёк',rejected:'Отказано',cancelled:'Отменена',change_requested:'Запрос на перенос',cancel_requested:'Запрос на отмену'};
+ const list=[...pending,...onlineBookingRows.filter(b=>!active.includes(b.status)).slice(0,10)];
+ $('onlineBookingItems').innerHTML=list.map(b=>{
+ const z=b.zayavki||{},c=z.clients||{},s=b.booking_services||{};
+ const local=new Intl.DateTimeFormat('ru-RU',{timeZone:'Asia/Yekaterinburg',day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}).format(new Date(b.start_at));
+ const waiting=['pending','proposed','expired'].includes(b.status);const canConfirm=['pending','proposed','expired'].includes(b.status);
+ const actions=`<button type="button" data-booking-id="${e(b.id)}" data-booking-action="open">Открыть заявку</button>`+
+  (canConfirm?`<button class="online-confirm" type="button" data-booking-id="${e(b.id)}" data-booking-action="confirm">Подтвердить</button>`:'')+
+  (waiting||b.status==='confirmed'||b.status==='change_requested'?`<button type="button" data-booking-id="${e(b.id)}" data-booking-action="propose">Другое время</button>`:'')+
+  (waiting?`<button class="online-deny" type="button" data-booking-id="${e(b.id)}" data-booking-action="reject">Отказать</button>`:'')+
+  (b.status==='cancel_requested'?`<button class="online-deny" type="button" data-booking-id="${e(b.id)}" data-booking-action="cancel">Подтвердить отмену</button>`:'')+
+  (['change_requested','cancel_requested'].includes(b.status)?`<button type="button" data-booking-id="${e(b.id)}" data-booking-action="dismiss_change">Отклонить запрос клиента</button>`:'')+
+  (b.status==='confirmed'?`<button type="button" data-booking-id="${e(b.id)}" data-booking-action="calendar_sync">Синхр. Google</button>`:'');
+ return `<article class="online-booking-item ${e(b.status)}"><div class="online-booking-title"><strong>${e(b.kind)} · ${e(s.name||z.service||'')} · №${e(b.id.slice(0,8).toUpperCase())}</strong><span>${e(statuses[b.status]||b.status)}</span></div><div class="online-booking-sub">${e(local)} · ${e(c.name||'Клиент')} · ${e(c.phone||'')} ${z.address?' · '+e(z.address):''}</div>${b.status==='pending'?`<div class="online-booking-sub">Бронь до: ${e(new Intl.DateTimeFormat('ru-RU',{timeZone:'Asia/Yekaterinburg',day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}).format(new Date(b.hold_until)))}</div>`:''}${b.note?`<div class="online-booking-sub">Комментарий: ${e(b.note)}</div>`:''}<div class="online-booking-actions">${actions}</div></article>`;
+ }).join('')||'<p class="muted-text">Онлайн-заявок пока нет.</p>';
+}
+async function onlineBookingAction(evn){const button=evn.target.closest('[data-booking-action]');if(!button)return;const b=onlineBookingRows.find(x=>x.id===button.dataset.bookingId);if(!b)return;
+ const action=button.dataset.bookingAction;if(action==='open'){const id=b.zayavka_id;const rec=records.find(r=>String(r.id)===id);if(rec)openRequest(id);else{await load({silent:true});openRequest(id);}return;}
+ let date=null,time=null,reason='';
+ if(action==='propose'){
+   date=prompt('Новая дата для записи (ГГГГ-ММ-ДД):',new Intl.DateTimeFormat('sv-SE',{timeZone:'Asia/Yekaterinburg',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date(b.start_at)));if(date===null)return;
+   time=prompt('Новое время по Екатеринбургу (ЧЧ:ММ):',new Intl.DateTimeFormat('sv-SE',{timeZone:'Asia/Yekaterinburg',hour:'2-digit',minute:'2-digit',hour12:false}).format(new Date(b.start_at)));if(time===null)return;
+   if(!/^\d{4}-\d{2}-\d{2}$/.test(date)||!/^\d{2}:\d{2}$/.test(time)){onlineBookingMsg('Введите корректную дату и время',true);return;}
+   if(!confirm('Новое время согласовано с клиентом по телефону?'))return;
+ }
+ if(action==='reject'||action==='cancel'){reason=prompt('Причина отказа / отмены (необязательно):','');if(reason===null)return;}
+ if(action==='confirm'&&!confirm('Подтвердить эту заявку? После подтверждения клиенту будет поставлено SMS в очередь.'))return;
+ button.disabled=true;onlineBookingMsg('Сохраняем решение…');
+ try{const data=await onlineBookingAPI('/booking-admin',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({mode:action==='calendar_sync'?'calendar_sync':'action',id:b.id,action,date,time,reason})});onlineBookingMsg(data.calendarWarning?'Заявка обработана, но Google Календарь: '+data.calendarWarning:('Сохранено: '+action),Boolean(data.calendarWarning));await onlineBookingLoad(true);await load({silent:true});}catch(error){onlineBookingMsg(error.message,true);}finally{button.disabled=false;}
+}
+async function onlineBookingLoadServices(){if(!onlineBookingIsManager())return;try{const d=await onlineBookingAPI('/booking-admin?mode=services');onlineBookingServices=d.services||[];const wrap=$('onlineBookingServices');wrap.innerHTML=onlineBookingServices.map(s=>`<div class="online-service-row" data-service-row="${e(s.id)}"><div><b>${e(s.kind)} · ${e(s.name)}</b><small>${e(s.direction)}</small></div><label>Цена от, ₽<input data-field="price" type="number" min="0" step="0.01" value="${s.price_from??''}" /></label><label>Минут<input data-field="duration" type="number" min="15" max="720" step="15" value="${s.duration_minutes??''}" /></label><label>Шаг, мин<input data-field="step" type="number" min="15" max="180" step="15" value="${s.slot_step_minutes??30}" /></label><label class="online-publish"><input data-field="published" type="checkbox" ${s.published?'checked':''}/>На сайте</label><button data-save-booking-service="${e(s.id)}" type="button">Сохранить</button></div>`).join('');}catch(error){onlineBookingMsg(error.message,true);}}
+async function onlineBookingSaveService(evn){const btn=evn.target.closest('[data-save-booking-service]');if(!btn)return;const row=btn.closest('[data-service-row]');const get=(key)=>row.querySelector('[data-field="'+key+'"]');btn.disabled=true;
+ try{await onlineBookingAPI('/booking-admin',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({mode:'service',id:btn.dataset.saveBookingService,priceFrom:get('price').value,durationMinutes:get('duration').value,stepMinutes:get('step').value,published:get('published').checked})});onlineBookingMsg('Услуга сохранена. Настройки сайта обновились.');}catch(error){onlineBookingMsg(error.message,true);}finally{btn.disabled=false;}}
+async function onlineBookingLoadBlocks(){if(!onlineBookingIsManager())return;try{const d=await onlineBookingAPI('/booking-admin?mode=blocks');$('onlineBookingBlocks').innerHTML=(d.blocks||[]).map(b=>`<div class="online-booking-block-item"><span>${e(b.direction)} · ${e(new Date(b.start_at).toLocaleString('ru-RU',{timeZone:'Asia/Yekaterinburg'}))} — ${e(new Date(b.end_at).toLocaleString('ru-RU',{timeZone:'Asia/Yekaterinburg'}))} · ${b.blocked_places} мест · ${e(b.reason||'')}</span><button data-delete-booking-block="${e(b.id)}" type="button">Убрать</button></div>`).join('')||'<p class="muted-text">Блокировок нет.</p>';}catch(e){onlineBookingMsg(e.message,true);}}
+async function onlineBookingAddBlock(){const date=$('onlineBookingBlockDate').value,from=$('onlineBookingBlockFrom').value,to=$('onlineBookingBlockTo').value;if(!date||!from||!to){onlineBookingMsg('Заполните дату и время',true);return;}
+ try{const startAt=new Date(date+'T'+from+':00+05:00').toISOString(),endAt=new Date(date+'T'+to+':00+05:00').toISOString();await onlineBookingAPI('/booking-admin',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({mode:'block',direction:$('onlineBookingBlockDirection').value,startAt,endAt,places:Number($('onlineBookingBlockPlaces').value),reason:$('onlineBookingBlockReason').value})});onlineBookingMsg('Время заблокировано');await onlineBookingLoadBlocks();}catch(e){onlineBookingMsg(e.message,true);}}
+async function onlineBookingDeleteBlock(evn){const btn=evn.target.closest('[data-delete-booking-block]');if(!btn)return;if(!confirm('Удалить блокировку времени?'))return;try{await onlineBookingAPI('/booking-admin',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({mode:'delete_block',id:btn.dataset.deleteBookingBlock})});await onlineBookingLoadBlocks();}catch(e){onlineBookingMsg(e.message,true);}}
+function initOnlineBookingPanel(){const panel=$('onlineBookingPanel');if(!panel)return;
+ $('onlineBookingRefresh').addEventListener('click',()=>onlineBookingLoad());
+ $('onlineBookingItems').addEventListener('click',onlineBookingAction);
+ $('onlineBookingServicesRefresh').addEventListener('click',onlineBookingLoadServices);
+ $('onlineBookingServices').addEventListener('click',onlineBookingSaveService);
+ $('onlineBookingAddBlock').addEventListener('click',onlineBookingAddBlock);
+ $('onlineBookingBlocks').addEventListener('click',onlineBookingDeleteBlock);
+ panel.querySelectorAll('details').forEach((node,index)=>node.addEventListener('toggle',()=>{if(node.open){if(index===0)onlineBookingLoadServices();else onlineBookingLoadBlocks();}}));
+}
+async function onlineBookingFileLinks(recordId){const target=$('requestR2FilesBox');if(!target||!recordId)return;target.textContent='Проверяем вложения клиента…';
+ try{const response=await fetch('/booking-files?requestId='+encodeURIComponent(recordId),{cache:'no-store',headers:{'x-admin-password':pwd()}});const data=await response.json();if(!response.ok||!data.ok)throw new Error(data.error||'Не удалось получить файлы');if(current?.id!==recordId)return;
+   target.innerHTML=data.files?.length?'<b>Вложения из онлайн-записи (Cloudflare R2)</b>'+data.files.map(f=>`<div class="r2-line"><a href="${e(f.url)}" target="_blank" rel="noopener">${e(f.name)}</a><span>${(Number(f.size_bytes)/1048576).toFixed(1)} МБ</span></div>`).join(''):'';
+ }catch(e){target.textContent='Вложения R2: '+e.message;}
+}
