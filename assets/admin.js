@@ -277,7 +277,7 @@ let contextMenuEl = null;
 const els = {
   sidebar: $("sidebar"), mobileMenuBtn: $("mobileMenuBtn"), sidebarCloseBtn: $("sidebarCloseBtn"), sidebarOverlay: $("sidebarOverlay"),
   loginPanel: $("loginPanel"), appPanel: $("appPanel"), loginForm: $("loginForm"), passwordInput: $("passwordInput"), loginMessage: $("loginMessage"), logoutBtn: $("logoutBtn"), refreshBtn: $("refreshBtn"), listBtn: $("listBtn"), calendarBtn: $("calendarBtn"), listView: $("listView"), calendarView: $("calendarView"), requestsBody: $("requestsBody"), calendarGrid: $("calendarGrid"), monthTitle: $("monthTitle"), calendarMonthSummary: $("calendarMonthSummary"), calendarTodayBtn: $("calendarTodayBtn"), calendarCreateDayBtn: $("calendarCreateDayBtn"), calendarDayAgenda: $("calendarDayAgenda"), calendarSelectedDateTitle: $("calendarSelectedDateTitle"), calendarSelectedDateSummary: $("calendarSelectedDateSummary"), calendarSelectedEvents: $("calendarSelectedEvents"), prevMonth: $("prevMonth"), nextMonth: $("nextMonth"), searchInput: $("searchInput"), statusFilter: $("statusFilter"), installerFilter: $("installerFilter"), dateFrom: $("dateFrom"), dateTo: $("dateTo"), clearFiltersBtn: $("clearFiltersBtn"), message: $("message"), statTotal: $("statTotal"), statNew: $("statNew"), statToday: $("statToday"), statWork: $("statWork"), statVolume: $("statVolume"), statFiltered: $("statFiltered"), bulkToolbar: $("bulkToolbar"), bulkSelectedCount: $("bulkSelectedCount"), bulkSelectAll: $("bulkSelectAll"), bulkDeleteBtn: $("bulkDeleteBtn"), bulkStatusSelect: $("bulkStatusSelect"), bulkApplyStatusBtn: $("bulkApplyStatusBtn"), bulkInstallerSelect: $("bulkInstallerSelect"), bulkApplyInstallerBtn: $("bulkApplyInstallerBtn"), bulkExportBtn: $("bulkExportBtn"),
-  dialog: $("requestDialog"), dialogTitle: $("dialogTitle"), requestInfo: $("requestInfo"), requestFormError: $("requestFormError"), copyRequestTopBtn: $("copyRequestTopBtn"), editRequestTopBtn: $("editRequestTopBtn"), editClientTopBtn: $("editClientTopBtn"), editClientBox: $("editClientBox"), editRequestBox: $("editRequestBox"), editName: $("editName"), editPhone: $("editPhone"), editClientSuggestions: $("editClientSuggestions"), editClientHint: $("editClientHint"), editDate: $("editDate"), editTime: $("editTime"), editStatus: $("editStatus"), editM2: $("editM2"), editResponsible: $("editResponsible"), editCompany: $("editCompany"), editDirection: $("editDirection"), editAutoFields: $("editAutoFields"), editAuto: $("editAuto"), editFilm: $("editFilm"), editAutoServices: $("editAutoServices"), editAddServiceBtn: $("editAddServiceBtn"), editAutoTotal: $("editAutoTotal"), editService: $("editService"), editAddress: $("editAddress"), editAdminComment: $("editAdminComment"), saveRequestBtn: $("saveRequestBtn"), cancelRequestBtn: $("cancelRequestBtn"), cancelReason: $("cancelReason"), requestHistoryBox: $("requestHistoryBox"), requestAutosaveStatus: $("requestAutosaveStatus"), requestCommentsBox: $("requestCommentsBox"), requestCommentText: $("requestCommentText"), addRequestCommentBtn: $("addRequestCommentBtn"), activityBody: $("activityBody"), requestGoogleCalendarBox: $("requestGoogleCalendarBox"), requestGoogleCreateBtn: $("requestGoogleCreateBtn"), requestGoogleOpenLink: $("requestGoogleOpenLink"), requestGoogleStatus: $("requestGoogleStatus"), exportBtn: $("exportBtn"),
+  dialog: $("requestDialog"), dialogTitle: $("dialogTitle"), requestFormError: $("requestFormError"), copyRequestTopBtn: $("copyRequestTopBtn"), editRequestTopBtn: $("editRequestTopBtn"), editClientTopBtn: $("editClientTopBtn"), editClientBox: $("editClientBox"), editRequestBox: $("editRequestBox"), editName: $("editName"), editPhone: $("editPhone"), editClientSuggestions: $("editClientSuggestions"), editClientHint: $("editClientHint"), editDate: $("editDate"), editTime: $("editTime"), editStatus: $("editStatus"), editM2: $("editM2"), editResponsible: $("editResponsible"), editCompany: $("editCompany"), editDirection: $("editDirection"), editAutoFields: $("editAutoFields"), editAuto: $("editAuto"), editFilm: $("editFilm"), editAutoServices: $("editAutoServices"), editAddServiceBtn: $("editAddServiceBtn"), editAutoTotal: $("editAutoTotal"), editService: $("editService"), editAddress: $("editAddress"), editAdminComment: $("editAdminComment"), saveRequestBtn: $("saveRequestBtn"), cancelRequestBtn: $("cancelRequestBtn"), cancelReason: $("cancelReason"), requestHistoryBox: $("requestHistoryBox"), requestAutosaveStatus: $("requestAutosaveStatus"), requestCommentsBox: $("requestCommentsBox"), requestCommentText: $("requestCommentText"), addRequestCommentBtn: $("addRequestCommentBtn"), activityBody: $("activityBody"), requestGoogleCalendarBox: $("requestGoogleCalendarBox"), requestGoogleCreateBtn: $("requestGoogleCreateBtn"), requestGoogleOpenLink: $("requestGoogleOpenLink"), requestGoogleStatus: $("requestGoogleStatus"), exportBtn: $("exportBtn"),
   clientsBody: $("clientsBody"), objectsBody: $("objectsBody"), installersBody: $("installersBody"), trashBody: $("trashBody"), historyBody: $("historyBody"), historySearchInput: $("historySearchInput"), clearHistoryLocalBtn: $("clearHistoryLocalBtn"), filesBody: $("filesBody"), filesSearchInput: $("filesSearchInput"), filesTypeFilter: $("filesTypeFilter"),
   quickAddBtn: $("quickAddBtn"), quickAddDialog: $("quickAddDialog"), quickSaveBtn: $("quickSaveBtn"), quickFormError: $("quickFormError"), quickName: $("quickName"), quickCompany: $("quickCompany"), quickPhone: $("quickPhone"), quickClientHint: $("quickClientHint"), quickClientSuggestions: $("quickClientSuggestions"), quickGoogleSync: $("quickGoogleSync"), quickDirection: $("quickDirection"), quickAutoFields: $("quickAutoFields"), quickAuto: $("quickAuto"), quickFilm: $("quickFilm"), quickAutoServices: $("quickAutoServices"), quickAddServiceBtn: $("quickAddServiceBtn"), quickAutoTotal: $("quickAutoTotal"), quickService: $("quickService"), quickServiceLabel: $("quickServiceLabel"), quickM2Label: $("quickM2Label"), quickAddressLabel: $("quickAddressLabel"), editServiceLabel: $("editServiceLabel"), quickDate: $("quickDate"), quickTime: $("quickTime"), quickM2: $("quickM2"), quickAddress: $("quickAddress"), quickComment: $("quickComment"),
   reportDialog: $("reportDialog"), reportTitle: $("reportTitle"), reportDateFrom: $("reportDateFrom"), reportDateTo: $("reportDateTo"), reportStatus: $("reportStatus"), reportFormat: $("reportFormat"), reportAllInstallers: $("reportAllInstallers"), reportInstallersFieldset: $("reportInstallersFieldset"), downloadReportBtn: $("downloadReportBtn"), payrollOptions: $("payrollOptions"), payrollSplitMode: $("payrollSplitMode"), payrollStatusMode: $("payrollStatusMode"), payrollSettingsBody: $("payrollSettingsBody"), savePayrollSettingsBtn: $("savePayrollSettingsBtn"), previewPayrollBtn: $("previewPayrollBtn"), reportPreview: $("reportPreview"),
@@ -1690,43 +1690,6 @@ function updateEditDirectionUI() {
   ensureRomanInstallerForAuto("edit");
 }
 
-function requestCardTopInfoHtml(record) {
-  const f = record.fields || {};
-  const kind = calendarEventKind(record);
-  const typeClass = calendarEventTypeClass(record);
-  const dir = recordDirection(record);
-  const services = parseAutoServices(f["Авто услуги"], f["Общая стоимость"], f["Услуга"]);
-  const servicesText = services.length
-    ? services.map((item) => [item.name, item.material ? `материал: ${item.material}` : "", item.price ? `${moneyNumber(item.price)} ₽` : ""].filter(Boolean).join(" · ")).join("; ")
-    : (f["Услуга"] || "—");
-  const total = f["Общая стоимость"] || (services.length ? autoServicesTotal(services) : "");
-  const comment = f["Комментарий клиента"] || f["Комментарий"] || f["Комментарий администратора"] || "";
-  const key = clientKeyFromFields(f);
-  return `<section class="request-top-info ${typeClass}">
-    <div class="request-top-info-head">
-      <div>
-        <span class="request-kind-badge ${typeClass}">${e(kind.label)}</span>
-        <h3>Информация о заявке</h3>
-        <p>${e(f["Дата записи"] || "Дата не указана")}${f["Время записи"] ? ` · ${e(f["Время записи"])}` : ""}${f["Статус"] ? ` · ${e(f["Статус"])}` : ""}</p>
-      </div>
-      <div class="request-client-actions">
-        <button class="open-btn ghost-small" type="button" data-copy-request="${e(record.id)}">Скопировать заявку</button>
-        <button class="open-btn ghost-small" type="button" data-open-client="${e(key)}">Открыть клиента</button>
-      </div>
-    </div>
-    <div class="request-top-info-grid">
-      <p><span>Телефон</span><b>${f["Телефон"] ? phoneLink(f["Телефон"]) : "—"}</b></p>
-      <p><span>Адрес</span><b>${e(f["Адрес"] || "—")}</b></p>
-      <p><span>Клиент</span><b>${e(f["Имя клиента"] || "—")}</b></p>
-      <p><span>Компания</span><b>${e(f["Компания"] || "—")}</b></p>
-      ${dir === "auto" ? `<p><span>Автомобиль</span><b>${e(f["Авто"] || "—")}</b></p>` : `<p><span>Площадь</span><b>${e(f["Итоговый м2"] || f["м2"] || "—")}</b></p>`}
-      <p><span>Стоимость</span><b>${total ? `${moneyNumber(total)} ₽` : "—"}</b></p>
-      <p class="wide"><span>Услуги</span><b>${e(servicesText)}</b></p>
-      ${comment ? `<p class="wide"><span>Комментарий</span><b>${nl2br(comment)}</b></p>` : ""}
-    </div>
-  </section>`;
-}
-
 function openRequest(id) {
   requestCreateMode = false;
   requestCreateCalendarEvent = null;
@@ -1736,7 +1699,6 @@ function openRequest(id) {
   setRequestCreateModeUI(false);
   const f = current.fields || {};
   els.dialogTitle.textContent = "Карточка заявки";
-  els.requestInfo.innerHTML = requestCardTopInfoHtml(current);
   bindActionButtons();
   els.editDate.value = f["Дата записи"] || "";
   els.editTime.value = f["Время записи"] || "";
@@ -2448,10 +2410,6 @@ function resetRequestDialogForCreate(prefill = {}) {
   setRequestCreateModeUI(true);
   const direction = prefill?.direction || (currentWorkspace === "auto" ? "auto" : "architecture");
   if (els.dialogTitle) els.dialogTitle.textContent = prefill?.copyFromNumber ? `Новая заявка — копия ${prefill.copyFromNumber}` : "Новая заявка";
-  if (els.requestInfo) {
-    const source = prefill?.copyFromNumber ? `Создаётся копия заявки ${e(prefill.copyFromNumber)}. Измените нужные данные и нажмите «Создать заявку».` : "Заполните карточку. После создания эта же карточка откроется полностью: можно будет добавить файлы, комментарии, SMS и Google Календарь.";
-    els.requestInfo.innerHTML = `<div class="request-current-summary request-create-summary"><b>Создание новой заявки</b><br>${source}</div>`;
-  }
   if (els.editName) els.editName.value = prefill?.name || "";
   if (els.editCompany) els.editCompany.value = prefill?.company || "";
   if (els.editPhone) els.editPhone.value = prefill?.phone ? formatQuickPhoneForTyping(prefill.phone) : "";
