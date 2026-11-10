@@ -5,3 +5,7 @@
 .booking-contact-actions{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-top:18px}
 .booking-contact-actions .booking-back,.booking-contact-actions .booking-primary{min-height:48px}
 @media(max-width:480px){.booking-contact-actions .booking-back,.booking-contact-actions .booking-primary{flex:1 1 auto}.booking-contact-actions .booking-primary{flex-grow:2}}
+
+/* Замер: короткая заявка без выбора услуги и календаря */
+.booking-progress.is-measure span:nth-child(2){display:none!important}
+.booking-progress.is-measure{grid-template-columns:repeat(2,minmax(0,1fr))!important}

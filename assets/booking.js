@@ -12,7 +12,7 @@
  const alert=(message,good=false)=>{const e=$('bookingAlert');e.textContent=message;e.classList.toggle('good',good);e.hidden=!message;};
  const api=async (url,init={})=>{const r=await fetch(url,{cache:'no-store',...init});const raw=await r.text();let d;try{d=JSON.parse(raw)}catch{throw new Error('Сервер вернул некорректный ответ. Проверьте Cloudflare Pages Functions.');}if(!r.ok||!d.ok)throw new Error(d.error||'Ошибка соединения');return d;};
  const service=()=>state.services.find(s=>s.id===state.serviceId);
- function step(n){state.step=n;alert('');document.querySelectorAll('.booking-step').forEach(x=>x.hidden=Number(x.dataset.step)!==n);document.querySelectorAll('#bookingProgress span').forEach((x,i)=>{x.classList.toggle('current',i+1===n);x.classList.toggle('done',i+1<n)});$('bookingBack').hidden=n===1;$('bookingNext').hidden=n===3;$('bookingNavigation').hidden=n===3;validate();if(n===2)renderCalendar();if(n===3){summary();renderTurnstile();}window.scrollTo({top:0,behavior:'smooth'});}
+ function step(n){state.step=n;alert('');const measure=state.kind==='Замер'&&state.direction==='Архитектура';$('bookingProgress').classList.toggle('is-measure',measure);const contactProgress=$('bookingProgress').querySelector('span:nth-child(3)');if(contactProgress)contactProgress.innerHTML=(measure?'2':'3')+' <b>Контакты</b>';document.querySelectorAll('.booking-step').forEach(x=>x.hidden=Number(x.dataset.step)!==n);document.querySelectorAll('#bookingProgress span').forEach((x,i)=>{x.classList.toggle('current',i+1===n);x.classList.toggle('done',i+1<n)});$('bookingBack').hidden=n===1;$('bookingNext').hidden=n===3;$('bookingNavigation').hidden=n===3;validate();if(n===2)renderCalendar();if(n===3){summary();renderTurnstile();}window.scrollTo({top:0,behavior:'smooth'});}
  function validate(){const allowed=state.step===1?Boolean(state.serviceId):state.step===2?Boolean(state.date&&state.time):true;$('bookingNext').disabled=!allowed;}
  function clearScheduleSelection(){
    state.date='';state.time='';state.slots=[];
@@ -27,9 +27,16 @@
    updateServices();
  }
  function selectKind(kind){
-   if(state.kind===kind)return; // Keep the service and date if the client clicks the same option.
+   if(state.kind===kind){if(kind==='Замер')step(3);return;}
    state.kind=kind;state.serviceId='';clearScheduleSelection();
    document.querySelectorAll('[data-kind]').forEach(x=>x.classList.toggle('selected',x.dataset.kind===kind));
+   if(kind==='Замер'){
+     // Measurement is a callback request, not a timed service reservation.
+     $('bookingServiceBox').hidden=true;
+     const leadService=state.services.find(s=>s.direction==='Архитектура'&&s.kind==='Замер'&&s.name==='Замер / консультация') || state.services.find(s=>s.direction==='Архитектура'&&s.kind==='Замер');
+     if(!leadService){alert('Замер временно недоступен. Позвоните нам.');return;}
+     state.serviceId=leadService.id;step(3);return;
+   }
    $('bookingServiceBox').hidden=false;updateServices();
  }
  function updateServices(){const options=state.services.filter(s=>s.direction===state.direction&&s.kind===state.kind);
@@ -51,28 +58,36 @@
    $('bookingPrevMonth').disabled=monthFirst(state.month)<=monthFirst(ekbDay());$('bookingNextMonth').disabled=monthFirst(state.month)>=monthFirst(plusDays(ekbDay(),30));
  }
  async function pickDay(day){state.date=day;state.time='';renderCalendar();validate();$('bookingSlots').textContent='Проверяем свободное время…';try{const r=await api('/booking-public?mode=slots&service='+encodeURIComponent(state.serviceId)+'&date='+encodeURIComponent(day));if(day!==state.date)return;state.slots=r.slots;$('bookingSlots').innerHTML=r.slots.length?r.slots.map(t=>`<button class="booking-slot" type="button" data-slot="${esc(t)}">${esc(t)}</button>`).join(''):'<span class="booking-hint">На эту дату свободных мест нет. Выберите другой день.</span>';document.querySelectorAll('[data-slot]').forEach(b=>b.onclick=()=>{state.time=b.dataset.slot;document.querySelectorAll('[data-slot]').forEach(x=>x.classList.toggle('selected',x===b));validate();});}catch(e){$('bookingSlots').textContent=e.message;}}
- function summary(){const s=service();$('bookingSummary').innerHTML=`<b>${esc(state.kind)} · ${esc(s?.name||'')}</b><div>${esc(state.date.split('-').reverse().join('.'))} в ${esc(state.time)} · Екатеринбург</div><div>${esc(money(s?.price_from,s))}</div>`;$('bookingAddressBox').hidden=state.direction!=='Архитектура';$('bookingCarBox').hidden=state.direction!=='Авто';}
+ function summary(){
+   const measure=state.kind==='Замер'&&state.direction==='Архитектура';
+   const s=service();
+   $('bookingSummary').innerHTML=measure
+     ?'<b>Бесплатный замер</b><div>Оставьте имя и телефон. Сотрудник позвонит и согласует удобную дату.</div>'
+     :`<b>${esc(state.kind)} · ${esc(s?.name||'')}</b><div>${esc(state.date.split('-').reverse().join('.'))} в ${esc(state.time)} · Екатеринбург</div><div>${esc(money(s?.price_from,s))}</div>`;
+   $('bookingAddressBox').hidden=measure||state.direction!=='Архитектура';
+   $('bookingCarBox').hidden=state.direction!=='Авто';
+ }
  function renderTurnstile(){if(!state.siteKey||state.turnstileId!==null||!state.ready)return;if(!window.turnstile){setTimeout(renderTurnstile,250);return;}state.turnstileId=window.turnstile.render('#bookingTurnstile',{sitekey:state.siteKey,callback:v=>state.turnstileToken=v,'expired-callback':()=>state.turnstileToken='','error-callback':()=>state.turnstileToken='' });}
  const normalizePhone=v=>{let d=v.replace(/\D/g,'');if(d.startsWith('8'))d='7'+d.slice(1);if(d.length===10&&d.startsWith('9'))d='7'+d;return d};
  async function submit(e){e.preventDefault();if(state.busy)return;
    const name=$('bookingName').value.trim(),phone=normalizePhone($('bookingPhone').value);
    if(name.length<2){alert('Введите имя клиента');return;}
    if(!/^7\d{10}$/.test(phone)){alert('Введите телефон в формате +7');return;}
-   if(state.direction==='Архитектура'&&$('bookingAddress').value.trim().length<5){alert('Введите адрес объекта');return;}
+   if(state.direction==='Архитектура'&&state.kind!=='Замер'&&$('bookingAddress').value.trim().length<5){alert('Введите адрес объекта');return;}
    if(state.direction==='Авто'&&$('bookingCar').value.trim().length<2){alert('Укажите марку и модель автомобиля');return;}
    if(!$('bookingConsent').checked){alert('Подтвердите согласие на обработку персональных данных');return;}
    if(state.siteKey&&!state.turnstileToken){alert('Пройдите проверку защиты от спама');return;}
    const files=state.uploadAvailable?Array.from($('bookingAttachments').files||[]):[];if(files.length>15){alert('Можно приложить не более 15 файлов');return;}
    if(files.some(f=>f.size>state.maxFileSizeBytes)){alert('Для Google Drive каждый файл должен быть не больше 10 МБ');return;}
    state.busy=true;const button=$('bookingSubmit');button.disabled=true;button.textContent='Отправляем заявку…';alert('');
-   try{const r=await api('/booking-public',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({requestKey:state.requestKey,serviceId:state.serviceId,date:state.date,time:state.time,name,phone:'+'+phone,address:$('bookingAddress').value,car:$('bookingCar').value,comment:$('bookingComment').value,consent:true,formStartedAt:state.started,website:$('bookingWebsite').value,turnstileToken:state.turnstileToken})});state.submitted=r;state.files=files;showSuccess();if(files.length)void uploadAll();}catch(error){alert(error.message);if(window.turnstile&&state.turnstileId!==null)window.turnstile.reset(state.turnstileId);state.turnstileToken='';}finally{state.busy=false;button.disabled=false;button.textContent='Отправить заявку';}
+   try{const r=await api('/booking-public',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({requestKey:state.requestKey,leadKind:state.kind==='Замер'&&state.direction==='Архитектура'?'Замер':null,serviceId:state.serviceId,date:state.date,time:state.time,name,phone:'+'+phone,address:$('bookingAddress').value,car:$('bookingCar').value,comment:$('bookingComment').value,consent:true,formStartedAt:state.started,website:$('bookingWebsite').value,turnstileToken:state.turnstileToken})});state.submitted=r;state.files=files;showSuccess();if(files.length)void uploadAll();}catch(error){alert(error.message);if(window.turnstile&&state.turnstileId!==null)window.turnstile.reset(state.turnstileId);state.turnstileToken='';}finally{state.busy=false;button.disabled=false;button.textContent='Отправить заявку';}
  }
  const bookingSessionKey='solncanet_public_booking_drive_v2';
  function savedUploadKey(file){return `solncanet_upload_${state.submitted.bookingId}_${encodeURIComponent(file.name)}_${file.size}_${file.lastModified}`;}
  function saveSession(){try{sessionStorage.setItem(bookingSessionKey,JSON.stringify({response:state.submitted,savedAt:Date.now()}));}catch{}}
  function showSuccess(){
    saveSession();$('bookingApp').hidden=true;$('bookingSuccess').hidden=false;
-   $('bookingReference').textContent=state.submitted.reference||'';
+   $('bookingReference').textContent=state.submitted.reference||'';const measure=Boolean(state.submitted.measureLead);$('bookingSuccessMessage').textContent=measure?'Мы получили ваши контакты. Сотрудник свяжется с вами и согласует бесплатный замер. Дата и время пока не назначены.':'Выбранное время ещё не подтверждено. Менеджер проверит запись и свяжется с вами.';$('bookingSuccessHold').hidden=measure;$('bookingManageLinkBox').hidden=measure;
    $('bookingManageLink').value=location.origin+'/zapis.html?manage='+encodeURIComponent(state.submitted.manageToken);
    $('bookingUploadPanel').hidden=!state.uploadAvailable;if(state.uploadAvailable)renderUploadList();
    window.scrollTo({top:0,behavior:'smooth'});
@@ -150,7 +165,7 @@
    button.disabled=!errors&&!state.abortRequested&&state.files.every(f=>state.uploaded.has(savedUploadKey(f)));
  }
  async function manageInit(raw){$('bookingApp').hidden=true;$('bookingManagePane').hidden=false;
-   try{const d=await api('/booking-manage?token='+encodeURIComponent(raw));const b=d.booking;const date=new Intl.DateTimeFormat('ru-RU',{timeZone:'Asia/Yekaterinburg',day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}).format(new Date(b.startAt));$('bookingManageInfo').textContent=`Заявка № ${b.reference} · ${b.kind}: ${b.service} · ${date} (Екатеринбург). Статус: ${b.status}`;
+   try{const d=await api('/booking-manage?token='+encodeURIComponent(raw));const b=d.booking;const date=b.startAt?new Intl.DateTimeFormat('ru-RU',{timeZone:'Asia/Yekaterinburg',day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}).format(new Date(b.startAt)):'дата и время уточняются';$('bookingManageInfo').textContent=`Заявка № ${b.reference} · ${b.kind}: ${b.service} · ${date} (Екатеринбург). Статус: ${b.status}`;
      $('bookingManageForm').hidden=!['confirmed','change_requested','cancel_requested'].includes(b.status);}
    catch(e){$('bookingManageInfo').textContent=e.message;}
    let action='';document.querySelectorAll('[data-manage]').forEach(b=>b.onclick=()=>{action=b.dataset.manage;document.querySelectorAll('[data-manage]').forEach(x=>x.classList.toggle('selected',x===b));$('bookingManageChange').hidden=action!=='change';});
@@ -173,7 +188,7 @@
    $('bookingService').onchange=e=>pickService(e.target.value);
    $('bookingPrevMonth').onclick=()=>{state.month=nextMonth(state.month,-1);renderCalendar()};
    $('bookingNextMonth').onclick=()=>{state.month=nextMonth(state.month,1);renderCalendar()};
-   document.querySelectorAll('[data-booking-back]').forEach(b=>b.onclick=()=>step(Math.max(1,state.step-1)));$('bookingNext').onclick=()=>step(Math.min(3,state.step+1));
+   document.querySelectorAll('[data-booking-back]').forEach(b=>b.onclick=()=>step(state.step===3&&state.kind==='Замер'?1:Math.max(1,state.step-1)));$('bookingNext').onclick=()=>step(Math.min(3,state.step+1));
    $('bookingSubmitForm').onsubmit=submit;
    $('bookingCopyLink').onclick=()=>navigator.clipboard.writeText($('bookingManageLink').value).then(()=>{$('bookingCopyLink').textContent='Скопировано';}).catch(()=>{$('bookingManageLink').select();});
    $('bookingUploadStart').onclick=uploadAll;

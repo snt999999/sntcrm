@@ -72,7 +72,7 @@ async function notifyBooking(env,notificationId){
   const rows=await db(env,'/rest/v1/booking_notifications?select=*,booking_requests(id,zayavka_id,direction,kind,start_at,status,zayavki(service))&id=eq.'+encodeURIComponent(notificationId)+'&limit=1');const n=rows?.[0];if(!n||n.status==='sent')return;
   const claim=await db(env,'/rest/v1/booking_notifications?id=eq.'+encodeURIComponent(n.id)+'&status=in.(queued,failed)&select=id',{method:'PATCH',headers:{Prefer:'return=representation'},body:{status:'sending',next_attempt_at:new Date(Date.now()+10*60_000).toISOString()}});
   if(!claim?.length)return;
-  const b=n.booking_requests||{};const local=new Date(b.start_at||Date.now()).toLocaleString('ru-RU',{timeZone:'Asia/Yekaterinburg',hour:'2-digit',minute:'2-digit',day:'2-digit',month:'2-digit',year:'numeric'});
+  const b=n.booking_requests||{};const local=b.start_at?new Date(b.start_at).toLocaleString('ru-RU',{timeZone:'Asia/Yekaterinburg',hour:'2-digit',minute:'2-digit',day:'2-digit',month:'2-digit',year:'numeric'}):'Дата и время уточняются';
   const title={created:'Новая заявка с сайта',change_requested:'Запрос на перенос',cancel_requested:'Запрос на отмену'}[n.event_type]||'Изменение записи';
   const base=String(env.BOOKING_SITE_URL||'').replace(/\/$/,'');
   const msg=`СОЛНЦАНЕТ · ${title}\nЗаявка ${String(b.id||'').slice(0,8).toUpperCase()}\n${b.kind||''}: ${b.zayavki?.service||''}\n${local} (Екатеринбург)\n${base?base+'/admin.html?open='+b.zayavka_id:'Откройте раздел Заявки в CRM'}`;
@@ -300,14 +300,17 @@ async function onRequest(context){
     if(body.consent!==true)throw new BookingError('Необходимо согласие на обработку данных');
     const phone=phone7(body.phone);if(!phone)throw new BookingError('Введите номер телефона +7');
     const serviceId=accessId(body.serviceId);
-    if(!dateText(body.date)|| !/^([01]\d|2[0-3]):[0-5]\d$/.test(body.time||''))throw new BookingError('Выберите дату и время');
+    const measureLead=body.leadKind==='Замер';
+    if(!measureLead&&(!dateText(body.date)|| !/^([01]\d|2[0-3]):[0-5]\d$/.test(body.time||'')))throw new BookingError('Выберите дату и время');
     if(env.TURNSTILE_SITE_KEY&&env.TURNSTILE_SECRET_KEY)await turnstile(env,body.turnstileToken,request.headers.get('cf-connecting-ip'));
     const clientKey=accessId(body.requestKey);
-    const data=await db(env,'/rest/v1/rpc/booking_submit',{method:'POST',body:{p_request_key:clientKey,p_service_id:serviceId,p_date:body.date,p_time:body.time,p_name:clean(body.name,160),p_phone:phone,p_address:clean(body.address,400),p_car:clean(body.car,200),p_comment:clean(body.comment,2000)}});
+    const data=measureLead
+      ?await db(env,'/rest/v1/rpc/booking_submit_measure',{method:'POST',body:{p_request_key:clientKey,p_name:clean(body.name,160),p_phone:phone,p_comment:clean(body.comment,2000)}})
+      :await db(env,'/rest/v1/rpc/booking_submit',{method:'POST',body:{p_request_key:clientKey,p_service_id:serviceId,p_date:body.date,p_time:body.time,p_name:clean(body.name,160),p_phone:phone,p_address:clean(body.address,400),p_car:clean(body.car,200),p_comment:clean(body.comment,2000)}});
     const b=data?.[0];if(!b)throw new BookingError('Не удалось сохранить заявку',500);
     const uploadToken=await token(env,'upload',b.booking_id,Date.now()+48*3600_000);
     const manageToken=await token(env,'manage',b.booking_id,Date.now()+180*86400_000);
-    const result={ok:true,bookingId:b.booking_id,requestId:b.zayavka_id,reference:b.reference,holdUntil:b.hold_until,uploadToken,manageToken,created:b.is_new===true};
+    const result={ok:true,bookingId:b.booking_id,requestId:b.zayavka_id,reference:b.reference,holdUntil:b.hold_until,uploadToken,manageToken,created:b.is_new===true,measureLead};
     if(b.is_new===true && context.waitUntil && env.BOOKING_TELEGRAM_BOT_TOKEN && env.BOOKING_TELEGRAM_SERGEY_CHAT_ID && env.BOOKING_TELEGRAM_ROMAN_CHAT_ID){context.waitUntil((async()=>{try{const rows=await db(env,'/rest/v1/booking_notifications?select=id&booking_id=eq.'+encodeURIComponent(b.booking_id)+'&event_type=eq.created&limit=1');if(rows?.[0]){const {notifyBooking}=await Promise.resolve(__modules['lib/booking-server.js']);await notifyBooking(env,rows[0].id);}}catch(e){console.error('Telegram notification failed',e.message);}})());}
     return respond(result,201);
   }catch(error){return handleError(error);}

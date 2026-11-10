@@ -818,6 +818,12 @@ function calendarEventKind(recordOrFields) {
 function calendarEventShortTitle(recordOrFields) {
   return calendarEventKind(recordOrFields).label;
 }
+function calendarOnlineBookingInfo(recordOrFields) {
+  const f=recordOrFields?.fields || recordOrFields || {};
+  const online=String(f['Источник']||'').trim().toLowerCase()==='с сайта' || f['Онлайн-запись']===true;
+  const confirmed=online && String(f['Статус']||'').trim()==='Подтверждена';
+  return {online,confirmed,classes:online?'is-online-booking'+(confirmed?' is-online-confirmed':''):''};
+}
 function calendarEventTypeClass(recordOrFields) {
   return `calendar-type-${calendarEventKind(recordOrFields).key}`;
 }
@@ -1046,8 +1052,9 @@ function calendarMonthEventButton(record) {
   const status = f["Статус"] || "";
   const dir = recordDirection(record);
   const typeClass = calendarEventTypeClass(record);
+  const online=calendarOnlineBookingInfo(record);
   const hint = [time, shortTitle, name, f["Услуга"], f["Адрес"]].filter(Boolean).join(" — ");
-  return `<button class="event calendar-event-chip direction-${dir} ${typeClass}" type="button" data-open="${e(record.id)}" title="${e(hint)}"><span>${e(time || "—")}</span><b>${e(shortTitle)}</b>${status ? `<small>${e(status)}</small>` : ""}</button>`;
+  return `<button class="event calendar-event-chip direction-${dir} ${typeClass} ${online.classes}" type="button" data-open="${e(record.id)}" title="${e(hint)}"><span>${e(time || "—")}</span><b>${e(shortTitle)}</b>${online.online?'<small class="calendar-online-label">Онлайн-запись</small>':''}${status ? `<small>${e(status)}</small>` : ""}</button>`;
 }
 
 function bindCalendarMonthButtons() {
@@ -1175,12 +1182,13 @@ function calendarAgendaItemHtml(record) {
   const dir = recordDirection(record);
   const typeClass = calendarEventTypeClass(record);
   const shortTitle = calendarEventShortTitle(record);
+  const online=calendarOnlineBookingInfo(record);
   const client = [f["Имя клиента"], f["Компания"]].filter(Boolean).join(" · ");
   const serviceLine = [f["Услуга"], f["Адрес"]].filter(Boolean).join(" · ") || "—";
-  return `<article class="calendar-agenda-item direction-${dir} ${typeClass}" data-open="${e(record.id)}">
+  return `<article class="calendar-agenda-item direction-${dir} ${typeClass} ${online.classes}" data-open="${e(record.id)}">
     <div class="calendar-agenda-time"><b>${e(f["Время записи"] || "—")}</b><span class="status" data-status="${status}">${status || "—"}</span></div>
     <div class="calendar-agenda-content">
-      <h4>${e(shortTitle)}</h4>
+      <h4>${e(shortTitle)} ${online.online?'<span class="calendar-online-label">Онлайн-запись</span>':''}</h4>
       <p>${e(serviceLine)}</p>
       <small>${client ? `<b>${e(client)}</b>` : "Без клиента"}${f["Телефон"] ? ` · ${phoneLink(f["Телефон"])}` : ""}</small>
     </div>
@@ -4994,29 +5002,36 @@ function onlineBookingRender(){const active=['pending','proposed','change_reques
  const list=[...pending,...onlineBookingRows.filter(b=>!active.includes(b.status)).slice(0,10)];
  $('onlineBookingItems').innerHTML=list.map(b=>{
  const z=b.zayavki||{},c=z.clients||{},s=b.booking_services||{};
- const local=new Intl.DateTimeFormat('ru-RU',{timeZone:'Asia/Yekaterinburg',day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}).format(new Date(b.start_at));
+ const local=b.start_at?new Intl.DateTimeFormat('ru-RU',{timeZone:'Asia/Yekaterinburg',day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}).format(new Date(b.start_at)):'Дата и время не назначены';
  const waiting=['pending','proposed','expired'].includes(b.status);const canConfirm=['pending','proposed','expired'].includes(b.status);
  const actions=`<button type="button" data-booking-id="${e(b.id)}" data-booking-action="open">Открыть заявку</button>`+
-  (canConfirm?`<button class="online-confirm" type="button" data-booking-id="${e(b.id)}" data-booking-action="confirm">Подтвердить</button>`:'')+
+  (canConfirm?`<button class="online-confirm" type="button" data-booking-id="${e(b.id)}" data-booking-action="confirm">${b.start_at?'Подтвердить':'Назначить замер'}</button>`:'')+
   (waiting||b.status==='confirmed'||b.status==='change_requested'?`<button type="button" data-booking-id="${e(b.id)}" data-booking-action="propose">Другое время</button>`:'')+
   (waiting?`<button class="online-deny" type="button" data-booking-id="${e(b.id)}" data-booking-action="reject">Отказать</button>`:'')+
   (b.status==='cancel_requested'?`<button class="online-deny" type="button" data-booking-id="${e(b.id)}" data-booking-action="cancel">Подтвердить отмену</button>`:'')+
   (['change_requested','cancel_requested'].includes(b.status)?`<button type="button" data-booking-id="${e(b.id)}" data-booking-action="dismiss_change">Отклонить запрос клиента</button>`:'')+
   (b.status==='confirmed'?`<button type="button" data-booking-id="${e(b.id)}" data-booking-action="calendar_sync">Синхр. Google</button>`:'');
- return `<article class="online-booking-item ${e(b.status)}"><div class="online-booking-title"><strong>${e(b.kind)} · ${e(s.name||z.service||'')} · №${e(b.id.slice(0,8).toUpperCase())}</strong><span>${e(statuses[b.status]||b.status)}</span></div><div class="online-booking-sub">${e(local)} · ${e(c.name||'Клиент')} · ${e(c.phone||'')} ${z.address?' · '+e(z.address):''}</div>${b.status==='pending'?`<div class="online-booking-sub">Бронь до: ${e(new Intl.DateTimeFormat('ru-RU',{timeZone:'Asia/Yekaterinburg',day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}).format(new Date(b.hold_until)))}</div>`:''}${b.note?`<div class="online-booking-sub">Комментарий: ${e(b.note)}</div>`:''}<div class="online-booking-actions">${actions}</div></article>`;
+ return `<article class="online-booking-item ${e(b.status)}"><div class="online-booking-title"><strong>${e(b.kind)} · ${e(s.name||z.service||'')} · №${e(b.id.slice(0,8).toUpperCase())}</strong><span>${e(statuses[b.status]||b.status)}</span></div><div class="online-booking-sub">${e(local)} · ${e(c.name||'Клиент')} · ${e(c.phone||'')} ${z.address?' · '+e(z.address):''}</div>${b.status==='pending'&&b.hold_until?`<div class="online-booking-sub">Бронь до: ${e(new Intl.DateTimeFormat('ru-RU',{timeZone:'Asia/Yekaterinburg',day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}).format(new Date(b.hold_until)))}</div>`:''}${b.note?`<div class="online-booking-sub">Комментарий: ${e(b.note)}</div>`:''}<div class="online-booking-actions">${actions}</div></article>`;
  }).join('')||'<p class="muted-text">Онлайн-заявок пока нет.</p>';
 }
 async function onlineBookingAction(evn){const button=evn.target.closest('[data-booking-action]');if(!button)return;const b=onlineBookingRows.find(x=>x.id===button.dataset.bookingId);if(!b)return;
  const action=button.dataset.bookingAction;if(action==='open'){const id=b.zayavka_id;const rec=records.find(r=>String(r.id)===id);if(rec)openRequest(id);else{await load({silent:true});openRequest(id);}return;}
  let date=null,time=null,reason='';
  if(action==='propose'){
-   date=prompt('Новая дата для записи (ГГГГ-ММ-ДД):',new Intl.DateTimeFormat('sv-SE',{timeZone:'Asia/Yekaterinburg',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date(b.start_at)));if(date===null)return;
-   time=prompt('Новое время по Екатеринбургу (ЧЧ:ММ):',new Intl.DateTimeFormat('sv-SE',{timeZone:'Asia/Yekaterinburg',hour:'2-digit',minute:'2-digit',hour12:false}).format(new Date(b.start_at)));if(time===null)return;
+   date=prompt('Новая дата для записи (ГГГГ-ММ-ДД):',new Intl.DateTimeFormat('sv-SE',{timeZone:'Asia/Yekaterinburg',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date(b.start_at||Date.now()+86400000)));if(date===null)return;
+   time=prompt('Новое время по Екатеринбургу (ЧЧ:ММ):',b.start_at?new Intl.DateTimeFormat('sv-SE',{timeZone:'Asia/Yekaterinburg',hour:'2-digit',minute:'2-digit',hour12:false}).format(new Date(b.start_at)):'10:00');if(time===null)return;
    if(!/^\d{4}-\d{2}-\d{2}$/.test(date)||!/^\d{2}:\d{2}$/.test(time)){onlineBookingMsg('Введите корректную дату и время',true);return;}
    if(!confirm('Новое время согласовано с клиентом по телефону?'))return;
  }
  if(action==='reject'||action==='cancel'){reason=prompt('Причина отказа / отмены (необязательно):','');if(reason===null)return;}
- if(action==='confirm'&&!confirm('Подтвердить эту заявку? После подтверждения клиенту будет поставлено SMS в очередь.'))return;
+ if(action==='confirm'&&!b.start_at){
+    date=prompt('Дата бесплатного замера (ГГГГ-ММ-ДД). Сначала согласуйте её с клиентом:',new Intl.DateTimeFormat('sv-SE',{timeZone:'Asia/Yekaterinburg'}).format(new Date(Date.now()+86400000)));
+    if(date===null)return;
+    time=prompt('Время замера по Екатеринбургу (ЧЧ:ММ):','10:00');
+    if(time===null)return;
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(date)||!/^\d{2}:\d{2}$/.test(time)){onlineBookingMsg('Введите корректную дату и время',true);return;}
+  }
+  if(action==='confirm'&&!confirm('Подтвердить эту заявку? После подтверждения клиенту будет поставлено SMS в очередь.'))return;
  button.disabled=true;onlineBookingMsg('Сохраняем решение…');
  try{const data=await onlineBookingAPI('/booking-admin',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({mode:action==='calendar_sync'?'calendar_sync':'action',id:b.id,action,date,time,reason})});onlineBookingMsg(data.calendarWarning?'Заявка обработана, но Google Календарь: '+data.calendarWarning:('Сохранено: '+action),Boolean(data.calendarWarning));await onlineBookingLoad(true);await load({silent:true});}catch(error){onlineBookingMsg(error.message,true);}finally{button.disabled=false;}
 }
