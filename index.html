@@ -61,58 +61,21 @@
     <section id="booking" class="booking-card">
       <div class="booking-form">
         <h2>Заявка на консультацию</h2>
-        <p>Опишите задачу и оставьте контакты — мы свяжемся с вами.</p>
+        <p>Оставьте контакты и комментарий — мы свяжемся с вами.</p>
         <form id="leadForm" class="lead-form-v7">
           <input type="text" name="hpCompany" class="hp-field" tabindex="-1" autocomplete="off" aria-hidden="true" />
           <input type="hidden" name="formStartedAt" id="formStartedAt" />
 
-          <label>Фамилия и имя
+          <label>Имя
             <input name="name" placeholder="Например: Иван Иванов" autocomplete="name" required />
-          </label>
-
-          <label>Компания
-            <input name="companyName" placeholder="Например: ООО Ромашка" autocomplete="organization" />
           </label>
 
           <label>Телефон
             <input name="phone" placeholder="+7 (___) ___-__-__" autocomplete="tel" required />
           </label>
 
-          <label>Услуга
-            <select name="service" required>
-              <option value="">Выберите услугу</option>
-              <option>Тонировка стекол автомобиля</option>
-              <option>Атермальная тонировка автомобиля</option>
-              <option>Тонировка балконов и окон</option>
-              <option>Бронирование стекол и витрин</option>
-              <option>Бронирование фар</option>
-              <option>Защита авто полиуретановой пленкой</option>
-              <option>Тонирование витрин</option>
-              <option>Декоративное тонирование офисных перегородок</option>
-              <option>Замер / консультация</option>
-              <option>Другое</option>
-            </select>
-          </label>
-
-          <div class="form-row-2">
-            <label>Желаемая дата
-              <input name="preferredDate" type="date" />
-            </label>
-            <label>Желаемое время
-              <input name="preferredTime" type="time" />
-            </label>
-          </div>
-
-          <label>Адрес объекта
-            <input name="address" placeholder="Город, улица, дом, офис / квартира" required />
-          </label>
-
-          <label>Информация об объекте
-            <textarea name="objectInfo" placeholder="Автомобиль, квартира, балкон, витрина, офис. Укажите площадь, количество стекол или особенности." required></textarea>
-          </label>
-
-          <label>Комментарий / что нужно сделать
-            <textarea name="task" placeholder="Например: тонировка авто, бронирование фар, тонировка балкона, защита витрин." required></textarea>
+          <label>Комментарий
+            <textarea name="comment" placeholder="Коротко опишите, что вас интересует" required></textarea>
           </label>
 
           <button class="btn btn--red" id="leadSubmitBtn" type="submit">Отправить заявку</button>
@@ -245,7 +208,7 @@
     </div>
   </div>
 
-  <script src="assets/site.js?v=client-public-clean-20261110-v2"></script>
+  <script src="assets/site.js?v=client-public-clean-20261110-v3"></script>
   <script src="assets/pwa.js?v=20260902-admin-recovery-cache-fix-v1"></script>
 </body>
 </html>

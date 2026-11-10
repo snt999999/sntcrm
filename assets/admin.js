@@ -818,9 +818,13 @@ function calendarEventKind(recordOrFields) {
 function calendarEventShortTitle(recordOrFields) {
   return calendarEventKind(recordOrFields).label;
 }
+function isOnlineBookingRecord(recordOrFields) {
+  const f=recordOrFields?.fields || recordOrFields || {};
+  return String(f['Источник']||'').trim().toLowerCase()==='с сайта' || f['Онлайн-запись']===true;
+}
 function calendarOnlineBookingInfo(recordOrFields) {
   const f=recordOrFields?.fields || recordOrFields || {};
-  const online=String(f['Источник']||'').trim().toLowerCase()==='с сайта' || f['Онлайн-запись']===true;
+  const online=isOnlineBookingRecord(recordOrFields);
   const confirmed=online && String(f['Статус']||'').trim()==='Подтверждена';
   return {online,confirmed,classes:online?'is-online-booking'+(confirmed?' is-online-confirmed':''):''};
 }
@@ -1420,7 +1424,7 @@ function showRowContextMenu(event, id) {
   if (!record) return;
   const f = record.fields || {};
   const menu = ensureContextMenu();
-  menu.innerHTML = `<button data-ctx="open">Открыть</button><button data-ctx="copy-request">Скопировать заявку</button><button data-ctx="copy-phone">Копировать телефон</button><button data-ctx="copy-address">Копировать адрес</button><button data-ctx="client">История клиента</button>${canDeleteRecords() ? `<button data-ctx="delete" class="danger-context" data-delete-only="1">Удалить</button>` : ""}`;
+  menu.innerHTML = `<button data-ctx="open">Открыть</button><button data-ctx="copy-request">Скопировать заявку</button><button data-ctx="copy-phone">Копировать телефон</button><button data-ctx="copy-address">Копировать адрес</button><button data-ctx="client">История клиента</button>${canDeleteRecords() ? `<button data-ctx="delete" class="danger-context" data-delete-only="1">${isOnlineBookingRecord(record)?'Удалить онлайн-запись':'Удалить'}</button>` : ""}`;
   menu.style.left = Math.min(event.clientX, window.innerWidth - 240) + "px";
   menu.style.top = Math.min(event.clientY, window.innerHeight - 230) + "px";
   menu.hidden = false;
@@ -1957,10 +1961,34 @@ async function saveRequest() {
     restoreButton();
   }
 }
+async function deleteOnlineBooking(record, reason='Удалено вручную', confirmed=false) {
+  if(!canDeleteRecords())return msg('У вас нет прав на удаление онлайн-записей.');
+  if(!record||!isOnlineBookingRecord(record))throw new Error('Это не онлайн-запись');
+  if(!confirmed && !confirm('Удалить онлайн-запись? Время освободится, а заявка попадёт в корзину.'))return false;
+  try {
+    const result=await onlineBookingAPI('/booking-admin',{
+      method:'POST',headers:{'content-type':'application/json'},
+      body:JSON.stringify({mode:'delete',requestId:record.id,reason})
+    });
+    await reloadRecordsFromSupabase();
+    if(current&&String(current.id)===String(record.id)){
+      current=null;
+      if(els.dialog?.open)els.dialog.close();
+    }
+    renderAll();
+    if(onlineBookingIsManager())await onlineBookingLoad(true);
+    msg(result.calendarWarning?'Онлайн-запись удалена. '+result.calendarWarning:'Онлайн-запись удалена и перенесена в корзину.');
+    return true;
+  }catch(error){
+    msg('Не удалось удалить онлайн-запись: '+error.message);
+    throw error;
+  }
+}
 async function cancelCurrentRequest() {
   if (!canDeleteRecords()) return msg("У вас нет прав на удаление. Можно создавать и редактировать, но нельзя удалять.");
   if (!current) return;
-  const reason = els.cancelReason.value.trim() || "Причина не указана";
+  const reason = els.cancelReason.value.trim() || 'Удалено вручную';
+  if (isOnlineBookingRecord(current)) return deleteOnlineBooking(current, reason);
   if (!confirm("Удалить заявку? Она сразу попадёт в корзину.")) return;
   const oldFields = current.fields || {};
   const adminComment = [oldFields["Комментарий администратора"] || "", `ОТМЕНА: ${dateTimeY()} — ${reason}`].filter(Boolean).join("\n");
@@ -1974,6 +2002,7 @@ async function cancelCurrentRequest() {
 async function moveRecordToTrash(record, reason = "Удалено вручную") {
   if (!canDeleteRecords()) return msg("У вас нет прав на удаление. Можно создавать и редактировать, но нельзя удалять.");
   if (!record) return;
+  if (isOnlineBookingRecord(record)) return deleteOnlineBooking(record, reason, true);
   const oldFields = record.fields || {};
   const adminComment = [oldFields["Комментарий администратора"] || "", `КОРЗИНА: ${dateTimeY()} — ${reason}`].filter(Boolean).join("\n");
   let history = getHistoryForRecord(record);
@@ -1994,7 +2023,7 @@ async function trashRecordById(id, reason = "Удалено вручную") {
   if (!canDeleteRecords()) return msg("У вас нет прав на удаление. Можно создавать и редактировать, но нельзя удалять.");
   const record = records.find((r) => String(r.id) === String(id));
   if (!record) return msg("Запись не найдена. Обновите страницу.");
-  if (!confirm("Удалить запись? Она сразу попадёт в корзину.")) return;
+  if (!confirm(isOnlineBookingRecord(record) ? 'Удалить онлайн-запись? Бронь освободится, заявка попадёт в корзину.' : 'Удалить запись? Она сразу попадёт в корзину.')) return;
   await moveRecordToTrash(record, reason);
   renderAll();
 }
@@ -2388,7 +2417,10 @@ function applyQuickClient(record) {
 function setRequestCreateModeUI(isCreate) {
   [els.copyRequestTopBtn, els.editRequestTopBtn, els.editClientTopBtn].filter(Boolean).forEach((btn) => { btn.hidden = Boolean(isCreate); });
   if (els.saveRequestBtn) els.saveRequestBtn.textContent = isCreate ? "Создать заявку" : "Сохранить";
-  if (els.cancelRequestBtn) els.cancelRequestBtn.hidden = Boolean(isCreate || !canDeleteRecords());
+  if (els.cancelRequestBtn) {
+    els.cancelRequestBtn.hidden = Boolean(isCreate || !canDeleteRecords());
+    els.cancelRequestBtn.textContent = !isCreate && current && isOnlineBookingRecord(current) ? 'Удалить онлайн-запись' : 'Удалить';
+  }
   const title = document.querySelector('#requestDialog details.files-box summary');
   if (title && isCreate) title.textContent = "Файлы этой заявки — после создания";
   else if (title) title.textContent = "Файлы этой заявки";
@@ -2889,7 +2921,7 @@ function renderInstallerDetails() {
   els.installerDetailsBody.innerHTML = detailRows.join("") || '<tr><td colspan="12">По этому монтажнику ничего не найдено</td></tr>';
   bindActionButtons();
 }
-function renderTrash() { const arr = records.filter(isTrashRecord).sort(sortByDateDesc); els.trashBody.innerHTML = arr.map((r) => { const f = r.fields || {}; return `<tr class="clickable-row" data-open-row="${e(r.id)}"><td>${e(f["Дата записи"] || "")}<br><small>${e(requestDisplayNumber(r))}</small></td><td><b>${e(f["Имя клиента"] || "—")}</b></td><td>${e(f["Компания"] || "—")}</td><td>${phoneLink(f["Телефон"])}</td><td>${e(f["Услуга"] || "")}</td><td>${e(f["Адрес"] || "")}</td><td>${nl2br(f["Причина отмены"] || lastCancelReason(f) || f["Комментарий администратора"] || "")}</td><td class="status-cell"><span class="status" data-status="${e(f["Статус"] || "")}">${e(f["Статус"] || "—")}</span></td><td><button class="open-btn" data-open="${e(r.id)}">Открыть</button> <button class="restore-btn" data-restore="${e(r.id)}">Восстановить</button></td></tr>`; }).join("") || '<tr><td colspan="8">Корзина пустая</td></tr>'; bindActionButtons(); }
+function renderTrash() { const arr = records.filter(isTrashRecord).sort(sortByDateDesc); els.trashBody.innerHTML = arr.map((r) => { const f = r.fields || {}; return `<tr class="clickable-row" data-open-row="${e(r.id)}"><td>${e(f["Дата записи"] || "")}<br><small>${e(requestDisplayNumber(r))}</small></td><td><b>${e(f["Имя клиента"] || "—")}</b></td><td>${e(f["Компания"] || "—")}</td><td>${phoneLink(f["Телефон"])}</td><td>${e(f["Услуга"] || "")}</td><td>${e(f["Адрес"] || "")}</td><td>${nl2br(f["Причина отмены"] || lastCancelReason(f) || f["Комментарий администратора"] || "")}</td><td class="status-cell"><span class="status" data-status="${e(f["Статус"] || "")}">${e(f["Статус"] || "—")}</span></td><td><button class="open-btn" data-open="${e(r.id)}">Открыть</button> ${isOnlineBookingRecord(r)?'':`<button class="restore-btn" data-restore="${e(r.id)}">Восстановить</button>`}</td></tr>`; }).join("") || '<tr><td colspan="8">Корзина пустая</td></tr>'; bindActionButtons(); }
 function renderFiles() {
   renderFilesRequestSelect();
   const q = norm(els.filesSearchInput?.value || ""), type = norm(els.filesTypeFilter?.value || "");
@@ -5010,12 +5042,25 @@ function onlineBookingRender(){const active=['pending','proposed','change_reques
   (waiting?`<button class="online-deny" type="button" data-booking-id="${e(b.id)}" data-booking-action="reject">Отказать</button>`:'')+
   (b.status==='cancel_requested'?`<button class="online-deny" type="button" data-booking-id="${e(b.id)}" data-booking-action="cancel">Подтвердить отмену</button>`:'')+
   (['change_requested','cancel_requested'].includes(b.status)?`<button type="button" data-booking-id="${e(b.id)}" data-booking-action="dismiss_change">Отклонить запрос клиента</button>`:'')+
-  (b.status==='confirmed'?`<button type="button" data-booking-id="${e(b.id)}" data-booking-action="calendar_sync">Синхр. Google</button>`:'');
+  (b.status==='confirmed'?`<button type="button" data-booking-id="${e(b.id)}" data-booking-action="calendar_sync">Синхр. Google</button>`:'')+
+  (canDeleteRecords()?`<button class="online-deny" type="button" data-booking-id="${e(b.id)}" data-booking-action="delete">Удалить онлайн-запись</button>`:'');
  return `<article class="online-booking-item ${e(b.status)}"><div class="online-booking-title"><strong>${e(b.kind)} · ${e(s.name||z.service||'')} · №${e(b.id.slice(0,8).toUpperCase())}</strong><span>${e(statuses[b.status]||b.status)}</span></div><div class="online-booking-sub">${e(local)} · ${e(c.name||'Клиент')} · ${e(c.phone||'')} ${z.address?' · '+e(z.address):''}</div>${b.status==='pending'&&b.hold_until?`<div class="online-booking-sub">Бронь до: ${e(new Intl.DateTimeFormat('ru-RU',{timeZone:'Asia/Yekaterinburg',day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}).format(new Date(b.hold_until)))}</div>`:''}${b.note?`<div class="online-booking-sub">Комментарий: ${e(b.note)}</div>`:''}<div class="online-booking-actions">${actions}</div></article>`;
  }).join('')||'<p class="muted-text">Онлайн-заявок пока нет.</p>';
 }
 async function onlineBookingAction(evn){const button=evn.target.closest('[data-booking-action]');if(!button)return;const b=onlineBookingRows.find(x=>x.id===button.dataset.bookingId);if(!b)return;
  const action=button.dataset.bookingAction;if(action==='open'){const id=b.zayavka_id;const rec=records.find(r=>String(r.id)===id);if(rec)openRequest(id);else{await load({silent:true});openRequest(id);}return;}
+ if(action==='delete'){
+   if(!canDeleteRecords())return onlineBookingMsg('У вас нет прав на удаление.',true);
+   if(!confirm('Удалить онлайн-запись? Время освободится, а заявка попадёт в корзину.'))return;
+   const reason=prompt('Причина удаления (необязательно):','');if(reason===null)return;
+   button.disabled=true;
+   try{
+     const result=await onlineBookingAPI('/booking-admin',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({mode:'delete',requestId:b.zayavka_id,reason})});
+     await reloadRecordsFromSupabase();renderAll();await onlineBookingLoad(true);
+     onlineBookingMsg(result.calendarWarning?'Запись удалена. '+result.calendarWarning:'Онлайн-запись удалена и перенесена в корзину.',Boolean(result.calendarWarning));
+   }catch(error){onlineBookingMsg(error.message,true);}finally{button.disabled=false;}
+   return;
+ }
  let date=null,time=null,reason='';
  if(action==='propose'){
    date=prompt('Новая дата для записи (ГГГГ-ММ-ДД):',new Intl.DateTimeFormat('sv-SE',{timeZone:'Asia/Yekaterinburg',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date(b.start_at||Date.now()+86400000)));if(date===null)return;

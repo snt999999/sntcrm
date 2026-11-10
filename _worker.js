@@ -67,6 +67,42 @@ function prettyDate(iso){const x=String(iso||'').slice(0,10);return /^\d{4}-\d{2
 async function telegramSend(env,chatId,message){if(!chatId)return false;if(!env.BOOKING_TELEGRAM_BOT_TOKEN)return false;
   const result=await fetch('https://api.telegram.org/bot'+env.BOOKING_TELEGRAM_BOT_TOKEN+'/sendMessage',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({chat_id:chatId,text:message,disable_web_page_preview:true})});const d=await result.json().catch(()=>({}));return result.ok&&d.ok===true;
 }
+const BOOKING_WEB3FORMS_ENDPOINT='https://api.web3forms.com/submit';
+async function sendBookingEmail(env,details){
+  const accessKey=String(env.WEB3FORMS_ACCESS_KEY||env.WEB3FORMS_KEY||'').trim();
+  if(!accessKey)return {ok:false,skipped:true,error:'WEB3FORMS_ACCESS_KEY is not set'};
+  const lines=[
+    details.reference?`Номер заявки: ${details.reference}`:'',
+    details.direction?`Направление: ${details.direction}`:'',
+    details.kind?`Тип записи: ${details.kind}`:'',
+    details.service?`Услуга: ${details.service}`:'',
+    details.date&&details.time?`Дата и время: ${details.date} ${details.time}`:(details.date?`Дата: ${details.date}`:''),
+    details.name?`Имя: ${details.name}`:'',
+    details.phone?`Телефон: ${details.phone}`:'',
+    details.address?`Адрес объекта: ${details.address}`:'',
+    details.car?`Автомобиль: ${details.car}`:'',
+    details.comment?`Комментарий: ${details.comment}`:'',
+    details.manageUrl?`Ссылка для управления записью: ${details.manageUrl}`:'',
+    details.crmUrl?`Открыть в CRM: ${details.crmUrl}`:''
+  ].filter(Boolean);
+  const payload={
+    access_key:accessKey,
+    subject:`Новая онлайн-запись СОЛНЦАНЕТ${details.reference?` № ${details.reference}`:''}`,
+    from_name:'Сайт СОЛНЦАНЕТ',
+    name:details.name||'Клиент',
+    phone:details.phone||'',
+    service:details.service||'',
+    address:details.address||details.car||'',
+    preferred_date:details.date||'',
+    preferred_time:details.time||'',
+    message:lines.join('\n'),
+    record_source:'Cloudflare Pages / booking-public / Supabase'
+  };
+  const res=await fetch(BOOKING_WEB3FORMS_ENDPOINT,{method:'POST',headers:{'content-type':'application/json','accept':'application/json'},body:JSON.stringify(payload)});
+  const raw=await res.text();let data={};try{data=raw?JSON.parse(raw):{}}catch{data={raw}}
+  if(!res.ok||data.success===false)throw new Error(data.message||data.error||'Web3Forms send error');
+  return {ok:true,response:data};
+}
 async function notifyBooking(env,notificationId){
   if(!env.BOOKING_TELEGRAM_BOT_TOKEN||!env.BOOKING_TELEGRAM_SERGEY_CHAT_ID||!env.BOOKING_TELEGRAM_ROMAN_CHAT_ID)return;
   const rows=await db(env,'/rest/v1/booking_notifications?select=*,booking_requests(id,zayavka_id,direction,kind,start_at,status,zayavki(service))&id=eq.'+encodeURIComponent(notificationId)+'&limit=1');const n=rows?.[0];if(!n||n.status==='sent')return;
@@ -83,10 +119,10 @@ async function notifyBooking(env,notificationId){
   const patch={sergey_sent:Boolean(sergey),roman_sent:Boolean(roman),status:done?'sent':'failed',attempts:n.attempts+1,next_attempt_at:new Date(Date.now()+Math.min(60,2**Math.min(n.attempts,6))*60_000).toISOString(),last_error:done?null:'Проверьте BOT_TOKEN и оба Telegram chat_id',sent_at:done?new Date().toISOString():null};
   await db(env,'/rest/v1/booking_notifications?id=eq.'+encodeURIComponent(n.id),{method:'PATCH',body:patch});
 }
-async function bookingRow(env,id){const rows=await db(env,'/rest/v1/booking_requests?select=*,zayavki(id,service,client_id,clients(name,phone))&id=eq.'+encodeURIComponent(accessId(id))+'&limit=1');return rows?.[0]||null;}
-async function adminBookings(env){const r=await db(env,'/rest/v1/booking_requests?select=*,booking_services(name,price_from,duration_minutes),zayavki(id,service,address,client_comment,clients(name,phone))&order=created_at.desc&limit=200');return Array.isArray(r)?r:[];}
+async function bookingRow(env,id){const rows=await db(env,'/rest/v1/booking_requests?select=*,zayavki(id,service,address,client_comment,client_id,clients(name,phone))&id=eq.'+encodeURIComponent(accessId(id))+'&limit=1');return rows?.[0]||null;}
+async function adminBookings(env){const r=await db(env,'/rest/v1/booking_requests?select=*,booking_services(name,price_from,duration_minutes),zayavki(id,deleted_at,service,address,client_comment,clients(name,phone))&order=created_at.desc&limit=200');return Array.isArray(r)?r.filter(b=>!b.zayavki?.deleted_at):[];}
 
-return {respond, BookingError, clean, phone7, root, key, checkSetup, db, adminRole, requireAdmin, requireAnyStaff, token, verifyToken, handleError, turnstile, accessId, dateText, timeText, yes, prettyDate, telegramSend, notifyBooking, bookingRow, adminBookings};
+return {respond, BookingError, clean, phone7, root, key, checkSetup, db, adminRole, requireAdmin, requireAnyStaff, token, verifyToken, handleError, turnstile, accessId, dateText, timeText, yes, prettyDate, telegramSend, sendBookingEmail, notifyBooking, bookingRow, adminBookings};
 })();
 
 __modules['lib/booking-calendar.js']=(()=>{
@@ -137,6 +173,32 @@ async function onRequest({request,env}){
   }
   if(request.method!=='POST')return respond({ok:false,error:'Method not allowed'},405);
   const body=await request.json(); const mode=String(body.mode||'action');
+  if(mode==='delete'){
+    // Only online bookings can use this endpoint. Ordinary CRM records retain their existing delete route.
+    const zid=accessId(body.requestId);
+    const rows=await db(env,'/rest/v1/booking_requests?select=id,zayavka_id,status,zayavki(id,deleted_at,meta,calendar_event_id)&zayavka_id=eq.'+encodeURIComponent(zid)+'&limit=1');
+    const booking=rows?.[0];
+    if(!booking||!booking.zayavki?.meta?.online_booking)throw new BookingError('Онлайн-запись не найдена',404);
+    if(booking.zayavki.deleted_at)return respond({ok:true,deleted:true,alreadyDeleted:true});
+    const reason=clean(body.reason||'Удалено менеджером',1000)||'Удалено менеджером';
+    // The existing transition RPC is transactional and releases the held slot and queued SMS.
+    // A second request after partial failure can safely finish the soft deletion.
+    if(!['cancelled','rejected'].includes(booking.status)){
+      await db(env,'/rest/v1/rpc/booking_admin_transition',{method:'POST',body:{p_booking_id:booking.id,p_action:'cancel',p_date:null,p_time:null,p_reason:reason}});
+    }
+    await db(env,'/rest/v1/sms_queue?zayavka_id=eq.'+encodeURIComponent(zid)+'&status=eq.queued',{
+      method:'PATCH',body:{status:'cancelled',cancelled_at:new Date().toISOString(),error:'Онлайн-запись удалена'}
+    });
+    const updated=await db(env,'/rest/v1/zayavki?id=eq.'+encodeURIComponent(zid)+'&deleted_at=is.null&select=id,deleted_at',{
+      method:'PATCH',headers:{Prefer:'return=representation'},body:{deleted_at:new Date().toISOString(),deleted_reason:reason}
+    });
+    // The record and client data stay in the CRM trash for audit; pending bot notices must not fire later.
+    await db(env,'/rest/v1/booking_notifications?booking_id=eq.'+encodeURIComponent(booking.id)+'&status=in.(queued,failed)',{method:'DELETE'}).catch(e=>console.error('Booking notification cleanup:',e.message));
+    await db(env,'/rest/v1/history_log',{method:'POST',body:{entity_type:'zayavka',entity_id:zid,action:'online_booking_deleted',actor:manager,comment:'Онлайн-запись удалена. '+reason}}).catch(()=>{});
+    const eventId=String(booking.zayavki.calendar_event_id||booking.zayavki.meta?.old_fields?.['Google Calendar Event ID']||'').trim();
+    return respond({ok:true,deleted:true,recordId:zid,alreadyDeleted:!updated?.length,
+      calendarWarning:eventId?'В Google Календаре есть связанное событие. Проверьте и удалите его отдельно.':null});
+  }
   if(mode==='calendar_sync'){const result=await syncBookingGoogle(env,accessId(body.id));return respond({ok:result.ok,calendar:result,error:result.error||''},result.ok?200:502);}
   if(mode==='action'){
     const action=String(body.action||'');if(!['confirm','propose','reject','cancel','dismiss_change'].includes(action))throw new BookingError('Недопустимое действие');
@@ -263,7 +325,7 @@ return {onRequest};
 
 __modules['functions/booking-public.js']=(()=>{
 'use strict';
-const {respond,db,checkSetup,turnstile,handleError,clean,phone7,token,accessId,dateText,BookingError}=__modules['lib/booking-server.js'];
+const {respond,db,checkSetup,turnstile,handleError,clean,phone7,token,accessId,dateText,BookingError,sendBookingEmail}=__modules['lib/booking-server.js'];
 
 async function onRequest(context){
   const {request,env}=context;
@@ -300,6 +362,8 @@ async function onRequest(context){
     if(body.consent!==true)throw new BookingError('Необходимо согласие на обработку данных');
     const phone=phone7(body.phone);if(!phone)throw new BookingError('Введите номер телефона +7');
     const serviceId=accessId(body.serviceId);
+    const serviceRows=await db(env,'/rest/v1/booking_services?select=id,name,direction,kind&id=eq.'+encodeURIComponent(serviceId)+'&published=eq.true&limit=1');
+    const serviceRow=serviceRows?.[0]||null;
     const measureLead=body.leadKind==='Замер';
     if(!measureLead&&(!dateText(body.date)|| !/^([01]\d|2[0-3]):[0-5]\d$/.test(body.time||'')))throw new BookingError('Выберите дату и время');
     if(env.TURNSTILE_SITE_KEY&&env.TURNSTILE_SECRET_KEY)await turnstile(env,body.turnstileToken,request.headers.get('cf-connecting-ip'));
@@ -311,7 +375,33 @@ async function onRequest(context){
     const uploadToken=await token(env,'upload',b.booking_id,Date.now()+48*3600_000);
     const manageToken=await token(env,'manage',b.booking_id,Date.now()+180*86400_000);
     const result={ok:true,bookingId:b.booking_id,requestId:b.zayavka_id,reference:b.reference,holdUntil:b.hold_until,uploadToken,manageToken,created:b.is_new===true,measureLead};
-    if(b.is_new===true && context.waitUntil && env.BOOKING_TELEGRAM_BOT_TOKEN && env.BOOKING_TELEGRAM_SERGEY_CHAT_ID && env.BOOKING_TELEGRAM_ROMAN_CHAT_ID){context.waitUntil((async()=>{try{const rows=await db(env,'/rest/v1/booking_notifications?select=id&booking_id=eq.'+encodeURIComponent(b.booking_id)+'&event_type=eq.created&limit=1');if(rows?.[0]){const {notifyBooking}=await Promise.resolve(__modules['lib/booking-server.js']);await notifyBooking(env,rows[0].id);}}catch(e){console.error('Telegram notification failed',e.message);}})());}
+    if(b.is_new===true && context.waitUntil){context.waitUntil((async()=>{
+      try{
+        const manageUrlBase=String(env.BOOKING_SITE_URL||'').replace(/\/$/,'');
+        const emailDetails={
+          reference:b.reference,
+          direction:serviceRow?.direction||body.direction||'',
+          kind:measureLead?'Замер':(serviceRow?.kind||''),
+          service:serviceRow?.name||'',
+          date:measureLead?'':(body.date||''),
+          time:measureLead?'':(body.time||''),
+          name:clean(body.name,160),
+          phone,
+          address:clean(body.address,400),
+          car:clean(body.car,200),
+          comment:clean(body.comment,2000),
+          manageUrl:manageUrlBase&&manageToken?`${manageUrlBase}/zapis.html?manage=${encodeURIComponent(manageToken)}`:'',
+          crmUrl:manageUrlBase&&b.zayavka_id?`${manageUrlBase}/admin.html?open=${encodeURIComponent(b.zayavka_id)}`:''
+        };
+        await sendBookingEmail(env,emailDetails);
+      }catch(e){console.error('Booking email failed',e.message);}
+      try{
+        if(env.BOOKING_TELEGRAM_BOT_TOKEN && env.BOOKING_TELEGRAM_SERGEY_CHAT_ID && env.BOOKING_TELEGRAM_ROMAN_CHAT_ID){
+          const rows=await db(env,'/rest/v1/booking_notifications?select=id&booking_id=eq.'+encodeURIComponent(b.booking_id)+'&event_type=eq.created&limit=1');
+          if(rows?.[0]){const {notifyBooking}=await Promise.resolve(__modules['lib/booking-server.js']);await notifyBooking(env,rows[0].id);}
+        }
+      }catch(e){console.error('Telegram notification failed',e.message);}
+    })());}
     return respond(result,201);
   }catch(error){return handleError(error);}
 }
@@ -768,7 +858,7 @@ async function addHistory(env, entityType, entityId, action, actor, comment, old
 
 const WEB3FORMS_ENDPOINT = "https://api.web3forms.com/submit";
 function nowYekaterinburg() { const p = localPartsFromIso(new Date().toISOString()); return { day: p.date, time: p.time }; }
-function buildLeadFields(input) { const now = nowYekaterinburg(); const name = cleanText(input.name, 160); const phone = cleanText(input.phone, 80); const companyName = cleanText(input.companyName || input.company || "", 220); const service = cleanText(input.service || input.task, 220) || "Заявка с сайта"; const address = cleanText(input.address, 300); const objectInfo = cleanText(input.objectInfo, 1000); const task = cleanText(input.task, 1000); const comment = cleanText(input.comment, 1000); const preferredDate = cleanText(input.preferredDate || input.date, 40) || now.day; const preferredTime = cleanText(input.preferredTime || input.time, 40) || now.time; const m2 = cleanText(input.m2, 40); const clientComment = [objectInfo ? `Информация об объекте: ${objectInfo}` : "", task ? `Что нужно сделать: ${task}` : "", comment ? `Комментарий: ${comment}` : "", `Источник: форма сайта`, `Создано: ${now.day} ${now.time}`].filter(Boolean).join("\n"); return { "Имя клиента": name, "Компания": companyName, "Телефон": phone, "Услуга": service, "Дата записи": preferredDate, "Время записи": preferredTime, "Адрес": address, "м2": m2, "Комментарий клиента": clientComment, "Статус": "Новая заявка", "Cal Booking ID": `site-${Date.now()}-${Math.random().toString(16).slice(2, 8)}`, "Источник": "Форма сайта" }; }
+function buildLeadFields(input) { const now = nowYekaterinburg(); const name = cleanText(input.name, 160); const phone = cleanText(input.phone, 80); const comment = cleanText(input.comment || input.task || '', 2000); const clientComment = [comment ? `Комментарий: ${comment}` : '', `Источник: форма сайта`, `Создано: ${now.day} ${now.time}`].filter(Boolean).join("\n"); return { "Имя клиента": name, "Компания": '', "Телефон": phone, "Услуга": 'Заявка на консультацию', "Дата записи": now.day, "Время записи": now.time, "Адрес": '', "м2": '', "Комментарий клиента": clientComment, "Статус": "Новая заявка", "Cal Booking ID": `site-${Date.now()}-${Math.random().toString(16).slice(2, 8)}`, "Источник": "Форма сайта" }; }
 async function sendWeb3Forms(env, fields) { const accessKey = env.WEB3FORMS_ACCESS_KEY || env.WEB3FORMS_KEY; if (!accessKey) return { ok: false, skipped: true, error: "WEB3FORMS_ACCESS_KEY is not set" }; const payload = { access_key: accessKey, subject: "Новая заявка с сайта СОЛНЦАНЕТ", from_name: "Сайт СОЛНЦАНЕТ", name: fields["Имя клиента"], phone: fields["Телефон"], company: fields["Компания"] || "", service: fields["Услуга"], address: fields["Адрес"], preferred_date: fields["Дата записи"], preferred_time: fields["Время записи"], message: fields["Комментарий клиента"], record_source: "Cloudflare Pages / create-public-lead / Supabase" }; const res = await fetch(WEB3FORMS_ENDPOINT, { method: "POST", headers: { "Content-Type": "application/json", "Accept": "application/json" }, body: JSON.stringify(payload) }); const text = await res.text(); const data = parseJson(text); if (!res.ok || data.success === false) return { ok: false, status: res.status, error: "Web3Forms send error", response: data }; return { ok: true, response: data }; }
 async function onRequestPost(context) { const { request, env } = context; let input; try { input = await request.json(); } catch (_) { return json({ ok: false, error: "Некорректные данные формы" }, 400); } if (cleanText(input.hpCompany || input.website || input.companyTrap, 200)) return json({ ok: false, error: "Spam rejected" }, 400); const startedAt = Number(input.formStartedAt || 0); if (startedAt && Date.now() - startedAt < 1000) return json({ ok: false, error: "Форма отправлена слишком быстро" }, 429); const fields = buildLeadFields(input); if (!fields["Имя клиента"] || fields["Имя клиента"].length < 2) return json({ ok: false, error: "Укажите имя" }, 400); if (!fields["Телефон"] || fields["Телефон"].replace(/\D/g, "").length < 10) return json({ ok: false, error: "Укажите корректный телефон" }, 400); try { const client = await upsertClient(env, fields); const payload = fieldsToZayavkaPayload(fields, {}); payload.client_id = client.id; payload.direction = "Архитектура"; payload.status = "Новая заявка"; payload.service = fields["Услуга"]; payload.title = fields["Услуга"]; const created = await sbFetch(env, `/rest/v1/zayavki?select=*`, { method: "POST", headers: { "Prefer": "return=representation" }, body: JSON.stringify(payload) }); const row = asArr(created)[0]; const full = await getZayavka(env, row.id) || row; const autoSms = []; /* Публичные обращения не подтверждены: SMS до подтверждения запрещены. */ const email = await sendWeb3Forms(env, fields); return json({ ok: true, saved: true, provider: "supabase", id: row.id, autoSmsCreated: autoSms.length, emailSent: Boolean(email.ok), emailWarning: email.ok ? "" : (email.error || "Письмо не отправлено"), message: "Заявка принята" }); } catch (error) { return json({ ok: false, provider: "supabase", error: error.message || "Ошибка отправки заявки", supabaseResponse: error.response || null }, error.status || 500); } }
 async function onRequest(context) { if (context.request.method !== "POST") return json({ ok: false, error: "Only POST" }, 405); return onRequestPost(context); }
