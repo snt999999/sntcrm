@@ -9,9 +9,9 @@
   <title>Онлайн-запись — СОЛНЦАНЕТ</title>
   <link rel="manifest" href="/manifest.webmanifest" />
   <link rel="icon" href="/assets/icons/icon-192.png" />
-  <link rel="stylesheet" href="/assets/booking.css?v=drive-no-r2-20261110" />
+  <link rel="stylesheet" href="/assets/booking.css?v=booking-back-20261110" />
   <script defer src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit"></script>
-  <script defer src="/assets/booking.js?v=drive-no-r2-20261110"></script>
+  <script defer src="/assets/booking.js?v=booking-back-20261110"></script>
 </head>
 <body>
   <header class="booking-header">
@@ -45,6 +45,7 @@
           </div>
         </section>
         <section class="booking-step" data-step="2" hidden>
+          <button class="booking-back booking-back-top" data-booking-back type="button">← Назад к выбору услуги</button>
           <h2>Когда вам удобно?</h2>
           <p class="booking-hint">Понедельник — пятница, 09:00–18:00. Запись со следующего дня, на 30 дней вперёд. Время указано по Екатеринбургу.</p>
           <div class="booking-month"><button type="button" id="bookingPrevMonth" aria-label="Предыдущий месяц">‹</button><b id="bookingMonthTitle"></b><button type="button" id="bookingNextMonth" aria-label="Следующий месяц">›</button></div>
@@ -53,6 +54,7 @@
           <p class="booking-hint">Для каждого направления предусмотрено два места. Неподтверждённые заявки резервируют время на срок до 24 часов.</p>
         </section>
         <section class="booking-step" data-step="3" hidden>
+          <button class="booking-back booking-back-top" data-booking-back type="button">← Назад к дате и времени</button>
           <h2>Ваши контактные данные</h2>
           <div class="booking-summary" id="bookingSummary"></div>
           <form id="bookingSubmitForm" novalidate>
@@ -67,10 +69,13 @@
             <div class="booking-hidden-honeypot"><label>Сайт <input id="bookingWebsite" tabindex="-1" autocomplete="off" /></label></div>
             <label class="booking-consent"><input id="bookingConsent" type="checkbox" required /><span>Согласен(на) на обработку персональных данных в соответствии с <a id="bookingPrivacyLink" href="#" target="_blank" rel="noopener">политикой обработки персональных данных</a>.</span></label>
             <div id="bookingTurnstile" class="booking-turnstile"></div>
-            <button id="bookingSubmit" class="booking-primary" type="submit">Отправить заявку</button>
+            <div class="booking-contact-actions">
+              <button class="booking-back" data-booking-back type="button">← Назад</button>
+              <button id="bookingSubmit" class="booking-primary" type="submit">Отправить заявку</button>
+            </div>
           </form>
         </section>
-        <div class="booking-actions" id="bookingNavigation"><button class="booking-back" id="bookingBack" type="button" hidden>← Назад</button><button class="booking-primary" id="bookingNext" type="button" disabled>Продолжить →</button></div>
+        <div class="booking-actions" id="bookingNavigation"><button class="booking-back" id="bookingBack" data-booking-back type="button" hidden>← Назад</button><button class="booking-primary" id="bookingNext" type="button" disabled>Продолжить →</button></div>
       </div>
     </section>
     <section id="bookingSuccess" class="booking-card booking-success" hidden>

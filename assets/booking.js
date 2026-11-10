@@ -14,13 +14,33 @@
  const service=()=>state.services.find(s=>s.id===state.serviceId);
  function step(n){state.step=n;alert('');document.querySelectorAll('.booking-step').forEach(x=>x.hidden=Number(x.dataset.step)!==n);document.querySelectorAll('#bookingProgress span').forEach((x,i)=>{x.classList.toggle('current',i+1===n);x.classList.toggle('done',i+1<n)});$('bookingBack').hidden=n===1;$('bookingNext').hidden=n===3;$('bookingNavigation').hidden=n===3;validate();if(n===2)renderCalendar();if(n===3){summary();renderTurnstile();}window.scrollTo({top:0,behavior:'smooth'});}
  function validate(){const allowed=state.step===1?Boolean(state.serviceId):state.step===2?Boolean(state.date&&state.time):true;$('bookingNext').disabled=!allowed;}
- function selectDirection(direction){state.direction=direction;state.kind=direction==='Авто'?'Авто':'';state.serviceId='';state.date='';state.time='';document.querySelectorAll('[data-direction]').forEach(x=>x.classList.toggle('selected',x.dataset.direction===direction));$('bookingKinds').hidden=direction!=='Архитектура';$('bookingServiceBox').hidden=direction==='Архитектура';document.querySelectorAll('[data-kind]').forEach(x=>x.classList.remove('selected'));updateServices();}
- function selectKind(kind){state.kind=kind;state.serviceId='';document.querySelectorAll('[data-kind]').forEach(x=>x.classList.toggle('selected',x.dataset.kind===kind));$('bookingServiceBox').hidden=false;updateServices();}
+ function clearScheduleSelection(){
+   state.date='';state.time='';state.slots=[];
+   $('bookingSlots').innerHTML='<span class="booking-hint">Выберите дату в календаре</span>';
+ }
+ function selectDirection(direction){
+   if(state.direction===direction)return; // Re-selecting the same direction must not erase a previous choice.
+   state.direction=direction;state.kind=direction==='Авто'?'Авто':'';state.serviceId='';clearScheduleSelection();
+   document.querySelectorAll('[data-direction]').forEach(x=>x.classList.toggle('selected',x.dataset.direction===direction));
+   $('bookingKinds').hidden=direction!=='Архитектура';$('bookingServiceBox').hidden=direction==='Архитектура';
+   document.querySelectorAll('[data-kind]').forEach(x=>x.classList.remove('selected'));
+   updateServices();
+ }
+ function selectKind(kind){
+   if(state.kind===kind)return; // Keep the service and date if the client clicks the same option.
+   state.kind=kind;state.serviceId='';clearScheduleSelection();
+   document.querySelectorAll('[data-kind]').forEach(x=>x.classList.toggle('selected',x.dataset.kind===kind));
+   $('bookingServiceBox').hidden=false;updateServices();
+ }
  function updateServices(){const options=state.services.filter(s=>s.direction===state.direction&&s.kind===state.kind);
    $('bookingService').innerHTML='<option value="">Выберите услугу</option>'+options.map(s=>`<option value="${esc(s.id)}">${esc(s.name)}</option>`).join('');
    $('bookingServiceHint').textContent=options.length?'Выберите услугу, чтобы увидеть минимальную цену и продолжительность.':'Пока нет опубликованных услуг этого типа. Уточните возможность записи по телефону.';
    validate();}
- function pickService(id){state.serviceId=id;state.date='';state.time='';const s=service();$('bookingServiceHint').textContent=s?`${money(s.price_from,s)} · ${s.duration_minutes} мин.`:'';validate();}
+ function pickService(id){
+   if(id!==state.serviceId){state.serviceId=id;clearScheduleSelection();}
+   const s=service();$('bookingServiceHint').textContent=s?`${money(s.price_from,s)} · ${s.duration_minutes} мин.`:'';
+   validate();
+ }
  function isDateAllowed(day){const today=ekbDay(),last=plusDays(today,30),dow=dateUTC(day).getUTCDay();return day>today&&day<=last&&dow!==0&&dow!==6;}
  function renderCalendar(){const d=dateUTC(state.month);$('bookingMonthTitle').textContent=new Intl.DateTimeFormat('ru-RU',{month:'long',year:'numeric',timeZone:'UTC'}).format(d);
    const y=d.getUTCFullYear(),m=d.getUTCMonth(),firstDay=(new Date(Date.UTC(y,m,1)).getUTCDay()+6)%7,days=new Date(Date.UTC(y,m+1,0)).getUTCDate();let html=['Пн','Вт','Ср','Чт','Пт','Сб','Вс'].map(x=>`<span class="booking-weekday">${x}</span>`).join('');
@@ -153,7 +173,7 @@
    $('bookingService').onchange=e=>pickService(e.target.value);
    $('bookingPrevMonth').onclick=()=>{state.month=nextMonth(state.month,-1);renderCalendar()};
    $('bookingNextMonth').onclick=()=>{state.month=nextMonth(state.month,1);renderCalendar()};
-   $('bookingBack').onclick=()=>step(Math.max(1,state.step-1));$('bookingNext').onclick=()=>step(Math.min(3,state.step+1));
+   document.querySelectorAll('[data-booking-back]').forEach(b=>b.onclick=()=>step(Math.max(1,state.step-1)));$('bookingNext').onclick=()=>step(Math.min(3,state.step+1));
    $('bookingSubmitForm').onsubmit=submit;
    $('bookingCopyLink').onclick=()=>navigator.clipboard.writeText($('bookingManageLink').value).then(()=>{$('bookingCopyLink').textContent='Скопировано';}).catch(()=>{$('bookingManageLink').select();});
    $('bookingUploadStart').onclick=uploadAll;
