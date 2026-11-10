@@ -5,13 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="theme-color" content="#0b2a66" />
   <meta name="referrer" content="no-referrer" />
-  <meta name="description" content="Онлайн-заявка на замер, монтаж и автомобильные услуги СОЛНЦАНЕТ в Екатеринбурге. Подтверждение записи менеджером." />
+  <meta name="description" content="Онлайн-запись на автомобильные и архитектурные услуги СОЛНЦАНЕТ в Екатеринбурге. Заявка на бесплатный замер." />
   <title>Онлайн-запись — СОЛНЦАНЕТ</title>
   <link rel="manifest" href="/manifest.webmanifest" />
   <link rel="icon" href="/assets/icons/icon-192.png" />
-  <link rel="stylesheet" href="/assets/booking.css?v=booking-calfix-20261110" />
+  <link rel="stylesheet" href="/assets/booking.css?v=client-public-clean-20261110-v2" />
   <script defer src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit"></script>
-  <script defer src="/assets/booking.js?v=booking-calfix-20261110"></script>
+  <script defer src="/assets/booking.js?v=client-public-clean-20261110-v2"></script>
 </head>
 <body>
   <header class="booking-header">
@@ -22,7 +22,7 @@
     <section class="booking-heading">
       <div class="booking-eyebrow">СОЛНЦАНЕТ · ЕКАТЕРИНБУРГ</div>
       <h1>Запись на услугу</h1>
-      <p>Для монтажа и авто выберите услугу и время. Для бесплатного замера оставьте контакты — сотрудник свяжется с вами.</p>
+      <p>Выберите услугу и удобное время или оставьте заявку на бесплатный замер.</p>
     </section>
     <section class="booking-card" id="bookingApp" aria-live="polite">
       <div class="booking-progress" id="bookingProgress" aria-label="Шаги записи">
@@ -47,11 +47,10 @@
         <section class="booking-step" data-step="2" hidden>
           <button class="booking-back booking-back-top" data-booking-back type="button">← Назад к выбору услуги</button>
           <h2>Когда вам удобно?</h2>
-          <p class="booking-hint">Понедельник — пятница, 09:00–18:00. Запись со следующего дня, на 30 дней вперёд. Время указано по Екатеринбургу.</p>
+          <p class="booking-hint">Пн–Пт, 09:00–18:00 (Екатеринбург). Запись со следующего дня.</p>
           <div class="booking-month"><button type="button" id="bookingPrevMonth" aria-label="Предыдущий месяц">‹</button><b id="bookingMonthTitle"></b><button type="button" id="bookingNextMonth" aria-label="Следующий месяц">›</button></div>
           <div class="booking-calendar" id="bookingCalendar"></div>
           <div class="booking-field"><label>Доступное время</label><div id="bookingSlots" class="booking-slots"><span class="booking-hint">Выберите дату в календаре</span></div></div>
-          <p class="booking-hint">Время, уже занятое в календаре СОЛНЦАНЕТ, недоступно для онлайн-записи. Неподтверждённая заявка временно резервирует выбранный интервал.</p>
         </section>
         <section class="booking-step" data-step="3" hidden>
           <button class="booking-back booking-back-top" data-booking-back type="button">← Назад к дате и времени</button>
@@ -65,7 +64,8 @@
               <div class="booking-field" id="bookingCarBox" hidden><label for="bookingCar">Марка и модель автомобиля <em>*</em></label><input id="bookingCar" maxlength="200" placeholder="Например, Hyundai Solaris" /></div>
             </div>
             <div class="booking-field"><label for="bookingComment">Комментарий</label><textarea id="bookingComment" rows="3" maxlength="2000" placeholder="Дополнительная информация, пожелания"></textarea></div>
-            <div class="booking-field"><label for="bookingAttachments">Фотографии и документы</label><input id="bookingAttachments" type="file" multiple accept="image/jpeg,image/png,image/webp,image/gif,image/heic,image/heif,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.rtf" /><span class="booking-hint" id="bookingAttachmentHint">До 15 файлов на заявку, каждый не больше 10 МБ. После отправки заявки появится шкала загрузки.</span></div>
+            <div class="booking-field"><label for="bookingAttachments">Фотографии и документы</label><input id="bookingAttachments" type="file" multiple accept="image/jpeg,image/png,image/webp,image/gif,image/heic,image/heif,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.rtf" /><span class="booking-hint" id="bookingAttachmentHint">До 15 файлов, не более 10 МБ каждый.</span></div>
+            <div id="bookingUploadPanel" class="booking-field" hidden aria-live="polite"><div id="bookingUploads"></div><button id="bookingUploadStart" type="button" class="booking-primary" hidden>Повторить загрузку</button> <button id="bookingUploadCancel" type="button" class="booking-back" hidden>Отменить загрузку</button></div>
             <div class="booking-hidden-honeypot"><label>Сайт <input id="bookingWebsite" tabindex="-1" autocomplete="off" /></label></div>
             <label class="booking-consent"><input id="bookingConsent" type="checkbox" required /><span>Согласен(на) на обработку персональных данных в соответствии с <a id="bookingPrivacyLink" href="#" target="_blank" rel="noopener">политикой обработки персональных данных</a>.</span></label>
             <div id="bookingTurnstile" class="booking-turnstile"></div>
@@ -80,10 +80,9 @@
     </section>
     <section id="bookingSuccess" class="booking-card booking-success" hidden>
       <div class="booking-success-icon">✓</div><h2>Заявка отправлена</h2>
-      <p><b>Заявка № <span id="bookingReference"></span></b> принята. <span id="bookingSuccessMessage">Менеджер проверит запись и свяжется с вами.</span></p>
-      <p class="booking-hint" id="bookingSuccessHold">До подтверждения выбранный интервал зарезервирован максимум на 24 часа. SMS поступит после подтверждения.</p>
-      <div class="booking-field" id="bookingManageLinkBox"><label>Ссылка для запроса переноса или отмены</label><div class="booking-link-row"><input id="bookingManageLink" readonly /><button id="bookingCopyLink" type="button">Скопировать</button></div><p class="booking-hint">Сохраните эту ссылку. Пока она не включена в согласованный шаблон SMS, повторно получить её будет невозможно.</p></div>
-      <div id="bookingUploadPanel" hidden><h3>Загрузка вложений в заявку</h3><p class="booking-hint">Загрузка в Google Drive: до 10 МБ на файл. Если произошёл обрыв, выберите файл заново и повторите попытку. Проценты показывают передачу; окончательное сохранение подтвердится отдельно.</p><div class="booking-field"><input id="bookingExtraFiles" type="file" multiple accept="image/jpeg,image/png,image/webp,image/gif,image/heic,image/heif,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.rtf" /></div><div id="bookingUploads"></div><button id="bookingUploadStart" type="button" class="booking-primary">Загрузить выбранные файлы</button> <button id="bookingUploadCancel" type="button" class="booking-back" hidden>Отменить загрузку</button></div>
+      <p><b>Заявка № <span id="bookingReference"></span></b> принята. <span id="bookingSuccessMessage">Мы свяжемся с вами для подтверждения записи.</span></p>
+      <div class="booking-field" id="bookingManageLinkBox"><label>Ссылка для запроса переноса или отмены</label><div class="booking-link-row"><input id="bookingManageLink" readonly /><button id="bookingCopyLink" type="button">Скопировать</button></div><p class="booking-hint">Сохраните эту ссылку, повторно получить её будет невозможно</p></div>
+      
       <div class="booking-success-links"><a class="booking-back booking-back-link" href="/zapis.html?new=1">Оформить ещё одну заявку</a><a class="booking-back booking-back-link" href="/index.html">На главную</a></div>
     </section>
     <section id="bookingManagePane" class="booking-card" hidden>

@@ -63,3 +63,7 @@ body{font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,
 
 /* Own booking widget, no Cal.com */
 .booking-entry-cta{min-height:340px;padding:26px;background:linear-gradient(140deg,#eff6ff,#fff);border:1px solid #dbeafe;border-radius:18px;display:flex;flex-direction:column;justify-content:center;gap:16px}.booking-entry-cta b{font-size:23px;color:#0b2a66}.booking-entry-cta p{color:#475569;line-height:1.6}.booking-entry-cta small{color:#64748b}.booking-entry-cta a{display:flex!important;text-align:center;margin:0!important}
+
+/* Compact customer-facing booking entry. */
+.booking-entry-cta{min-height:0;padding:22px;gap:14px;justify-content:flex-start}
+.booking-entry-cta p{margin:0;color:#475569;line-height:1.5}

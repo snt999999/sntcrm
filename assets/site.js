@@ -29,12 +29,8 @@ document.addEventListener("DOMContentLoaded", () => {
           throw new Error(result.error || "Заявку не удалось отправить");
         }
 
-        const emailText = result.emailSent
-          ? "Копия заявки отправлена на почту."
-          : "Заявка отправлена. Мы свяжемся с вами в ближайшее время.";
-
         if (note) {
-          note.textContent = `Заявка отправлена. Мы свяжемся с вами в ближайшее время. ${emailText}`;
+          note.textContent = "Заявка отправлена. Мы свяжемся с вами в ближайшее время.";
           note.classList.remove("is-error");
           note.classList.add("is-success");
         }
@@ -43,7 +39,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (startedAt) startedAt.value = String(Date.now());
       } catch (error) {
         if (note) {
-          note.textContent = `${error.message}. Можно написать нам напрямую в Telegram или MAX — текст заявки скопирован в буфер.`;
+          note.textContent = "Не удалось отправить заявку. Попробуйте ещё раз или свяжитесь с нами по телефону.";
           note.classList.remove("is-success");
           note.classList.add("is-error");
         }

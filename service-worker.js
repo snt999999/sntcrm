@@ -1,4 +1,4 @@
-const CACHE_NAME = 'solncanet-booking-calendar-v2-20261110';
+const CACHE_NAME = 'solncanet-client-public-clean-20261110-v2';
 self.addEventListener('install', (event) => { self.skipWaiting(); });
 self.addEventListener('activate', (event) => {
   event.waitUntil((async () => {

@@ -42,7 +42,7 @@ function adminRole(request,env){
 }
 function requireAdmin(request,env){
   const role=adminRole(request,env);
-  if(!role)throw new BookingError('Доступ только для Сергея и Романа. Войдите в CRM под своей учётной записью.',403);
+  if(!role)throw new BookingError('Недостаточно прав. Войдите в CRM под учётной записью с нужными разрешениями.',403);
   return role;
 }
 function requireAnyStaff(request,env){let p=(request.headers.get('x-admin-password')||'').trim();if(adminRole(request,env))return true;

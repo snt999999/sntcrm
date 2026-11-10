@@ -10,7 +10,7 @@
  const nextMonth=(s,delta)=>{const d=dateUTC(s);d.setUTCDate(1);d.setUTCMonth(d.getUTCMonth()+delta);return d.toISOString().slice(0,10)};
  const money=(v,s)=>v===null||v===undefined?'Цена уточняется':Number(v)===0?'Бесплатно':'от '+Number(v).toLocaleString('ru-RU')+' ₽'+(s?.direction==='Архитектура'&&s?.kind==='Монтаж'?'/м²':s?.name==='Бронирование порогов'?'/шт.':'');
  const alert=(message,good=false)=>{const e=$('bookingAlert');e.textContent=message;e.classList.toggle('good',good);e.hidden=!message;};
- const api=async (url,init={})=>{const r=await fetch(url,{cache:'no-store',...init});const raw=await r.text();let d;try{d=JSON.parse(raw)}catch{throw new Error('Сервер вернул некорректный ответ. Проверьте Cloudflare Pages Functions.');}if(!r.ok||!d.ok)throw new Error(d.error||'Ошибка соединения');return d;};
+ const api=async (url,init={})=>{const r=await fetch(url,{cache:'no-store',...init});const raw=await r.text();let d;try{d=JSON.parse(raw)}catch{throw new Error('Не удалось получить ответ. Повторите попытку позже.');}if(!r.ok||!d.ok){const message=String(d.error||'');const internal=/supabase|postgres|cloudflare|\br2\b|booking_|stack|rpc|column|schema|relation|function|database|SQL|миграц|секрет|ключ доступа|syntax error/i.test(message);throw new Error(r.status>=500||internal?'Не удалось выполнить запрос. Повторите попытку позже.':message||'Ошибка соединения');}return d;};
  const service=()=>state.services.find(s=>s.id===state.serviceId);
  function step(n){state.step=n;alert('');const measure=state.kind==='Замер'&&state.direction==='Архитектура';$('bookingProgress').classList.toggle('is-measure',measure);const contactProgress=$('bookingProgress').querySelector('span:nth-child(3)');if(contactProgress)contactProgress.innerHTML=(measure?'2':'3')+' <b>Контакты</b>';document.querySelectorAll('.booking-step').forEach(x=>x.hidden=Number(x.dataset.step)!==n);document.querySelectorAll('#bookingProgress span').forEach((x,i)=>{x.classList.toggle('current',i+1===n);x.classList.toggle('done',i+1<n)});$('bookingBack').hidden=n===1;$('bookingNext').hidden=n===3;$('bookingNavigation').hidden=n===3;validate();if(n===2)renderCalendar();if(n===3){summary();renderTurnstile();}window.scrollTo({top:0,behavior:'smooth'});}
  function validate(){const allowed=state.step===1?Boolean(state.serviceId):state.step===2?Boolean(state.date&&state.time):true;$('bookingNext').disabled=!allowed;}
@@ -41,7 +41,7 @@
  }
  function updateServices(){const options=state.services.filter(s=>s.direction===state.direction&&s.kind===state.kind);
    $('bookingService').innerHTML='<option value="">Выберите услугу</option>'+options.map(s=>`<option value="${esc(s.id)}">${esc(s.name)}</option>`).join('');
-   $('bookingServiceHint').textContent=options.length?'Выберите услугу, чтобы увидеть минимальную цену и продолжительность.':'Пока нет опубликованных услуг этого типа. Уточните возможность записи по телефону.';
+   $('bookingServiceHint').textContent=options.length?'':'Для записи на эту услугу позвоните нам.';
    validate();}
  function pickService(id){
    if(id!==state.serviceId){state.serviceId=id;clearScheduleSelection();}
@@ -69,7 +69,7 @@
  }
  function renderTurnstile(){if(!state.siteKey||state.turnstileId!==null||!state.ready)return;if(!window.turnstile){setTimeout(renderTurnstile,250);return;}state.turnstileId=window.turnstile.render('#bookingTurnstile',{sitekey:state.siteKey,callback:v=>state.turnstileToken=v,'expired-callback':()=>state.turnstileToken='','error-callback':()=>state.turnstileToken='' });}
  const normalizePhone=v=>{let d=v.replace(/\D/g,'');if(d.startsWith('8'))d='7'+d.slice(1);if(d.length===10&&d.startsWith('9'))d='7'+d;return d};
- async function submit(e){e.preventDefault();if(state.busy)return;
+ async function submit(e){e.preventDefault();if(state.busy)return;if(state.submitted){showSuccess();return;}
    const name=$('bookingName').value.trim(),phone=normalizePhone($('bookingPhone').value);
    if(name.length<2){alert('Введите имя клиента');return;}
    if(!/^7\d{10}$/.test(phone)){alert('Введите телефон в формате +7');return;}
@@ -78,28 +78,25 @@
    if(!$('bookingConsent').checked){alert('Подтвердите согласие на обработку персональных данных');return;}
    if(state.siteKey&&!state.turnstileToken){alert('Пройдите проверку защиты от спама');return;}
    const files=state.uploadAvailable?Array.from($('bookingAttachments').files||[]):[];if(files.length>15){alert('Можно приложить не более 15 файлов');return;}
-   if(files.some(f=>f.size>state.maxFileSizeBytes)){alert('Для Google Drive каждый файл должен быть не больше 10 МБ');return;}
+   if(files.some(f=>f.size>state.maxFileSizeBytes)){alert('Файл превышает допустимый размер 10 МБ');return;}
    state.busy=true;const button=$('bookingSubmit');button.disabled=true;button.textContent='Отправляем заявку…';alert('');
-   try{const r=await api('/booking-public',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({requestKey:state.requestKey,leadKind:state.kind==='Замер'&&state.direction==='Архитектура'?'Замер':null,serviceId:state.serviceId,date:state.date,time:state.time,name,phone:'+'+phone,address:$('bookingAddress').value,car:$('bookingCar').value,comment:$('bookingComment').value,consent:true,formStartedAt:state.started,website:$('bookingWebsite').value,turnstileToken:state.turnstileToken})});state.submitted=r;state.files=files;showSuccess();if(files.length)void uploadAll();}catch(error){alert(error.message);if(window.turnstile&&state.turnstileId!==null)window.turnstile.reset(state.turnstileId);state.turnstileToken='';}finally{state.busy=false;button.disabled=false;button.textContent='Отправить заявку';}
+   try{const r=await api('/booking-public',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({requestKey:state.requestKey,leadKind:state.kind==='Замер'&&state.direction==='Архитектура'?'Замер':null,serviceId:state.serviceId,date:state.date,time:state.time,name,phone:'+'+phone,address:$('bookingAddress').value,car:$('bookingCar').value,comment:$('bookingComment').value,consent:true,formStartedAt:state.started,website:$('bookingWebsite').value,turnstileToken:state.turnstileToken})});state.submitted=r;state.files=files;saveSession();
+     if(files.length){
+       $('bookingUploadPanel').hidden=false;
+       renderUploadList();
+       const complete=await uploadAll();
+       if(complete){showSuccess();}
+       else{alert('Заявка отправлена, но не все файлы прикрепились. Повторите загрузку или нажмите «Завершить без файлов».');}
+     }else{showSuccess();}}catch(error){alert(error.message);if(window.turnstile&&state.turnstileId!==null)window.turnstile.reset(state.turnstileId);state.turnstileToken='';}finally{state.busy=false;button.disabled=false;button.textContent=state.submitted?'Завершить без файлов':'Отправить заявку';}
  }
  const bookingSessionKey='solncanet_public_booking_drive_v2';
  function savedUploadKey(file){return `solncanet_upload_${state.submitted.bookingId}_${encodeURIComponent(file.name)}_${file.size}_${file.lastModified}`;}
  function saveSession(){try{sessionStorage.setItem(bookingSessionKey,JSON.stringify({response:state.submitted,savedAt:Date.now()}));}catch{}}
  function showSuccess(){
    saveSession();$('bookingApp').hidden=true;$('bookingSuccess').hidden=false;
-   $('bookingReference').textContent=state.submitted.reference||'';const measure=Boolean(state.submitted.measureLead);$('bookingSuccessMessage').textContent=measure?'Мы получили ваши контакты. Сотрудник свяжется с вами и согласует бесплатный замер. Дата и время пока не назначены.':'Выбранное время ещё не подтверждено. Менеджер проверит запись и свяжется с вами.';$('bookingSuccessHold').hidden=measure;$('bookingManageLinkBox').hidden=measure;
+   $('bookingReference').textContent=state.submitted.reference||'';const measure=Boolean(state.submitted.measureLead);$('bookingSuccessMessage').textContent=measure?'Мы свяжемся с вами для согласования бесплатного замера.':'Мы свяжемся с вами для подтверждения записи.';$('bookingManageLinkBox').hidden=measure;
    $('bookingManageLink').value=location.origin+'/zapis.html?manage='+encodeURIComponent(state.submitted.manageToken);
-   $('bookingUploadPanel').hidden=!state.uploadAvailable;if(state.uploadAvailable)renderUploadList();
    window.scrollTo({top:0,behavior:'smooth'});
- }
- function onExtraFiles(){
-   const extra=Array.from($('bookingExtraFiles').files||[]);
-   const unique=new Set(state.files.map(f=>`${f.name}:${f.size}:${f.lastModified}`));
-   for(const f of extra){const k=`${f.name}:${f.size}:${f.lastModified}`;if(!unique.has(k)){state.files.push(f);unique.add(k);}}
-   $('bookingExtraFiles').value='';
-   if(state.files.length>15){state.files=state.files.slice(0,15);window.alert('Можно прикрепить не больше 15 файлов к одной заявке.');}
-   const tooBig=state.files.filter(f=>f.size>state.maxFileSizeBytes);if(tooBig.length){state.files=state.files.filter(f=>f.size<=state.maxFileSizeBytes);window.alert('Файлы больше 10 МБ не добавлены: '+tooBig.map(f=>f.name).join(', '));}
-   renderUploadList();
  }
  function renderUploadList(){
    const el=$('bookingUploads');
@@ -120,9 +117,9 @@
    const xhr=new XMLHttpRequest();state.activeXhr=xhr;
    xhr.open('POST','/booking-upload');xhr.setRequestHeader('Authorization','Bearer '+token);
    xhr.upload.onprogress=e=>{if(e.lengthComputable)onProgress(Math.min(95,Math.round(e.loaded*95/e.total)))};
-   xhr.upload.onload=()=>onProgress(96,'Сохраняем в Google Drive…');
+   xhr.upload.onload=()=>onProgress(96,'Сохраняем файл…');
    xhr.onload=()=>{state.activeXhr=null;let data;try{data=JSON.parse(xhr.responseText)}catch{reject(new Error('Сервер загрузки вернул некорректный ответ'));return;}
-     if(xhr.status<200||xhr.status>=300||!data.ok)reject(new Error(data.error||'Google Drive отклонил файл'));else resolve(data);
+     if(xhr.status<200||xhr.status>=300||!data.ok)reject(new Error('Не удалось сохранить файл. Попробуйте ещё раз'));else resolve(data);
    };
    xhr.onerror=()=>{state.activeXhr=null;reject(new Error('Соединение прервалось, повторите загрузку'))};
    xhr.onabort=()=>{state.activeXhr=null;reject(new Error('Загрузка отменена'))};
@@ -131,15 +128,13 @@
  async function uploadOne(f,i){
    if(f.size>state.maxFileSizeBytes)throw new Error('Максимум 10 МБ на файл');
    if(state.abortRequested)throw new Error('Загрузка отменена');
-   const start=Date.now();
    for(let attempt=0;attempt<2;attempt++){
      try{
        const r=await singleFileXHR(f,state.submitted.uploadToken,(pct,text)=>{
-         const seconds=Math.max(1,(Date.now()-start)/1000);
-         uploadProgress(i,f.size*pct/100,f.size,text||`${pct}% · ~${(f.size*pct/100/1048576/seconds).toFixed(1)} МБ/с`);
+         uploadProgress(i,f.size*pct/100,f.size,text||`Загружаем файл: ${pct}%`);
        });
        state.uploaded.add(savedUploadKey(f));
-       uploadProgress(i,f.size,f.size,'Файл прикреплён к заявке в Google Drive');
+       uploadProgress(i,f.size,f.size,'Файл прикреплён к заявке');
        return r;
      }catch(e){if(state.abortRequested||attempt===1)throw e;await new Promise(resolve=>setTimeout(resolve,1000));}
    }
@@ -150,7 +145,7 @@
    if(state.activeXhr)state.activeXhr.abort();
  }
  async function uploadAll(){
-   if(state.uploading||!state.files.length||!state.submitted||!state.uploadAvailable)return;
+   if(state.uploading||!state.files.length||!state.submitted||!state.uploadAvailable)return false;
    state.uploading=true;state.abortRequested=false;
    const button=$('bookingUploadStart');button.hidden=true;
    const cancel=$('bookingUploadCancel');cancel.hidden=false;
@@ -163,9 +158,10 @@
    state.uploading=false;cancel.hidden=true;button.hidden=false;
    button.textContent=state.abortRequested?'Повторить незагруженные файлы':errors?'Повторить неудачные загрузки':state.files.every(f=>state.uploaded.has(savedUploadKey(f)))?'Все файлы прикреплены':'Загрузить выбранные файлы';
    button.disabled=!errors&&!state.abortRequested&&state.files.every(f=>state.uploaded.has(savedUploadKey(f)));
+   return !state.abortRequested && state.files.every(f=>state.uploaded.has(savedUploadKey(f)));
  }
  async function manageInit(raw){$('bookingApp').hidden=true;$('bookingManagePane').hidden=false;
-   try{const d=await api('/booking-manage?token='+encodeURIComponent(raw));const b=d.booking;const date=b.startAt?new Intl.DateTimeFormat('ru-RU',{timeZone:'Asia/Yekaterinburg',day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}).format(new Date(b.startAt)):'дата и время уточняются';$('bookingManageInfo').textContent=`Заявка № ${b.reference} · ${b.kind}: ${b.service} · ${date} (Екатеринбург). Статус: ${b.status}`;
+   try{const d=await api('/booking-manage?token='+encodeURIComponent(raw));const b=d.booking;const statuses={pending:'Ожидает подтверждения',confirmed:'Подтверждена',change_requested:'Запрошен перенос',cancel_requested:'Запрошена отмена',cancelled:'Отменена',rejected:'Отклонена',expired:'Срок брони истёк',completed:'Выполнена'};const date=b.startAt?new Intl.DateTimeFormat('ru-RU',{timeZone:'Asia/Yekaterinburg',day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}).format(new Date(b.startAt)):'дата и время уточняются';$('bookingManageInfo').textContent=`Заявка № ${b.reference} · ${b.kind}: ${b.service} · ${date} (Екатеринбург). Статус: ${statuses[b.status]||'Уточняется'}`;
      $('bookingManageForm').hidden=!['confirmed','change_requested','cancel_requested'].includes(b.status);}
    catch(e){$('bookingManageInfo').textContent=e.message;}
    let action='';document.querySelectorAll('[data-manage]').forEach(b=>b.onclick=()=>{action=b.dataset.manage;document.querySelectorAll('[data-manage]').forEach(x=>x.classList.toggle('selected',x===b));$('bookingManageChange').hidden=action!=='change';});
@@ -174,13 +170,13 @@
  }
  async function init(){const manage=new URLSearchParams(location.search).get('manage');if(manage){await manageInit(manage);return;}try{
    const r=await api('/booking-public?mode=config');$('bookingLoading').hidden=true;state.services=r.services||[];state.ready=r.ready;state.siteKey=r.turnstileSiteKey||null;state.uploadAvailable=!!r.uploadAvailable;state.maxFileSizeBytes=r.maxFileSizeBytes||10*1024*1024;state.month=monthFirst(ekbDay());
-   if(!r.ready){$('bookingLoading').hidden=false;$('bookingLoading').textContent=r.notice||'Онлайн-запись готовится к запуску. Для уточнения даты свяжитесь с нами по телефону.';return;}
-   if(!state.services.length){$('bookingLoading').hidden=false;$('bookingLoading').textContent='Онлайн-запись пока закрыта: услуги ещё не опубликованы. Позвоните нам для записи.';return;}
+   if(!r.ready){$('bookingLoading').hidden=false;$('bookingLoading').textContent='Онлайн-запись временно недоступна. Пожалуйста, свяжитесь с нами по телефону.';return;}
+   if(!state.services.length){$('bookingLoading').hidden=false;$('bookingLoading').textContent='Сейчас нет доступных услуг для записи. Позвоните нам для уточнения.';return;}
    if(r.privacyUrl){$('bookingPrivacyLink').href=r.privacyUrl;}
    else{$('bookingPrivacyLink').replaceWith(document.createTextNode('условиями обработки данных для связи по заявке'));}
    if(!state.uploadAvailable){
-     $('bookingAttachments').disabled=true;$('bookingExtraFiles').disabled=true;
-     $('bookingAttachmentHint').textContent='Прикрепление файлов пока недоступно. Заявку можно отправить без них — менеджер свяжется с вами.';
+     $('bookingAttachments').disabled=true;
+     $('bookingAttachments').closest('.booking-field').hidden=true;
    }
    $('bookingWizard').hidden=false;step(1);
    document.querySelectorAll('[data-direction]').forEach(x=>x.onclick=()=>selectDirection(x.dataset.direction));
@@ -191,11 +187,10 @@
    document.querySelectorAll('[data-booking-back]').forEach(b=>b.onclick=()=>step(state.step===3&&state.kind==='Замер'?1:Math.max(1,state.step-1)));$('bookingNext').onclick=()=>step(Math.min(3,state.step+1));
    $('bookingSubmitForm').onsubmit=submit;
    $('bookingCopyLink').onclick=()=>navigator.clipboard.writeText($('bookingManageLink').value).then(()=>{$('bookingCopyLink').textContent='Скопировано';}).catch(()=>{$('bookingManageLink').select();});
-   $('bookingUploadStart').onclick=uploadAll;
+   $('bookingUploadStart').onclick=async()=>{const complete=await uploadAll();if(complete)showSuccess();};
    $('bookingUploadCancel').onclick=cancelUpload;
-   $('bookingExtraFiles').onchange=onExtraFiles;
    const pending=sessionStorage.getItem(bookingSessionKey);let saved=null;try{saved=JSON.parse(pending||'null')}catch{}
    if(saved?.response?.bookingId&&saved?.response?.manageToken&&saved?.response?.uploadToken && Date.now()-saved.savedAt<48*3600_000 && !new URLSearchParams(location.search).has('new')){state.submitted=saved.response;showSuccess();}
- }catch(e){$('bookingLoading').textContent='Онлайн-запись временно недоступна: '+e.message+'. Позвоните нам по указанному номеру.';}}
+ }catch(e){$('bookingLoading').textContent='Онлайн-запись временно недоступна. Пожалуйста, позвоните нам.';}}
  init();
 })();
