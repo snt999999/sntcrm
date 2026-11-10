@@ -9,9 +9,9 @@
   <title>Онлайн-запись — СОЛНЦАНЕТ</title>
   <link rel="manifest" href="/manifest.webmanifest" />
   <link rel="icon" href="/assets/icons/icon-192.png" />
-  <link rel="stylesheet" href="/assets/booking.css?v=booking-v1" />
+  <link rel="stylesheet" href="/assets/booking.css?v=drive-no-r2-20261110" />
   <script defer src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit"></script>
-  <script defer src="/assets/booking.js?v=excel-20261109"></script>
+  <script defer src="/assets/booking.js?v=drive-no-r2-20261110"></script>
 </head>
 <body>
   <header class="booking-header">
@@ -63,7 +63,7 @@
               <div class="booking-field" id="bookingCarBox" hidden><label for="bookingCar">Марка и модель автомобиля <em>*</em></label><input id="bookingCar" maxlength="200" placeholder="Например, Hyundai Solaris" /></div>
             </div>
             <div class="booking-field"><label for="bookingComment">Комментарий</label><textarea id="bookingComment" rows="3" maxlength="2000" placeholder="Дополнительная информация, пожелания"></textarea></div>
-            <div class="booking-field"><label for="bookingAttachments">Фотографии и документы</label><input id="bookingAttachments" type="file" multiple accept="image/jpeg,image/png,image/webp,image/gif,image/heic,image/heif,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.rtf" /><span class="booking-hint">До 15 файлов на заявку. После отправки заявки появится шкала загрузки каждого файла.</span></div>
+            <div class="booking-field"><label for="bookingAttachments">Фотографии и документы</label><input id="bookingAttachments" type="file" multiple accept="image/jpeg,image/png,image/webp,image/gif,image/heic,image/heif,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.rtf" /><span class="booking-hint" id="bookingAttachmentHint">До 15 файлов на заявку, каждый не больше 10 МБ. После отправки заявки появится шкала загрузки.</span></div>
             <div class="booking-hidden-honeypot"><label>Сайт <input id="bookingWebsite" tabindex="-1" autocomplete="off" /></label></div>
             <label class="booking-consent"><input id="bookingConsent" type="checkbox" required /><span>Согласен(на) на обработку персональных данных в соответствии с <a id="bookingPrivacyLink" href="#" target="_blank" rel="noopener">политикой обработки персональных данных</a>.</span></label>
             <div id="bookingTurnstile" class="booking-turnstile"></div>
@@ -78,7 +78,7 @@
       <p><b>Заявка № <span id="bookingReference"></span></b> принята. Выбранное время ещё не подтверждено. Менеджер проверит запись и свяжется с вами.</p>
       <p class="booking-hint">До подтверждения выбранный интервал зарезервирован максимум на 24 часа. SMS поступит после подтверждения.</p>
       <div class="booking-field"><label>Ссылка для запроса переноса или отмены</label><div class="booking-link-row"><input id="bookingManageLink" readonly /><button id="bookingCopyLink" type="button">Скопировать</button></div><p class="booking-hint">Сохраните эту ссылку. Пока она не включена в согласованный шаблон SMS, повторно получить её будет невозможно.</p></div>
-      <div id="bookingUploadPanel" hidden><h3>Загрузка вложений в заявку</h3><p class="booking-hint">При обрыве связи можно обновить страницу, снова выбрать тот же файл и продолжить загрузку. Закройте вкладку только после завершения.</p><div class="booking-field"><input id="bookingExtraFiles" type="file" multiple accept="image/jpeg,image/png,image/webp,image/gif,image/heic,image/heif,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.rtf" /></div><div id="bookingUploads"></div><button id="bookingUploadStart" type="button" class="booking-primary">Загрузить выбранные файлы</button> <button id="bookingUploadCancel" type="button" class="booking-back" hidden>Отменить загрузку</button></div>
+      <div id="bookingUploadPanel" hidden><h3>Загрузка вложений в заявку</h3><p class="booking-hint">Загрузка в Google Drive: до 10 МБ на файл. Если произошёл обрыв, выберите файл заново и повторите попытку. Проценты показывают передачу; окончательное сохранение подтвердится отдельно.</p><div class="booking-field"><input id="bookingExtraFiles" type="file" multiple accept="image/jpeg,image/png,image/webp,image/gif,image/heic,image/heif,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.rtf" /></div><div id="bookingUploads"></div><button id="bookingUploadStart" type="button" class="booking-primary">Загрузить выбранные файлы</button> <button id="bookingUploadCancel" type="button" class="booking-back" hidden>Отменить загрузку</button></div>
       <div class="booking-success-links"><a class="booking-back booking-back-link" href="/zapis.html?new=1">Оформить ещё одну заявку</a><a class="booking-back booking-back-link" href="/index.html">На главную</a></div>
     </section>
     <section id="bookingManagePane" class="booking-card" hidden>

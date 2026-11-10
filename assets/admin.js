@@ -3525,6 +3525,21 @@ function initFileServiceEvents() {
 }
 async function loadFiles(silent = false) {
   filesCache = parseFilesFromRecords(records);
+  try {
+    const response = await fetch('/booking-files?mode=all', {
+      cache: 'no-store', headers: {'x-admin-password': pwd()}
+    });
+    const data=await response.json();
+    if(response.ok&&data.ok&&Array.isArray(data.files)){
+      const onlineFiles=data.files.map(f=>normalizeFileMeta({
+        id:f.external_id||f.id,key:'drive:'+(f.external_id||f.id),
+        name:f.name,originalName:f.name,url:f.url,downloadUrl:f.url,
+        size:f.size_bytes,contentType:f.mime_type,uploadedAt:f.created_at,
+        requestId:f.zayavka_id,fileType:fileTypeByMime(f.mime_type,f.name)
+      },f.zayavka_id));
+      filesCache=mergeFilesUnique([...filesCache,...onlineFiles]);
+    }
+  } catch(error) { console.warn('Не удалось загрузить вложения онлайн-записей',error.message); }
   renderFiles();
   if (current) renderRequestFiles(current.id);
   if (!silent) setFilesStatus(`Файлов в заявках: ${filesCache.length}`);
@@ -5009,9 +5024,15 @@ function initOnlineBookingPanel(){const panel=$('onlineBookingPanel');if(!panel)
  $('onlineBookingServicesRefresh').addEventListener('click',onlineBookingLoadServices);
  $('onlineBookingServices').addEventListener('click',onlineBookingSaveService);
  panel.querySelectorAll('.online-booking-settings').forEach(node=>node.addEventListener('toggle',()=>{if(node.open)onlineBookingLoadServices();}));
+ // Without Telegram, the CRM still updates its new-booking counter while open.
+ if(!window.__solncanetOnlineBookingPoll){
+   window.__solncanetOnlineBookingPoll=window.setInterval(()=>{
+     if(document.visibilityState==='visible'&&onlineBookingIsManager()&&Date.now()-onlineBookingLastLoad>45000)onlineBookingLoad(true);
+   },60000);
+ }
 }
 async function onlineBookingFileLinks(recordId){const target=$('requestR2FilesBox');if(!target||!recordId)return;target.textContent='Проверяем вложения клиента…';
  try{const response=await fetch('/booking-files?requestId='+encodeURIComponent(recordId),{cache:'no-store',headers:{'x-admin-password':pwd()}});const data=await response.json();if(!response.ok||!data.ok)throw new Error(data.error||'Не удалось получить файлы');if(current?.id!==recordId)return;
-   target.innerHTML=data.files?.length?'<b>Вложения из онлайн-записи (Cloudflare R2)</b>'+data.files.map(f=>`<div class="r2-line"><a href="${e(f.url)}" target="_blank" rel="noopener">${e(f.name)}</a><span>${(Number(f.size_bytes)/1048576).toFixed(1)} МБ</span></div>`).join(''):'';
- }catch(e){target.textContent='Вложения R2: '+e.message;}
+   target.innerHTML=data.files?.filter(f=>f.source==='r2').length?'<b>Вложения из онлайн-записи (Cloudflare R2)</b>'+data.files.filter(f=>f.source==='r2').map(f=>`<div class="r2-line"><a href="${e(f.url)}" target="_blank" rel="noopener">${e(f.name)}</a><span>${(Number(f.size_bytes)/1048576).toFixed(1)} МБ</span></div>`).join(''):'';
+ }catch(e){target.textContent='Вложения: '+e.message;}
 }

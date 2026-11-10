@@ -1,4 +1,4 @@
-const CACHE_NAME = 'solncanet-v61-booking-services-excel-20261109';
+const CACHE_NAME = 'solncanet-v61-booking-drive-no-r2-20261110';
 self.addEventListener('install', (event) => { self.skipWaiting(); });
 self.addEventListener('activate', (event) => {
   event.waitUntil((async () => {
