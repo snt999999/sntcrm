@@ -4983,7 +4983,12 @@ function onlineBookingMsg(message,error=false){const e=$('onlineBookingMessage')
 async function onlineBookingLoad(silent=false){if(!onlineBookingIsManager())return;try{
   if(!silent)onlineBookingMsg('Проверяем новые онлайн-заявки…');
   const d=await onlineBookingAPI('/booking-admin?mode=requests&_='+Date.now());onlineBookingRows=d.bookings||[];onlineBookingLastLoad=Date.now();onlineBookingRender();onlineBookingMsg('Данные обновлены');
- }catch(error){onlineBookingMsg(error.message,true);}}
+ }catch(error){
+   // Never leave a misleading zero counter and an endless loading placeholder.
+   const badge=$('onlineBookingBadge');if(badge)badge.textContent='—';
+   const list=$('onlineBookingItems');if(list)list.innerHTML='<p class="online-booking-load-error">Не удалось загрузить заявки: '+e(error.message)+'. Нажмите «Обновить» для повторной попытки.</p>';
+   onlineBookingMsg(error.message,true);
+ }}
 function onlineBookingRender(){const active=['pending','proposed','change_requested','cancel_requested'];const pending=onlineBookingRows.filter(b=>active.includes(b.status));$('onlineBookingBadge').textContent=String(pending.length);
  const statuses={pending:'Ожидает подтверждения',confirmed:'Подтверждена',proposed:'Предложено другое время',expired:'Резерв истёк',rejected:'Отказано',cancelled:'Отменена',change_requested:'Запрос на перенос',cancel_requested:'Запрос на отмену'};
  const list=[...pending,...onlineBookingRows.filter(b=>!active.includes(b.status)).slice(0,10)];

@@ -30,12 +30,21 @@ async function db(env,path,{method='GET',body=null,headers={}}={}){
   if(!res.ok){const msg=data?.message||data?.error||data?.hint||'Ошибка базы данных';const notReady=/does not exist|schema cache|could not find|relation .*does not exist|PGRST202/i.test(msg);throw new BookingError(notReady?'Сначала выполните миграцию booking_v1_migration.sql в Supabase':String(msg).slice(0,260),notReady?503:(res.status>=500?502:400));}
   return data;
 }
-function adminRole(request,env){const supplied=(request.headers.get('x-admin-password')||'').trim();if(!supplied)return null;
-  if(env.BOOKING_SERGEY_PASSWORD && supplied===String(env.BOOKING_SERGEY_PASSWORD))return 'Сергей';
-  if(env.BOOKING_ROMAN_PASSWORD && supplied===String(env.BOOKING_ROMAN_PASSWORD))return 'Роман';
+// Booking admin uses the SAME credentials as the existing CRM manager accounts.
+// Dedicated BOOKING_* passwords, when provided, remain supported as optional aliases.
+// Only the two manager accounts are accepted; general staff and ADMIN_PASSWORD are not.
+function adminRole(request,env){
+  const supplied=(request.headers.get('x-admin-password')||'').trim();
+  if(!supplied)return null;
+  if(supplied==='Bebelya9'||(env.BOOKING_SERGEY_PASSWORD&&supplied===String(env.BOOKING_SERGEY_PASSWORD)))return 'Сергей';
+  if(supplied==='Bebelya91'||(env.BOOKING_ROMAN_PASSWORD&&supplied===String(env.BOOKING_ROMAN_PASSWORD)))return 'Роман';
   return null;
 }
-function requireAdmin(request,env){let role=adminRole(request,env);if(!role)throw new BookingError('Только Сергей и Роман. Проверьте BOOKING_SERGEY_PASSWORD / BOOKING_ROMAN_PASSWORD.',403);return role;}
+function requireAdmin(request,env){
+  const role=adminRole(request,env);
+  if(!role)throw new BookingError('Доступ только для Сергея и Романа. Войдите в CRM под своей учётной записью.',403);
+  return role;
+}
 function requireAnyStaff(request,env){let p=(request.headers.get('x-admin-password')||'').trim();if(adminRole(request,env))return true;
   const legacy=['BebelyaNP','BebelyaPD','BebelyaSA'];return legacy.includes(p) || String(env.USER_PASSWORDS||'').split(/[;,\n]/).includes(p)&&p.length>0;
 }
